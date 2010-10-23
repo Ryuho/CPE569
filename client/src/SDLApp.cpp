@@ -56,6 +56,9 @@ void SDLApp::update()
    if (inputMgr.keyPressed(SDLK_e)) {
       world.spawnItem();
    }
+   if (inputMgr.keyPressed(SDLK_r)) {
+      world.spawnNPC();
+   }
 
    vec2 dir(0.0, 0.0);
    if (inputMgr.keyDown(SDLK_w))
