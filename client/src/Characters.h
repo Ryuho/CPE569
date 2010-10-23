@@ -41,4 +41,18 @@ struct Item {
    bool alive;
 };
 
+struct NPC {
+   enum Type { Thief };
+   NPC() : alive(false) {}
+   
+   void init(vec2 pos, Type type);
+   void update(float fdt, Player &player);
+   void draw();
+   
+   Type type;
+   vec2 pos, dir;
+   bool alive, moving;
+   int animStart;
+};
+
 #endif

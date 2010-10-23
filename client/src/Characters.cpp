@@ -152,3 +152,46 @@ void Item::draw()
       glPopMatrix();
    }  
 }
+
+
+
+
+
+
+
+
+
+void NPC::init(vec2 pos, Type type)
+{
+    this->type = type;
+    this->animStart = 0;
+    this->pos = pos;
+    this->moving = false;
+    this->alive = true;
+    this->dir = vec2(0, 0);
+}
+
+void NPC::update(float fdt, Player &player)
+{
+   if(alive) {
+      float speed = 800;
+      vec2 dist = to(pos, player.pos);
+      dir = normalize(dist);
+      if(dist.length() > 40) {         this->pos = dir*speed*fdt + pos;
+      }
+   }
+}
+
+void NPC::draw()
+{
+  if (alive) {
+      glPushMatrix();
+      glTranslatef(pos.x, pos.y, 0.0);
+      glScalef(spriteZoom, spriteZoom, 1.0);
+      //glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
+      
+      sprites16x32.draw(6, 9); // green rupee 1
+
+      glPopMatrix();
+   }  
+}

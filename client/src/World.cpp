@@ -11,7 +11,7 @@ struct WorldData {
 
    vector<Missile> missiles;
    vector<Item> items;
-   vector<Item> npcs;
+   vector<NPC> npcs;
    Player player;
    Texture ground;
 
@@ -77,7 +77,7 @@ void WorldData::update(int ticks, float dt)
    for (unsigned i = 0; i < items.size(); i++) {
       npcs[i].update(dt, player);
       if (!npcs[i].alive) {
-         npcs[i] = items.back();
+         npcs[i] = npcs.back();
          npcs.pop_back();
          i--;
       }
@@ -158,5 +158,7 @@ void World::spawnItem()
 
 void World::spawnNPC()
 {
-   
+   NPC n;
+   n.init(data->player.pos + vec2(400, 400), NPC::Thief);
+   data->npcs.push_back(n);
 }
