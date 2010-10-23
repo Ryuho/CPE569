@@ -30,7 +30,7 @@ struct Missile {
 
 struct Item {
    enum Type { Rupee };
-   Object() : alive(false) {}
+   Item() : alive(false) {}
    
    void init(vec2 pos, Type type);
    void update(float fdt, Player &player);
