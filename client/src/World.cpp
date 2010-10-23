@@ -159,6 +159,18 @@ void World::spawnItem()
 void World::spawnNPC()
 {
    NPC n;
-   n.init(data->player.pos + vec2(rand()%800 - 400, rand()%800 - 400), NPC::Thief);
+   //float t = rand()/(float)RAND_MAX;
+   //vec2 _pos = vec2(cos(t*2*PI), sin(t*2*PI)) * 1600;
+
+   vec2 _pos = vec2(rand()%3200 - 1600, rand()%3200 - 1600);
+   if(_pos.x >= 0.0 && _pos.x < 800.0)
+      _pos.x = 800.0;
+   else if(_pos.x < 0.0 && _pos.x > -800.0)
+      _pos.x = -800.0;
+   if(_pos.y >= 0.0 && _pos.y < 800.0)
+      _pos.y = 800;
+   else if(_pos.y < 0.0 && _pos.y > -800.0)
+      _pos.y = -800.0;
+   n.init(data->player.pos + _pos, NPC::Thief);
    data->npcs.push_back(n);
 }

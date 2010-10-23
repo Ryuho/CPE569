@@ -174,7 +174,7 @@ void NPC::init(vec2 pos, Type type)
 void NPC::update(float fdt, Player &player)
 {
    if(alive) {
-      float speed = 800;
+      float speed = 300;
       vec2 dist = to(pos, player.pos);
       dir = normalize(dist);
       if(dist.length() > 40) {         this->pos = dir*speed*fdt + pos;
@@ -190,7 +190,7 @@ void NPC::draw()
       glScalef(spriteZoom, spriteZoom, 1.0);
       //glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
       
-      sprites16x32.draw(6, 9); // green rupee 1
+      sprites16x32.draw(10, 6); // thief face down
 
       glPopMatrix();
    }  
