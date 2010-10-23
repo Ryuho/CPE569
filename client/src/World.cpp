@@ -73,15 +73,21 @@ void WorldData::draw()
    ground.bind();
 
    glBegin(GL_QUADS);
-   glTexCoord2f(0,0);
+   
+   float xoffset = player.pos.x / (float) width;
+   float yoffset = player.pos.y / (float) height;
+   
+   glTexCoord2f(xoffset,yoffset);
    glVertex2f(0,0);
-   glTexCoord2f(1,0);
+   glTexCoord2f(1+xoffset,yoffset);
    glVertex2f(width, 0);
-   glTexCoord2f(1,1);
+   glTexCoord2f(1+xoffset,1+yoffset);
    glVertex2f(width, height);
-   glTexCoord2f(0,1);
+   glTexCoord2f(xoffset,1+yoffset);
    glVertex2f(0, height);
    glEnd();
+   
+   glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 
    player.draw();
 
@@ -98,7 +104,7 @@ void World::shootArrow(mat::vec2 dir)
 {
    if (data->ticks - data->arrowTick > arrowCooldown) {
       Missile m;
-      m.init(data->player.pos, to(data->player.pos, dir), Missile::Arrow);
+      m.init(data->player.pos, dir - vec2(data->width/2,data->height/2), Missile::Arrow);
       data->missiles.push_back(m);
       data->arrowTick = data->ticks;
    }

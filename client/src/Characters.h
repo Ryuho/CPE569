@@ -28,4 +28,17 @@ struct Missile {
    bool alive;
 };
 
+struct Item {
+   enum Type { Rupee };
+   Object() : alive(false) {}
+   
+   void init(vec2 pos, Type type);
+   void update(float fdt, Player &player);
+   void draw();
+   
+   Type type;
+   vec2 pos;
+   bool alive;
+};
+
 #endif
