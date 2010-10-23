@@ -74,7 +74,7 @@ void WorldData::update(int ticks, float dt)
       }
    }
   
-   for (unsigned i = 0; i < items.size(); i++) {
+   for (unsigned i = 0; i < npcs.size(); i++) {
       npcs[i].update(dt, player);
       if (!npcs[i].alive) {
          npcs[i] = npcs.back();
@@ -117,7 +117,7 @@ void WorldData::draw()
    for (unsigned i = 0; i < items.size(); i++)
       items[i].draw();
 
-   for (unsigned i = 0; i < items.size(); i++)
+   for (unsigned i = 0; i < npcs.size(); i++)
       npcs[i].draw();
 }
 
@@ -159,6 +159,6 @@ void World::spawnItem()
 void World::spawnNPC()
 {
    NPC n;
-   n.init(data->player.pos + vec2(400, 400), NPC::Thief);
+   n.init(data->player.pos + vec2(rand()%800 - 400, rand()%800 - 400), NPC::Thief);
    data->npcs.push_back(n);
 }
