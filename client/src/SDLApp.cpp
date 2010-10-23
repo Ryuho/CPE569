@@ -53,6 +53,10 @@ void SDLApp::update()
       world.doSpecial();
    }
 
+   if (inputMgr.keyPressed(SDLK_e)) {
+      world.spawnItem();
+   }
+
    vec2 dir(0.0, 0.0);
    if (inputMgr.keyDown(SDLK_w))
       dir = dir + vec2(0.0, 1.0);

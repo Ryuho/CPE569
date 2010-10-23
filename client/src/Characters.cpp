@@ -127,6 +127,7 @@ void Item::init(vec2 pos, Type type)
 {
     this->pos = pos;
     this->type = type;
+    this->alive = true;
 }
 
 void Item::update(float fdt, Player &player)

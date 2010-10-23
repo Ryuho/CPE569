@@ -10,6 +10,7 @@ struct WorldData {
    int arrowTick, specialTick;
 
    vector<Missile> missiles;
+   vector<Item> items;
    Player player;
    Texture ground;
 
@@ -62,6 +63,15 @@ void WorldData::update(int ticks, float dt)
          i--;
       }
    }
+   
+   for (unsigned i = 0; i < items.size(); i++) {
+      items[i].update(dt, player);
+      if (!items[i].alive) {
+         items[i] = items.back();
+         items.pop_back();
+         i--;
+      }
+   }
 }
 
 void WorldData::draw()
@@ -93,6 +103,9 @@ void WorldData::draw()
 
    for (unsigned i = 0; i < missiles.size(); i++)
       missiles[i].draw();
+      
+   for (unsigned i = 0; i < items.size(); i++)
+      items[i].draw();
 }
 
 void World::move(mat::vec2 dir)
@@ -121,4 +134,11 @@ void World::doSpecial()
          data->specialTick = data->ticks;
       }
    }
+}
+
+void World::spawnItem()
+{
+   Item i;
+   i.init(data->player.pos + vec2(100, 100), Item::Rupee);
+   data->items.push_back(i);
 }

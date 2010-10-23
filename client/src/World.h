@@ -16,6 +16,7 @@ struct World {
    void move(vec2 dir);
    void shootArrow(mat::vec2 dir);
    void doSpecial();
+   void spawnItem();
 
    boost::shared_ptr<WorldData> data;
 };
