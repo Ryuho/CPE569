@@ -5,6 +5,9 @@ namespace {
    Texture spriteTex;
    Sprite sprites32;
    Sprite sprites64;
+   Sprite sprites16x32;
+   Sprite sprites16;
+   Sprite sprites8;
 
    int spriteZoom = 4;
 
@@ -21,6 +24,9 @@ void initCharacterResources()
       spriteTex = fromTGA("character.tga", opt);
       sprites32 = Sprite(spriteTex, 32, 32);
       sprites64 = Sprite(spriteTex, 64, 64);
+      sprites16x32 = Sprite(spriteTex, 16, 32);
+      sprites16 = Sprite(spriteTex, 16, 16);
+      sprites8 = Sprite(spriteTex, 8, 8);
       initalized = true;
    }
 }
@@ -100,16 +106,49 @@ void Missile::draw()
       glTranslatef(pos.x, pos.y, 0.0);
       glScalef(spriteZoom, spriteZoom, 1.0);
       glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
-      //sprites32.draw(4,0); // arrow
+      
+      sprites16.draw(9,0); // firebolt
+      //sprites16.draw(8,0); // arrow
+
+      //sprites16x32.draw(18,1); // pillar
+
       //sprites32.draw(12,2); // mini trident
       //sprites32.draw(11,0); // small fireball
       //sprites32.draw(6,0); // ball?
       //sprites32.draw(5,0); // bomb (dont rotate)
       //sprites32.draw(7,0); // boomerang (dont rotate, animation 7 - 10)
-      sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
+      //sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
       //sprites64.draw(7,0); // big ass spear
       glPopMatrix();
    }
 }
 
-void 
+void Item::init(vec2 pos, Type type)
+{
+    this->pos = pos;
+    this->type = type;
+    this->alive = true;
+}
+
+void Item::update(float fdt, Player &player)
+{
+  if (alive) {
+      //if within 40 pixels make not alive
+      if (dist(player.pos, pos) < 40)
+         alive = false;
+   }
+}
+
+void Item::draw()
+{
+  if (alive) {
+      glPushMatrix();
+      glTranslatef(pos.x, pos.y, 0.0);
+      glScalef(spriteZoom, spriteZoom, 1.0);
+      //glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
+      
+      sprites16.draw(13,0); // green rupee 1
+
+      glPopMatrix();
+   }  
+}
