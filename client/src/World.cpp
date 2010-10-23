@@ -11,6 +11,7 @@ struct WorldData {
 
    vector<Missile> missiles;
    vector<Item> items;
+   vector<Item> npcs;
    Player player;
    Texture ground;
 
@@ -72,6 +73,15 @@ void WorldData::update(int ticks, float dt)
          i--;
       }
    }
+  
+   for (unsigned i = 0; i < items.size(); i++) {
+      npcs[i].update(dt, player);
+      if (!npcs[i].alive) {
+         npcs[i] = items.back();
+         npcs.pop_back();
+         i--;
+      }
+   }
 }
 
 void WorldData::draw()
@@ -106,6 +116,9 @@ void WorldData::draw()
       
    for (unsigned i = 0; i < items.size(); i++)
       items[i].draw();
+
+   for (unsigned i = 0; i < items.size(); i++)
+      npcs[i].draw();
 }
 
 void World::move(mat::vec2 dir)
@@ -141,4 +154,9 @@ void World::spawnItem()
    Item i;
    i.init(data->player.pos + vec2(100, 100), Item::Rupee);
    data->items.push_back(i);
+}
+
+void World::spawnNPC()
+{
+   
 }
