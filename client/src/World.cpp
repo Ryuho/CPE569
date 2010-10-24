@@ -152,7 +152,7 @@ void World::doSpecial()
 void World::spawnItem()
 {
    Item i;
-   i.init(data->player.pos + vec2(100, 100), Item::Rupee);
+   i.init(data->player.pos + vec2(100, 100), (Item::Type) (rand() % ((int)Item::MaxItem)));
    data->items.push_back(i);
 }
 
