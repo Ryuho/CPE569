@@ -1,5 +1,4 @@
 #include "Characters.h"
-#include "Sprite.h"
 
 namespace {
    Texture spriteTex;
@@ -12,7 +11,24 @@ namespace {
    int spriteZoom = 4;
 
    bool initalized = false;
-};
+
+   Animation thiefAnim;
+   Animation princessAnim;
+   Animation fairyAnim;
+   Animation skeletonAnim;
+   Animation cyclopsAnim;
+   Animation batAnim;
+   Animation birdAnim;
+   Animation squirrelAnim;
+   Animation chickenAnim;
+   Animation vultureAnim;
+   Animation bushAnim;
+   Animation cactusAnim;
+   Animation bigFairyAnim;
+   Animation wizardAnim;
+   Animation ganonAnim;
+   Animation goblinAnim;
+}
 
 
 void initCharacterResources()
@@ -27,6 +43,158 @@ void initCharacterResources()
       sprites16x32 = Sprite(spriteTex, 16, 32);
       sprites16 = Sprite(spriteTex, 16, 16);
       sprites8 = Sprite(spriteTex, 8, 8);
+
+      thiefAnim.init(&sprites16x32, Animation::Normal, false);
+      thiefAnim.speed = 175;
+      thiefAnim.dirs[0].push_back(vec2i(11, 6)); //up
+      thiefAnim.dirs[0].push_back(vec2i(0,  6));
+      thiefAnim.dirs[0].push_back(vec2i(1,  6));
+      thiefAnim.dirs[1].push_back(vec2i(6,  6)); //right
+      thiefAnim.dirs[1].push_back(vec2i(7,  6));
+      thiefAnim.dirs[1].push_back(vec2i(6,  6));
+      thiefAnim.dirs[2].push_back(vec2i(10, 6)); //down
+      thiefAnim.dirs[2].push_back(vec2i(4,  6));
+      thiefAnim.dirs[2].push_back(vec2i(5,  6));
+      thiefAnim.dirs[3].push_back(vec2i(3,  6)); //left
+      thiefAnim.dirs[3].push_back(vec2i(2,  6));
+      thiefAnim.dirs[3].push_back(vec2i(3,  6));
+
+      princessAnim.init(&sprites16x32, Animation::Normal, false);
+      princessAnim.speed = 200;
+      princessAnim.dirs[0].push_back(vec2i(18, 6)); //up
+      princessAnim.dirs[0].push_back(vec2i(19, 6));
+      princessAnim.dirs[0].push_back(vec2i(18, 6));
+      princessAnim.dirs[1].push_back(vec2i(16, 6)); //right
+      princessAnim.dirs[1].push_back(vec2i(17, 6));
+      princessAnim.dirs[1].push_back(vec2i(16, 6));
+      princessAnim.dirs[2].push_back(vec2i(14, 6)); //down
+      princessAnim.dirs[2].push_back(vec2i(15, 6));
+      princessAnim.dirs[2].push_back(vec2i(14, 6)); 
+      princessAnim.dirs[3].push_back(vec2i(20, 6)); //left
+      princessAnim.dirs[3].push_back(vec2i(21, 6));
+      princessAnim.dirs[3].push_back(vec2i(20, 6));
+
+      fairyAnim.init(&sprites16, Animation::LeftRight, true);
+      fairyAnim.dirs[1].push_back(vec2i(22, 0)); //right
+      fairyAnim.dirs[1].push_back(vec2i(23, 0));
+      fairyAnim.dirs[3].push_back(vec2i(22, 1)); //left
+      fairyAnim.dirs[3].push_back(vec2i(23, 1));
+
+      skeletonAnim.init(&sprites16x32, Animation::Normal, false);
+      skeletonAnim.speed = 200;
+      skeletonAnim.dirs[0].push_back(vec2i(30, 0)); //up
+      skeletonAnim.dirs[0].push_back(vec2i(31, 0));
+      skeletonAnim.dirs[0].push_back(vec2i(30, 0));
+      skeletonAnim.dirs[1].push_back(vec2i(24, 0)); //right
+      skeletonAnim.dirs[1].push_back(vec2i(25, 0));
+      skeletonAnim.dirs[1].push_back(vec2i(24, 0));
+      skeletonAnim.dirs[2].push_back(vec2i(28, 0)); //down
+      skeletonAnim.dirs[2].push_back(vec2i(29, 0));
+      skeletonAnim.dirs[2].push_back(vec2i(28, 0)); 
+      skeletonAnim.dirs[3].push_back(vec2i(27, 0)); //left
+      skeletonAnim.dirs[3].push_back(vec2i(26, 0));
+      skeletonAnim.dirs[3].push_back(vec2i(27, 0));
+
+      cyclopsAnim.init(&sprites32, Animation::Normal, false);
+      cyclopsAnim.speed = 200;
+      cyclopsAnim.dirs[0].push_back(vec2i(12, 7)); //up
+      cyclopsAnim.dirs[0].push_back(vec2i(11, 7));
+      cyclopsAnim.dirs[0].push_back(vec2i(12, 7));
+      cyclopsAnim.dirs[0].push_back(vec2i(13, 7));
+      cyclopsAnim.dirs[0].push_back(vec2i(12, 7));
+      cyclopsAnim.dirs[1].push_back(vec2i(7,  7));  //right
+      cyclopsAnim.dirs[1].push_back(vec2i(6,  7));
+      cyclopsAnim.dirs[1].push_back(vec2i(7,  7));
+      cyclopsAnim.dirs[2].push_back(vec2i(4,  7)); //down
+      cyclopsAnim.dirs[2].push_back(vec2i(8,  7));
+      cyclopsAnim.dirs[2].push_back(vec2i(9,  7)); 
+      cyclopsAnim.dirs[2].push_back(vec2i(10, 7));
+      cyclopsAnim.dirs[2].push_back(vec2i(9,  7)); 
+      cyclopsAnim.dirs[3].push_back(vec2i(12, 8)); //left
+      cyclopsAnim.dirs[3].push_back(vec2i(13, 8));
+      cyclopsAnim.dirs[3].push_back(vec2i(12, 8));
+
+      batAnim.init(&sprites16, Animation::Forward, true);
+      batAnim.speed = 175;
+      batAnim.dirs[2].push_back(vec2i(24, 18)); //down
+      batAnim.dirs[2].push_back(vec2i(24, 19));
+
+      birdAnim.init(&sprites16, Animation::LeftRight, true);
+      birdAnim.speed = 150;
+      birdAnim.dirs[1].push_back(vec2i(0, 10)); //right
+      birdAnim.dirs[1].push_back(vec2i(1, 10));
+      birdAnim.dirs[3].push_back(vec2i(0, 11)); //left
+      birdAnim.dirs[3].push_back(vec2i(1, 11));
+
+      squirrelAnim.init(&sprites16x32, Animation::LeftRight, false);
+      squirrelAnim.speed = 150;
+      squirrelAnim.dirs[1].push_back(vec2i(2, 5)); //right
+      squirrelAnim.dirs[1].push_back(vec2i(3, 5));
+      squirrelAnim.dirs[1].push_back(vec2i(2, 5));
+      squirrelAnim.dirs[3].push_back(vec2i(4, 5)); //left
+      squirrelAnim.dirs[3].push_back(vec2i(5, 5));
+      squirrelAnim.dirs[3].push_back(vec2i(4, 5));
+
+      chickenAnim.init(&sprites32, Animation::LeftRight, false);
+      chickenAnim.speed = 175;
+      chickenAnim.dirs[1].push_back(vec2i(3, 5)); //right
+      chickenAnim.dirs[1].push_back(vec2i(4, 5));
+      chickenAnim.dirs[1].push_back(vec2i(5, 5));
+      chickenAnim.dirs[1].push_back(vec2i(3, 5));
+      chickenAnim.dirs[3].push_back(vec2i(6, 5)); //left
+      chickenAnim.dirs[3].push_back(vec2i(7, 5));
+      chickenAnim.dirs[3].push_back(vec2i(8, 5));
+      chickenAnim.dirs[3].push_back(vec2i(6, 5));
+
+      vultureAnim.init(&sprites32, Animation::Forward, true);
+      vultureAnim.dirs[2].push_back(vec2i(9, 5)); //down
+      vultureAnim.dirs[2].push_back(vec2i(10, 5));
+      vultureAnim.dirs[2].push_back(vec2i(11, 5));
+      vultureAnim.dirs[2].push_back(vec2i(10, 5));
+
+      bushAnim.init(&sprites32, Animation::Forward, false);
+      bushAnim.speed = 300;
+      bushAnim.dirs[2].push_back(vec2i(12, 3)); //down
+      bushAnim.dirs[2].push_back(vec2i(11, 3));
+      bushAnim.dirs[2].push_back(vec2i(12, 3));
+      bushAnim.dirs[2].push_back(vec2i(13, 3));
+      bushAnim.dirs[2].push_back(vec2i(12, 3));
+
+      cactusAnim.init(&sprites16x32, Animation::Forward, false);
+      cactusAnim.speed = 300;
+      cactusAnim.dirs[2].push_back(vec2i(20, 0)); //down
+      cactusAnim.dirs[2].push_back(vec2i(19, 0));
+      cactusAnim.dirs[2].push_back(vec2i(20, 0));
+      cactusAnim.dirs[2].push_back(vec2i(21, 0));
+      cactusAnim.dirs[2].push_back(vec2i(20, 0));
+
+      bigFairyAnim.init(&sprites32, Animation::Forward, true);
+      bigFairyAnim.speed = 200;
+      bigFairyAnim.dirs[2].push_back(vec2i(11, 4)); //down
+      bigFairyAnim.dirs[2].push_back(vec2i(12, 4));
+      bigFairyAnim.dirs[2].push_back(vec2i(13, 4));
+      bigFairyAnim.dirs[2].push_back(vec2i(12, 4));
+
+      wizardAnim.init(&sprites16x32, Animation::Forward, false);
+      wizardAnim.speed = 400;
+      wizardAnim.dirs[2].push_back(vec2i(12, 6)); //down
+      wizardAnim.dirs[2].push_back(vec2i(13, 6));
+      wizardAnim.dirs[2].push_back(vec2i(12, 6));
+
+      ganonAnim.init(&sprites32, Animation::Forward, true);
+      ganonAnim.speed = 350;
+      ganonAnim.dirs[2].push_back(vec2i(9, 4)); //down
+      ganonAnim.dirs[2].push_back(vec2i(10, 4));
+
+      goblinAnim.init(&sprites32, Animation::LeftRight, false);
+      goblinAnim.speed = 250;
+      goblinAnim.dirs[1].push_back(vec2i(2, 7)); //right
+      goblinAnim.dirs[1].push_back(vec2i(3, 7));
+      goblinAnim.dirs[1].push_back(vec2i(2, 7));
+      goblinAnim.dirs[3].push_back(vec2i(1, 7)); //left
+      goblinAnim.dirs[3].push_back(vec2i(0, 7));
+      goblinAnim.dirs[3].push_back(vec2i(1, 7));
+
       initalized = true;
    }
 }
@@ -132,7 +300,7 @@ void Item::init(vec2 pos, Type type)
 
 void Item::update(float fdt, Player &player)
 {
-  if (alive) {
+   if (alive) {
       //if within 40 pixels make not alive
       if (dist(player.pos, pos) < 40)
          alive = false;
@@ -141,34 +309,76 @@ void Item::update(float fdt, Player &player)
 
 void Item::draw()
 {
-  if (alive) {
+   if (alive) {
       glPushMatrix();
       glTranslatef(pos.x, pos.y, 0.0);
       glScalef(spriteZoom, spriteZoom, 1.0);
-      //glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
-      
+
       sprites16.draw(13,0); // green rupee 1
 
       glPopMatrix();
    }  
 }
 
-
-
-
-
-
-
-
-
 void NPC::init(vec2 pos, Type type)
 {
-    this->type = type;
-    this->animStart = 0;
-    this->pos = pos;
-    this->moving = false;
-    this->alive = true;
-    this->dir = vec2(0, 0);
+   this->type = type;
+   this->pos = pos;
+   moving = false;
+   alive = true;
+   dir = vec2(0, 0);
+   switch(type) {
+      case NPC::Thief :
+         this->anim = &thiefAnim;
+         break;
+      case NPC::Princess :
+         this->anim = &princessAnim;
+         break;
+      case NPC::Fairy :
+         this->anim = &fairyAnim;
+         break;
+      case NPC::Skeleton :
+         this->anim = &skeletonAnim;
+         break;
+      case NPC::Cyclops :
+         this->anim = &cyclopsAnim;
+         break;
+      case NPC::Bat :
+         this->anim = &batAnim;
+         break;
+      case NPC::Bird :
+         this->anim = &birdAnim;
+         break;
+      case NPC::Squirrel :
+         this->anim = &squirrelAnim;
+         break;
+      case NPC::Chicken :
+         this->anim = &chickenAnim;
+         break;
+      case NPC::Vulture :
+         this->anim = &vultureAnim;
+         break;
+      case NPC::Bush :
+         this->anim = &bushAnim;
+         break;
+      case NPC::Cactus :
+         this->anim = &cactusAnim;
+         break;
+      case NPC::BigFairy :
+         this->anim = &bigFairyAnim;
+         break;
+      case NPC::Wizard :
+         this->anim = &wizardAnim;
+         break;
+      case NPC::Ganon :
+         this->anim = &ganonAnim;
+         break;
+      case NPC::Goblin :
+         this->anim = &goblinAnim;
+         break;
+      default:
+         printf("Error: You forgot to add the Animation to NPC::init !\n");
+   }
 }
 
 void NPC::update(float fdt, Player &player)
@@ -176,22 +386,88 @@ void NPC::update(float fdt, Player &player)
    if(alive) {
       float speed = 300;
       vec2 dist = to(pos, player.pos);
+      bool ismoving = dist.length() > 40;
+      if(!moving && ismoving)
+         this->anim->animStart = SDL_GetTicks();
+      moving = ismoving;
       dir = normalize(dist);
-      if(dist.length() > 40) {         this->pos = dir*speed*fdt + pos;
-      }
+      if(moving)
+         this->pos = dir*speed*fdt + pos;
    }
 }
 
 void NPC::draw()
 {
-  if (alive) {
+   if(alive) {
       glPushMatrix();
       glTranslatef(pos.x, pos.y, 0.0);
       glScalef(spriteZoom, spriteZoom, 1.0);
-      //glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
-      
-      sprites16x32.draw(10, 6); // thief face down
-
+      anim->draw(dir, moving);
       glPopMatrix();
-   }  
+   }
+}
+
+int Animation::dirFace(vec2 dir)
+{
+   int adir = 0;
+   if (fabs(dir.x) >= fabs(dir.y)) {
+      if(dir.x > 0)
+         adir = 1; //right
+      else
+         adir = 3; //left
+   } else {
+      if(dir.y > 0)
+         adir = 0; // up
+      else
+         adir = 2; //down
+   }
+   return adir;
+}
+
+int Animation::dirFaceLR(vec2 dir)
+{
+   int adir = 0;
+   if(dir.x > 0)
+      adir = 1; //right
+   else
+      adir = 3; //left
+   return adir;
+}
+
+void Animation::init(Sprite *sprite, Type type, bool alwaysAnim)
+{
+   this->sprite = sprite;
+   this->type = type;
+   this->alwaysAnim = alwaysAnim;
+}
+
+void Animation::draw(vec2 dir, bool moving)
+{
+   int dirIndex = 2; //down by default
+   switch(this->type) {
+      case Animation::Normal :
+         dirIndex = dirFace(dir);
+         break;
+      case Animation::LeftRight :
+         dirIndex = dirFaceLR(dir);
+         break;
+      case Animation::Forward :
+         //printf("anim::draw forward todo\n");
+         dirIndex = 2;
+         break;
+      default:
+         printf("Error: anim::draw invalid animation type");
+   }
+   int frames = dirs[dirIndex].size();
+   if(frames > 0) {
+      int frame;
+      if(alwaysAnim)
+         frame = ((SDL_GetTicks() - animStart) / speed) % frames;
+      else if(!moving)
+         frame = 0;
+      else
+         frame = 1 + ((SDL_GetTicks() - animStart) / speed) % (frames - 1);
+      sprite->draw(dirs[dirIndex][frame].x, 
+         dirs[dirIndex][frame].y);
+   }
 }

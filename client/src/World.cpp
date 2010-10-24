@@ -162,15 +162,21 @@ void World::spawnNPC()
    //float t = rand()/(float)RAND_MAX;
    //vec2 _pos = vec2(cos(t*2*PI), sin(t*2*PI)) * 1600;
 
-   vec2 _pos = vec2(rand()%3200 - 1600, rand()%3200 - 1600);
-   if(_pos.x >= 0.0 && _pos.x < 800.0)
-      _pos.x = 800.0;
-   else if(_pos.x < 0.0 && _pos.x > -800.0)
-      _pos.x = -800.0;
-   if(_pos.y >= 0.0 && _pos.y < 800.0)
-      _pos.y = 800;
-   else if(_pos.y < 0.0 && _pos.y > -800.0)
-      _pos.y = -800.0;
-   n.init(data->player.pos + _pos, NPC::Thief);
+   int minv, maxv, midv;
+   minv = 700;
+   maxv = 1200;
+   midv = 400;
+
+   vec2 _pos = vec2(rand()%maxv - minv, rand()%maxv - minv);
+   if(_pos.x >= 0.0 && _pos.x < midv)
+      _pos.x = midv;
+   else if(_pos.x < 0.0 && _pos.x > -midv)
+      _pos.x = -midv;
+   if(_pos.y >= 0.0 && _pos.y < midv)
+      _pos.y = midv;
+   else if(_pos.y < 0.0 && _pos.y > -midv)
+      _pos.y = -midv;
+   //n.init(data->player.pos + _pos, NPC::Ganon);
+   n.init(data->player.pos + _pos, (NPC::Type) (rand() % ((int)NPC::MaxNPC)));
    data->npcs.push_back(n);
 }
