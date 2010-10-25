@@ -20,7 +20,7 @@ namespace sock {
          return this->getSocket() == other.getSocket();
       }
    protected:
-      virtual void error() =0;
+      virtual void setError() =0;
    };
 
    class Packet : public std::vector<unsigned char> {
@@ -64,20 +64,22 @@ namespace sock {
       virtual unsigned long getSocket() const;
       virtual bool check();
    protected:
-      virtual void error();
+      virtual void setError();
       boost::shared_ptr<ConnectionInfo> info;
    };
 
    class Server : public Socket {
    public:
-      Server(int port, const char *addr = 0);
+      Server(int port = 0, const char *addr = 0);
       void listen(int queueSize);
       Connection accept();
+      int port();
+      void close();
       virtual unsigned long getSocket() const;
       virtual bool check();
       virtual operator bool() const;
    protected:
-      virtual void error();
+      virtual void setError();
       boost::shared_ptr<ServerInfo> info;
    };
 

@@ -41,7 +41,7 @@ namespace {
 #endif
 
 #ifdef SOCK_EXCEPTION
-   void error(const char *err)
+   void sockError(const char *err)
    {
       // throw an exception here...
    }
@@ -49,7 +49,7 @@ namespace {
    void sockError(const char *err)
    {
       cerr << "Socket error: " << err << endl;
-      exit(-1);
+      //exit(-1);
    }
 #endif
 
@@ -78,7 +78,11 @@ namespace {
 
    int sockSend(SOCKET sd, const char *buf, int len, int flags)
    {
-      return send(sd, buf, len, flags);
+      printf("Sock send\n");
+      int val = send(sd, buf, len, flags);
+      printf("leaving\n");
+      return val;
+      //return send(sd, buf, len, flags);
    }
    
    int sockRecv(SOCKET sd, char *buf, int len, int flags)
@@ -135,7 +139,7 @@ bool Socket::select(int ms)
    }
 
    if (ret == SOCKET_ERROR)
-      error();
+      setError();
 
    return ret != 0;
 }
@@ -182,12 +186,15 @@ Connection::Connection(ConnectionInfo *info) : info(info)
 bool Connection::send(const Packet &p)
 {
    unsigned int bytesSent = 0, sendCount = 0;
+   
+   if (!info->active)
+      return false;
 
-   while (bytesSent < p.size()) {
+   while (info->active && bytesSent < p.size()) {
       sendCount++;
-      if ((bytesSent += sockSend(info->sd, (const char *)&p[bytesSent], p.size()-bytesSent, 0)) == SOCKET_ERROR) {
+      if ((bytesSent += sockSend(info->sd, (const char *)&p[bytesSent], p.size()-bytesSent, MSG_NOSIGNAL)) == SOCKET_ERROR) {
          cerr << "-- send failed on attempt number " << sendCount << "." << endl;
-         error();
+         setError();
          return false;
       } else if (bytesSent == 0) {
          cerr << "-- closing connection (sent 0 bytes)" << endl;
@@ -195,8 +202,9 @@ bool Connection::send(const Packet &p)
       } else if (bytesSent != p.size()) {
          cerr << "-- sent " << bytesSent << " out of " << p.size() << endl;
       }
+      
    }
-
+   
    if (sendCount > 1)
       cerr << "-- send took " << sendCount << " attempts to send packet." << endl;
 
@@ -207,8 +215,11 @@ bool Connection::recv(Packet &p, int size)
 {
    int bytesRead = 0, readCount = 0;
 
+   if (!info->active)
+      return false;
+
    if (size < 0) {
-      select(-1);
+      select();
       size = available();
       if (size == 0) {
          cerr << "-- Socket closed: select->avail->0" << endl;
@@ -219,11 +230,11 @@ bool Connection::recv(Packet &p, int size)
 
    p.reset(size);
 
-   while (bytesRead < size) {
+   while (info->active && bytesRead < size) {
       readCount++;
       if ((bytesRead += sockRecv(info->sd, (char *)&p[bytesRead], size-bytesRead, 0)) == SOCKET_ERROR) {
          cerr << "-- recv failed on attempt number " << readCount << "." << endl;
-         error();
+         setError();
          return false;
       } else if (bytesRead == 0) {
          cerr << "-- closing connection (read 0 bytes)" << endl;
@@ -246,7 +257,7 @@ void Connection::close()
    info->active = false;
 }
 
-void Connection::error()
+void Connection::setError()
 {
 #ifdef WIN32
    int err = WSAGetLastError();
@@ -256,6 +267,7 @@ void Connection::error()
    } else
       sockError();
 #else
+   info->active = false;
    perror("Connection::error");
 #endif
 }
@@ -270,7 +282,7 @@ unsigned long Connection::available()
    u_long size = 0;
 
    if (ioctl(info->sd, FIONREAD, &size))
-      error();
+      setError();
 
    return size;
 }
@@ -318,7 +330,8 @@ Server::Server(int port, const char *addr)
    sinRemote.sin_port = info->port;
    if (bind(info->sd, (sockaddr*)&sinRemote, sizeof(sockaddr_in)) == SOCKET_ERROR)
       sockError();
-
+   
+   info->port = ntohs(sinRemote.sin_port);
    info->active = true;
 }
 
@@ -346,6 +359,18 @@ Connection Server::accept()
    return Connection(conn);
 }
 
+int Server::port()
+{
+   return info->port;
+}
+
+void Server::close()
+{
+   if (info->active)
+      shutdownSocket(info->sd);
+   info->active = false;
+}
+
 unsigned long Server::getSocket() const
 {
    return info->sd;
@@ -361,7 +386,7 @@ Server::operator bool() const
    return info->active;
 }
 
-void Server::error()
+void Server::setError()
 {
 #ifdef WIN32
    int err = WSAGetLastError();
@@ -371,6 +396,7 @@ void Server::error()
    } else
       sockError();
 #else
+   info->active = false;
    perror("Server::erorr");
 #endif
 }
