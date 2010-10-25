@@ -78,11 +78,7 @@ namespace {
 
    int sockSend(SOCKET sd, const char *buf, int len, int flags)
    {
-      printf("Sock send\n");
-      int val = send(sd, buf, len, flags);
-      printf("leaving\n");
-      return val;
-      //return send(sd, buf, len, flags);
+      return send(sd, buf, len, flags);
    }
    
    int sockRecv(SOCKET sd, char *buf, int len, int flags)
@@ -458,6 +454,19 @@ Packet &Packet::writeInt(int i)
    return *this;
 }
 
+Packet &Packet::writeFloat(float f)
+{
+   u_char *p = (u_char*)&f;
+
+   checkSpace(4);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+
+   return *this;
+}
+
 Packet &Packet::writeCStr(const char *str)
 {
    checkSpace(strlen(str)+1);
@@ -527,6 +536,19 @@ Packet &Packet::readInt(int &i)
    *p++ = at(cursor++);
    *p++ = at(cursor++);
    i = ntohl(i);
+
+   bitCursor = 0;
+   return *this;
+}
+
+Packet &Packet::readFloat(float &f)
+{
+   u_char *p = (u_char*)&f;
+   
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
 
    bitCursor = 0;
    return *this;

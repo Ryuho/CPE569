@@ -14,23 +14,22 @@ int main()
    
    printf("Accepting connections on port %d\n", serv.port());
    
-   while (1) {
+   while (serv) {
       while (serv.select()) {
          printf("Accepting a new connection\n");
          connections.push_back(serv.accept());
-         printf("Got it.\n");
       }
    
       for (unsigned i = 0; i < connections.size(); i++) {
          while (connections[i].select()) {
             if (connections[i]) {
-               Packet p;
-               connections[i].recv(p, 4);
-               int val;
-               p.readInt(val);
-               printf("%d: %d\n", i, val);
-               if (val == '+')
-                  goto done;
+               pack::Packet p = pack::readPacket(connections[i]);
+               if (p.type == pack::message) {
+                  pack::Message msg(p);
+                  printf("%d: %s\n", i, msg.str.c_str());
+               } else {
+                  printf("unwanted packet type: %d on connection %d\n", p.type, i);
+               }
             } else {
                printf("%d disconnected\n", i);
                if (connections.size() > 1) {

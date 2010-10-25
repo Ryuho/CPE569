@@ -1,3 +1,6 @@
+#ifndef _SOCKET_H_
+#define _SOCKET_H_
+
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
@@ -32,6 +35,7 @@ namespace sock {
       Packet &writeByte(unsigned char b);
       Packet &writeShort(unsigned short s);
       Packet &writeInt(int i);
+      Packet &writeFloat(float f);
       Packet &writeCStr(const char *str);
       Packet &writeStdStr(const std::string &str);
       Packet &writeData(const unsigned char *data, int length);
@@ -40,6 +44,7 @@ namespace sock {
       Packet &readByte(unsigned char &b);
       Packet &readShort(unsigned short &s);
       Packet &readInt(int &i);
+      Packet &readFloat(float &f);
       Packet &readCStr(char *str);
       Packet &readStdStr(std::string &str);
       Packet &readData(unsigned char *data, int length);
@@ -95,3 +100,5 @@ namespace sock {
       boost::shared_ptr<SelectInfo> info;
    };
 }
+
+#endif

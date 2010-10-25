@@ -16,16 +16,13 @@ int main()
    }
 
    while (conn.check() && cin) {
-      Packet p;
-      int val;
+      string line;
+      getline(cin, line);
       
-      printf("0\n");
-      val = cin.get();
-      printf("1\n");
-      p.reset().writeInt(val);
-      printf("2\n");
-      conn.send(p);
-      printf("sent %d, conn: %d\n", val, conn.check());
+      pack::Message p(line);
+      
+      if (!p.makePacket().sendTo(conn))
+         printf("Failed sending packet\n");
    }
    
    if (conn.check()) {
