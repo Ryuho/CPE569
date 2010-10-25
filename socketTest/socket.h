@@ -1,3 +1,4 @@
+#include "packet.h"
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
@@ -35,6 +36,7 @@ namespace sock {
       Packet &writeCStr(const char *str);
       Packet &writeStdStr(const std::string &str);
       Packet &writeData(const unsigned char *data, int length);
+      Packet &writeInfo(const packet::info i);
 
       Packet &readBit(bool &b);
       Packet &readByte(unsigned char &b);
@@ -43,6 +45,7 @@ namespace sock {
       Packet &readCStr(char *str);
       Packet &readStdStr(std::string &str);
       Packet &readData(unsigned char *data, int length);
+      Packet &readInfo(packet::info &i);
 
       Packet &reset(int size = 0);
       Packet &setCursor(int pos);

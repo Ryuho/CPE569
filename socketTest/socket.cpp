@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "packet.h"
 
 #ifdef WIN32
 #include <winsock.h>
@@ -27,6 +28,7 @@ const int INVALID_SOCKET = -1;
 #include <boost/iostreams/stream.hpp>
 
 using namespace std;
+using namespace packet;
 
 #define SD_SEND 1
 
@@ -461,6 +463,38 @@ Packet &Packet::writeData(const unsigned char *data, int length)
    return *this;
 }
 
+// Used for writing in packet::info
+Packet &Packet::writeInfo(const info i)
+{
+   checkSpace(12);
+   u_int in = htonl(i.playerID);
+   u_char *p = (u_char*)&in;
+   
+   //write the int (playerID)
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+
+   //write the float (x)
+   in = htonl(i.x);
+   p = (u_char*)&in;
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+
+   //write the float (y)
+   in = htonl(i.y);
+   p = (u_char*)&in;
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+
+   return *this;
+}
+
 Packet &Packet::readBit(bool &b)
 {
    if (bitCursor == 7) {
@@ -531,6 +565,38 @@ Packet &Packet::readData(unsigned char *data, int length)
 {
    for (int i = 0; i < length; i++)
       *data++ = at(cursor++);
+
+   bitCursor = 0;
+   return *this;
+}
+
+// Used for reading in packet::info
+Packet &Packet::readInfo(info &infoPacket)
+{
+   int temp = 0;
+   //read in the int (playerID)
+   u_char *p = (u_char*)&temp;
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   infoPacket.playerID = ntohl(temp);
+
+   //read in the float (x)
+   p = (u_char*)&temp;
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   infoPacket.x = ntohl(temp);
+
+   //readin the float (y)
+   p = (u_char*)&temp;
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   infoPacket.y = ntohl(temp);
 
    bitCursor = 0;
    return *this;

@@ -1,9 +1,11 @@
 #include <iostream>
 #include <string>
 #include "socket.h"
+#include "packet.h"
 
 using namespace std;
 using namespace sock;
+using namespace packet;
 
 int main (int argc, char *argv[])
 {
@@ -15,6 +17,12 @@ int main (int argc, char *argv[])
    if (argc == 2)
       host = argv[1];
 
+
+   info test;
+   test.playerID = 1;
+   test.x = 90.230;
+   test.y = 9.03;
+   
    setupSockets();
 
    cout << "connecting..." << endl;
@@ -25,17 +33,22 @@ int main (int argc, char *argv[])
       cout << "failed." << endl;
 
    do {
-      cout << "enter strings ending with a blank line: " << endl;
-      strCount = 0;
-      p.reset().writeInt(0);
-      while (getline(cin, line) && line != "") {
-         p.writeStdStr(line);
-         strCount++;
-      }
-      if (strCount > 0 && conn.send(p.setCursor(0).writeInt(strCount))) {
+      cout << "enter the playerID: ";
+      getline(cin,line);
+      test.playerID = atoi(line.c_str());
+      cout << "enter the x coordinate: ";
+      getline(cin,line);
+      test.x = atof(line.c_str());
+      cout << "enter the y coordinate: ";
+      getline(cin,line);
+      test.y = atof(line.c_str());
+
+      p.reset().writeInfo(test);
+      
+      if (conn.send(p.setCursor(0))) {
          if (conn.recv(p)) {
             p.readCStr(buffer);
-            cout << "buffer: " << buffer << endl;
+            cout << "return message: " << buffer << endl;
          }
       }
    } while (cin && conn);
