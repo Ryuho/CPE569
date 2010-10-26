@@ -1,8 +1,13 @@
 #include "SDLApp.h"
+#include <ctime>
 using namespace mat;
 
 void SDLApp::init()
 {
+   // Initalize connection before showing graphics
+   srand(time(0));
+   world.init();
+
    // Set up the window and other stuff
    settings.width = 1024;
    settings.height = 768;
@@ -30,7 +35,7 @@ void SDLApp::init()
 
    // initalize components
    inputMgr.init(&settings, false);
-   world.init(settings.width, settings.height);
+   world.graphicsInit(settings.width, settings.height);
 }
 
 void SDLApp::update()

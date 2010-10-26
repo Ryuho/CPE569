@@ -3,7 +3,9 @@
 #ifdef WIN32
 #include <winsock.h>
 #define ioctl ioctlsocket
-#define close closesocket
+int (__stdcall*close)(unsigned) = closesocket;
+typedef int ACCEPT_TYPE;
+const int MSG_NOSIGNAL = 0;
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,6 +21,7 @@
 typedef int SOCKET;
 const int SOCKET_ERROR = -1;
 const int INVALID_SOCKET = -1;
+typedef unsigned ACCEPT_TYPE;
 #endif
 
 #include <iostream>
@@ -29,7 +32,6 @@ const int INVALID_SOCKET = -1;
 using namespace std;
 
 #define SD_SEND 1
-
 
 /********************************************/
 /********* Global Data for sockets **********/
@@ -71,7 +73,7 @@ namespace {
       return listen(sd, backlog);
    }
 
-   SOCKET sockAccept(SOCKET sd, sockaddr *addr, unsigned *size)
+   SOCKET sockAccept(SOCKET sd, sockaddr *addr, ACCEPT_TYPE *size)
    {
       return accept(sd, addr, size);
    }
@@ -267,6 +269,7 @@ void Connection::setError()
       cerr << "-- " << errors[WSAGetLastError()] << endl;
    } else {
       sockError();
+   }
 #else
    perror("Connection::error");
 #endif
@@ -353,7 +356,7 @@ void Server::listen(int queueSize)
 Connection Server::accept()
 {
    ConnectionInfo *conn = new ConnectionInfo;
-   unsigned size = sizeof(sockaddr_in);
+   ACCEPT_TYPE size = sizeof(sockaddr_in);
    sockaddr_in addr;
    conn->sd = sockAccept(info->sd, (sockaddr*)&addr, &size);
    if (conn->sd == INVALID_SOCKET) {

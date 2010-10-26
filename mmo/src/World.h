@@ -9,7 +9,8 @@ struct WorldData;
 struct World {
    World() {}
 
-   void init(int width, int height);
+   void init();
+   void graphicsInit(int width, int height);
    void update(int ticks, float dt);
    void draw();
 
@@ -19,6 +20,7 @@ struct World {
    void spawnItem();
    void spawnNPC();
 
+protected:
    boost::shared_ptr<WorldData> data;
 };
 

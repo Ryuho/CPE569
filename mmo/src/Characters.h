@@ -7,13 +7,14 @@
 void initCharacterResources();
 
 struct Player {
-   Player() {}
+   Player() : alive(true) {}
    void update(vec2 pos, vec2 dir, bool moving);
+   void update(vec2 pos, int ticks);
    void draw();
 
    vec2 pos, dir;
-   bool moving;
-   int animStart;
+   bool moving, alive;
+   int animStart, lastUpdate;
 };
 
 struct Missile {

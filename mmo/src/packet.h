@@ -11,9 +11,12 @@ namespace pack {
 enum PacketType {
    pos = 1,
    message = 2,
+   connect = 3,
+   signal = 4,
    // Add new packet types here, make values explicit
 };
 
+// Simple structure for reading/writing using sockets.
 struct Packet {
    Packet(int size, int type) : size(size), type(type) {}
    sock::Packet data;
@@ -41,25 +44,28 @@ Packet readPacket(sock::Connection conn) {
    return Packet(0,0);
 }
 
-// Actual packet types
-
+// Actual packets
 // You can even declare these somewhere else, just put a value in the enum
 
+// Update of a player position. 
+// id is not used when sending to server (can't trust pesky client)
 struct Pos {
    mat::vec2 v;
+   int id;
    Pos() {}
-   Pos(mat::vec2 v) : v(v) {}
-   Pos(float x, float y) : v(x,y) {}
+   Pos(mat::vec2 v) : v(v), id(0) {}
+   Pos(mat::vec2 v, int id) : v(v), id(id) {}
    Pos(Packet &p) {
-      p.data.readFloat(v.x).readFloat(v.y).reset();
+      p.data.readInt(id).readFloat(v.x).readFloat(v.y).reset();
    }
    Packet makePacket() {
-      Packet p(8, pos);
-      p.data.writeFloat(v.x).writeFloat(v.y);
+      Packet p(12, pos);
+      p.data.writeInt(id).writeFloat(v.x).writeFloat(v.y);
       return p;
    }
 };
 
+// Player/Server sends a text message?
 struct Message {
    std::string str;
    Message() {}
@@ -75,8 +81,42 @@ struct Message {
    }
 };
 
-// An example of how to use 
+// Sent to the connecting client to tell them their id.
+struct Connect {
+   int id;
+   Connect() : id(0) {}
+   Connect(int id) : id(id) {}
+   Connect(Packet &p) {
+      p.data.readInt(id).reset();
+   }
+   Packet makePacket() {
+      Packet p(4, connect);
+      p.data.writeInt(id);
+      return p;
+   }
+};
 
+// Used to combine all simple signals into one packet
+struct Signal {
+   enum { 
+      hello = 1,      // Not used yet... A simple ping
+      disconnect = 2  // Indicates the player with id in val disconnected
+   };
+   int sig, val;
+   Signal() : sig(0) {}
+   Signal(int sig) : sig(sig) {}
+   Signal(int sig, int val) : sig(sig), val(val) {}
+   Signal(Packet &p) {
+      p.data.readInt(sig).readInt(val).reset();
+   }
+   Packet makePacket() {
+      Packet p(8, signal);
+      p.data.writeInt(sig).writeInt(val);
+      return p;
+   }
+};
+
+// An example of how to use packets
 void example(sock::Connection conn) {
    Packet p = readPacket(conn);
    

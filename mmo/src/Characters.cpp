@@ -8,7 +8,8 @@ namespace {
    Sprite sprites16;
    Sprite sprites8;
 
-   int spriteZoom = 4;
+   int spriteZoom = 3;
+   int stopAfterTicks = 100;
 
    bool initalized = false;
 
@@ -260,9 +261,25 @@ void Player::update(mat::vec2 pos, mat::vec2 dir, bool moving)
    this->moving = moving;
 }
 
+void Player::update(mat::vec2 pos, int ticks)
+{
+   animStart = ticks;
+
+   dir = to(this->pos, pos);
+   if (dir.length() == 0.0)
+      dir = vec2(0,1);
+   dir.normalize();
+
+   this->pos = pos;
+   this->moving = moving;
+}
+
 void Player::draw()
 {
    int frame, adir;
+   
+   if (!alive)
+      return;
 
    if (moving)
       frame = ((SDL_GetTicks() - animStart) / 100) % 8;

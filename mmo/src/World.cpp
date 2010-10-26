@@ -1,8 +1,8 @@
 #include "World.h"
 #include "Characters.h"
 #include "Texture.h"
-#include "socket.h"
 #include "packet.h"
+#include <map>
 
 struct WorldData {
    int width, height;
@@ -11,16 +11,21 @@ struct WorldData {
    vec2 playerMoveDir;
    int arrowTick, specialTick;
 
+   int id;
+
+   map<int, int> idToIndex;
+   vector<Player> players;
    vector<Missile> missiles;
    vector<Item> items;
    vector<NPC> npcs;
-   Player player;
+   Player player, shadow;
    Texture ground;
    
    sock::Connection conn;
 
    void update(int ticks, float dt);
    void draw();
+   void processPacket(pack::Packet &p);
 };
 
 // Interface stubs
@@ -35,32 +40,48 @@ namespace {
    int specialCooldown = 2000; // ms between special attacks
 }
 
-void World::init(int width, int height)
+void World::init()
 {
-   initCharacterResources();
    data.reset(new WorldData());
-
    data->arrowTick = 0;
    data->specialTick = 0;
-
-   data->width = width;
-   data->height = height;
-   data->player.update(vec2(width/2, height/2), vec2(0.0, -1.0), false);
-
-   data->ground = fromTGA("grass.tga");
    
    sock::setupSockets();
    
-   data->conn = sock::Connection("localhost", 27015);
-   
+   data->conn = sock::Connection("localhost", 27027);
+
    if (!data->conn) {
       printf("Could not connect!\n");
       exit(-1);
    }
+
+   if (!data->conn.select(1000)) {
+      printf("Timed out waiting for server\n");
+      exit(-1);
+   }
+
+   pack::Packet p = pack::readPacket(data->conn);
+   if (p.type != pack::connect) {
+      printf("Expected connect packet for handshake, got: %d\n", p.type);
+      exit(-1);
+   }
    
-   NPC n;
-   n.init(data->player.pos, (NPC::Type) (rand() % ((int)NPC::MaxNPC)));
-   data->npcs.push_back(n);
+   pack::Connect c(p);
+   data->id = c.id;
+
+   printf("Connected to server successfully\n");
+}
+
+void World::graphicsInit(int width, int height)
+{
+   initCharacterResources();
+
+   data->width = width;
+   data->height = height;
+   data->player.update(vec2(width/2, height/2), vec2(0.0, -1.0), false);
+   data->shadow.update(vec2(width/2, height/2), vec2(0.0, -1.0), false);
+
+   data->ground = fromTGA("grass.tga");
 }
 
 void WorldData::update(int ticks, float dt)
@@ -68,24 +89,21 @@ void WorldData::update(int ticks, float dt)
    this->ticks = ticks;
    this->dt = dt;
 
+   while (conn.select()) {
+      if (conn) {
+         processPacket(pack::readPacket(conn));
+      } else {
+         printf("server disconnected!\n");
+         exit(-1);
+      }
+   }
+
    if (playerMoveDir.length() > 0.0) {
-      player.update(player.pos + player.dir * dt * playerSpeed, playerMoveDir, true);
+      player.update(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
       pack::Pos pos(player.pos + playerMoveDir * dt * playerSpeed);
       pos.makePacket().sendTo(conn);
    } else
       player.moving = false;
-
-   while (conn.select()) {
-      if (conn) {
-         pack::Packet p = pack::readPacket(conn);
-         if (p.type == pack::pos) {
-            pack::Pos pos(p);
-            npcs[0].pos = pos.v;
-         }
-      } else {
-         printf("server disconnected!\n");
-      }
-   }
 
    /*if (playerMoveDir.length() > 0.0) 
       player.update(player.pos + player.dir * dt * playerSpeed, playerMoveDir, true);
@@ -120,6 +138,35 @@ void WorldData::update(int ticks, float dt)
    }*/
 }
 
+void WorldData::processPacket(pack::Packet &p)
+{
+   using namespace pack;
+   if (p.type == pos) {
+      Pos pos(p);
+      if (pos.id == id) {
+         shadow.update(pos.v, ticks);
+      } else {
+         map<int,int>::iterator itr = idToIndex.find(pos.id);
+         if (itr == idToIndex.end()) {
+            printf("adding new player %d because of position update\n", pos.id);
+            players.push_back(Player());
+            players.back().update(pos.v, ticks);
+            idToIndex[pos.id] = players.size()-1;
+         } else {
+            players[idToIndex[pos.id]].update(pos.v, ticks);
+         }
+      }
+   } else if (p.type == signal) {
+      Signal sig(p);
+      if (sig.sig == Signal::disconnect) {
+         map<int,int>::iterator itr = idToIndex.find(sig.val);
+         if (itr != idToIndex.end()) {
+            players[idToIndex[sig.val]].alive = false;
+         }
+      }
+   }
+}
+
 void WorldData::draw()
 {
    glColor3ub(255, 255, 255);
@@ -146,6 +193,13 @@ void WorldData::draw()
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 
    player.draw();
+
+   glColor4ub(255,255,255,50);
+   shadow.draw();
+   glColor4ub(255,255,255,255);
+
+   for (unsigned i = 0; i < players.size(); i++)
+      players[i].draw();
 
    for (unsigned i = 0; i < missiles.size(); i++)
       missiles[i].draw();
