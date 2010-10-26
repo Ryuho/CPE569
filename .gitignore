@@ -7,3 +7,7 @@
 /*/client
 /*/server
 /*/client_linux
+*.exe
+*.ilk
+/*/Release
+/*/Debug
