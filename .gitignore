@@ -4,3 +4,6 @@
 *.suo
 *.pdb
 *.ncb
+/*/client
+/*/server
+/*/client_linux
