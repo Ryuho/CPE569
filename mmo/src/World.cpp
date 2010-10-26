@@ -25,7 +25,7 @@ struct WorldData {
 
    void update(int ticks, float dt);
    void draw();
-   void processPacket(pack::Packet &p);
+   void processPacket(pack::Packet p);
 };
 
 // Interface stubs
@@ -138,7 +138,7 @@ void WorldData::update(int ticks, float dt)
    }*/
 }
 
-void WorldData::processPacket(pack::Packet &p)
+void WorldData::processPacket(pack::Packet p)
 {
    using namespace pack;
    if (p.type == pos) {

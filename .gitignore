@@ -1,0 +1,6 @@
+*.o
+*~
+*.user
+*.suo
+*.pdb
+*.ncb
