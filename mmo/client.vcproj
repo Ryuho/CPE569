@@ -173,14 +173,6 @@
 			Name="Base"
 			>
 			<File
-				RelativePath=".\src\Camera.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Camera.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\GLUtil.cpp"
 				>
 			</File>
@@ -224,18 +216,6 @@
 				RelativePath=".\src\Texture.h"
 				>
 			</File>
-			<File
-				RelativePath=".\src\TriangleSet.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\VBO.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\VBO.h"
-				>
-			</File>
 		</Filter>
 		<File
 			RelativePath=".\src\Characters.cpp"
@@ -258,10 +238,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\frag.glsl"
-			>
-		</File>
-		<File
 			RelativePath=".\src\packet.h"
 			>
 		</File>
@@ -279,10 +255,6 @@
 		</File>
 		<File
 			RelativePath=".\src\socket.h"
-			>
-		</File>
-		<File
-			RelativePath=".\vert.glsl"
 			>
 		</File>
 		<File

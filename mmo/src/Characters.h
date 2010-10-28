@@ -75,11 +75,11 @@ struct ObjectHolder {
       IdType(int index, int type) : index(index), type(type) {}
       int index, type;
    };
-   vector<Player> players;
-   vector<Missile> missiles;
-   vector<Item> items;
-   vector<NPC> npcs;
-   map<int, IdType> idToIndex;
+   std::vector<Player> players;
+   std::vector<Missile> missiles;
+   std::vector<Item> items;
+   std::vector<NPC> npcs;
+   std::map<int, IdType> idToIndex;
 
    void addPlayer(Player p);
    void addMissile(Missile m);

@@ -1,8 +1,10 @@
 #include "Characters.h"
 #include "ClientUtil.h"
 #include "Constants.h"
+
 using namespace client;
 using namespace constants;
+using namespace std;
 
 namespace {
    Texture spriteTex;

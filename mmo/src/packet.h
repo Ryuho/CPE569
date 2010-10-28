@@ -30,7 +30,7 @@ struct Packet {
 };
 
 // Read a packet from a connection
-Packet readPacket(sock::Connection conn) {
+inline Packet readPacket(sock::Connection conn) {
    int size, type;
    sock::Packet header;
    
@@ -117,22 +117,6 @@ struct Signal {
    }
 };
 
-// An example of how to use packets
-void example(sock::Connection conn) {
-   Packet p = readPacket(conn);
-   
-   if (p.type == pos) {
-      Pos myPos(p);
-      myPos.v.x = myPos.v.y;
-   } else if (p.type == message) {
-      Message myMsg(p);
-      //printf("%s\n", myMsg.str.c_str());
-   } else if (p.type == 0) {
-      // Error reading from connection.
-   } else {
-      // Unknown packet type. Debug.
-   }
-}
 
 } // end pack namespace
 

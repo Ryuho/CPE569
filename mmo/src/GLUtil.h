@@ -12,7 +12,6 @@
 
 #include <exception>
 #include "matrix.h"
-#include "TriangleSet.h"
 using mat::vec3;
 
 const float PI = 3.14159265359;
