@@ -31,7 +31,6 @@ int main()
    setupSockets();
    Server serv(27027);
    serv.listen(5);
-   vector<ConnectionInfo> connections;
 
    ConnectionManager cm;
    GameServer gs(cm);
@@ -45,11 +44,11 @@ int main()
          gs.newConnection(id);
       }
    
-      for (unsigned i = 0; i < connections.size(); i++) {
+      for (unsigned i = 0; i < cm.connections.size(); i++) {
          Connection conn = cm.connections[i].conn;
          while (conn.select()) {
             if (conn) {
-               gs.processPacket(pack::readPacket(conn), connections[i].id);
+               gs.processPacket(pack::readPacket(conn), cm.connections[i].id);
             } else {
                int id = cm.connections[i].id;
                cm.removeAt(i--);
@@ -62,7 +61,7 @@ int main()
       sleepms(3); // 3 ms delay, really fast...
    }
 
-   for (unsigned i = 0; i < connections.size(); i++) {
+   for (unsigned i = 0; i < cm.connections.size(); i++) {
       cm.connections[i].conn.close();
    }
 
