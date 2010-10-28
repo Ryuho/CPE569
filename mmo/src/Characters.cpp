@@ -41,7 +41,8 @@ void Player::moveTo(mat::vec2 pos)
 void Player::update()
 {
    if (getTicks() - lastUpdate < playerPredictTicks) {
-      pos = pos + dir * getDt() * playerSpeed;
+      // this code is terribly broken
+      //pos = pos + dir * getDt() * playerSpeed;
    } else {
       moving = false;
    }

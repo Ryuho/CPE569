@@ -85,7 +85,7 @@ int main()
 
       gs.update(currentTicks());
       
-      sleepms(3); // 3 ms delay, really fast...
+      sleepms(50); // 50ms is pretty long...
    }
 
    for (unsigned i = 0; i < cm.connections.size(); i++) {
