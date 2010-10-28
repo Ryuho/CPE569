@@ -290,40 +290,42 @@ void ObjectHolder::addNPC(NPC n)
 }
 
 
-Player ObjectHolder::getPlayer(int id)
+Player &ObjectHolder::getPlayer(int id)
 {
    if (!checkObject(id, IdType::Player))
       printf("Attempting to access Player that doesn't exist!\n");
    return players[idToIndex[id].index];
 }
 
-Missile ObjectHolder::getMissile(int id)
+Missile &ObjectHolder::getMissile(int id)
 {
    if (!checkObject(id, IdType::Missile))
       printf("Attempting to access Missile that doesn't exist!\n");
    return missiles[idToIndex[id].index];
 }
 
-Item ObjectHolder::getItem(int id)
+Item &ObjectHolder::getItem(int id)
 {
    if (!checkObject(id, IdType::Item))
       printf("Attempting to access Item that doesn't exist!\n");
    return items[idToIndex[id].index];
 }
 
-NPC ObjectHolder::getNPC(int id)
+NPC &ObjectHolder::getNPC(int id)
 {
    if (!checkObject(id, IdType::NPC))
       printf("Attempting to access NPC that doesn't exist!\n");
    return npcs[idToIndex[id].index];
 }
 
+// Checks to see if the object exists already
 bool ObjectHolder::checkObject(int id, int type)
 {
    map<int,IdType>::iterator itr = idToIndex.find(id);
    if (itr == idToIndex.end()) {
       // Normally the behavior here should be an error,
       // but for the moment we should just add a new object of that type.
+      // Later on lets make object creation explicit
       const char *typeStr = 
          type == IdType::Player  ? "Player" :
          type == IdType::Missile ? "Missile" :
@@ -332,14 +334,19 @@ bool ObjectHolder::checkObject(int id, int type)
                                    "Unknown type";
       printf("Object with id %d not found in objects, creating an uninitalized %s\n", id, typeStr);
       if (type == IdType::Player) {
-         addPlayer(Player(id));
+         idToIndex[id] = IdType(players.size(), IdType::Player);
+         players.push_back(Player(id));
       } else if (type == IdType::Missile) {
-         addMissile(Missile(id));
+         idToIndex[id] = IdType(missiles.size(), IdType::Missile);
+         missiles.push_back(Missile(id));
       } else if (type == IdType::Item) {
-         addItem(Item(id));
+         idToIndex[id] = IdType(items.size(), IdType::Item);
+         items.push_back(Item(id));
       } else if (type == IdType::NPC) {
-         addNPC(NPC(id));
+         idToIndex[id] = IdType(npcs.size(), IdType::NPC);
+         npcs.push_back(NPC(id));
       }
+
       return true;
       //return false;
    } else if (itr->second.type != type) {

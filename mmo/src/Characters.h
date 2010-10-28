@@ -86,10 +86,10 @@ struct ObjectHolder {
    void addItem(Item i);
    void addNPC(NPC n);
 
-   Player getPlayer(int id);
-   Missile getMissile(int id);
-   Item getItem(int id);
-   NPC getNPC(int id);
+   Player &getPlayer(int id);
+   Missile &getMissile(int id);
+   Item &getItem(int id);
+   NPC &getNPC(int id);
 
    bool checkObject(int id, int type);
    void removeObject(int id);
