@@ -3,7 +3,7 @@
 #include "Texture.h"
 #include "packet.h"
 #include "Constants.h"
-#include "ClientUtil.h"
+#include "GameUtil.h"
 #include "GLUtil.h"
 
 using namespace constants;

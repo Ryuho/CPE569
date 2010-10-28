@@ -1,6 +1,7 @@
 #include "Characters.h"
 #include "GameUtil.h"
 #include "Constants.h"
+#include <cstdio>
 
 using namespace game;
 using namespace constants;
@@ -207,7 +208,7 @@ bool ObjectHolder::checkObject(int id, int type)
       return true;
       //return false;
    } else if (itr->second.type != type) {
-      printf("Object with id %id already exists with different type! %d %d\n", type, itr->second.type);
+      printf("Object with id %id already exists with different type! %d %d\n", id, type, itr->second.type);
       return false;
    }
    return true;
