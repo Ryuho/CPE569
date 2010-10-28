@@ -250,6 +250,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\src\ClientUtil.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Constants.h"
+			>
+		</File>
+		<File
 			RelativePath=".\frag.glsl"
 			>
 		</File>
@@ -267,6 +275,10 @@
 		</File>
 		<File
 			RelativePath=".\src\socket.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\socket.h"
 			>
 		</File>
 		<File

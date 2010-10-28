@@ -38,3 +38,75 @@ void Sprite::draw(int x, int y)
    glEnd();
   
 }
+
+
+int Animation::dirFace(vec2 dir)
+{
+   int adir = 0;
+   if (fabs(dir.x) >= fabs(dir.y)) {
+      if(dir.x > 0)
+         adir = 1; //right
+      else
+         adir = 3; //left
+   } else {
+      if(dir.y > 0)
+         adir = 0; // up
+      else
+         adir = 2; //down
+   }
+   return adir;
+}
+
+int Animation::dirFaceLR(vec2 dir)
+{
+   int adir = 0;
+   if(dir.x > 0)
+      adir = 1; //right
+   else
+      adir = 3; //left
+   return adir;
+}
+
+void Animation::init(Sprite *sprite, Type type, bool alwaysAnim)
+{
+   this->sprite = sprite;
+   this->type = type;
+   this->alwaysAnim = alwaysAnim;
+}
+
+void Animation::draw(vec2 dir, bool moving)
+{
+   int dirIndex = 2; //down by default
+   switch(this->type) {
+      case Animation::Normal :
+         dirIndex = dirFace(dir);
+         break;
+      case Animation::LeftRight :
+         dirIndex = dirFaceLR(dir);
+         break;
+      case Animation::Forward :
+         //printf("anim::draw forward todo\n");
+         dirIndex = Animation::Down;
+         break;
+      default:
+         printf("Error: anim::draw invalid animation type");
+   }
+   int frames = dirs[dirIndex].size();
+   if(frames > 0) {
+      int frame;
+      if(alwaysAnim)
+         frame = ((SDL_GetTicks() - animStart) / speed) % frames;
+      else if(!moving)
+         frame = 0;
+      else
+         frame = 1 + ((SDL_GetTicks() - animStart) / speed) % (frames - 1);
+      sprite->draw(dirs[dirIndex][frame].x, 
+         dirs[dirIndex][frame].y);
+   } else
+      printf("Error: unable to draw animation\n");
+}
+
+void Animation::draw()
+{
+   draw(vec2(0.1,-0.9), true);
+}

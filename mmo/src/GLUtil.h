@@ -41,7 +41,6 @@ void glUtilInit(glUtilSettings &settings);
 void glUtilReset();
 void glUtilDrawOrigin();
 int glUtilTypeSize(GLenum type);
-TriangleSet icosahedron();
 void glUtilPrintError(const char *info = "OPENGL ERROR");
 void glUtilPrintShaderVariables(int program);
 void glUtilSetWireframe(bool on);

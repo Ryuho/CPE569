@@ -167,6 +167,14 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\src\GameServer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\GameServer.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\matrix.h"
 			>
 		</File>
@@ -180,6 +188,10 @@
 		</File>
 		<File
 			RelativePath=".\src\server.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\ServerUtil.h"
 			>
 		</File>
 		<File

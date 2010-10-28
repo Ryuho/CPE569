@@ -3,88 +3,100 @@
 
 #include "GLUtil.h"
 #include "Sprite.h"
+#include <vector>
+#include <map>
 
 void initCharacterResources();
 
 struct Player {
-   Player() : alive(true) {}
-   void update(vec2 pos, vec2 dir, bool moving);
-   void update(vec2 pos, int ticks);
+   Player(int id) : id(id), alive(false) {}
+   void setPos(vec2 pos);
+   void moveTo(vec2 pos);
+
+   void update();
    void draw();
 
    vec2 pos, dir;
    bool moving, alive;
    int animStart, lastUpdate;
+   int id;
 };
 
 struct Missile {
    enum Type { Arrow };
-   Missile() : alive(false) {}
-
+   Missile(int id) : id(id), alive(false) {}
    void init(vec2 pos, vec2 dir, Type type);
-   void update(float fdt);
+
+   void update();
    void draw();
 
    Type type;
    vec2 pos, dir, start;
    bool alive;
-};
-
-struct vec2i {
-   int x, y;
-   vec2i() : x(0), y(0) {}
-   vec2i(int x, int y) : x(x), y(y) {}
-};
-
-struct Animation {
-   enum Type { LeftRight, Forward, Normal };
-   enum Direction { Up=0, Right, Down, Left };
-   //constant means the animation does not stop when not "moving"
-   bool alwaysAnim;
-   int animStart, speed;
-   Type type;
-   Sprite *sprite;
-
-   Animation() : alwaysAnim(false), sprite(0), type(Animation::Normal), 
-      animStart(0), speed(100) {};
-   void init(Sprite *sprite, Type type, bool alwaysAnim);
-   void draw();
-   void draw(vec2 dir, bool moving);
-   static int dirFace(vec2 dir); //(up=0, right=1, down=2, left=3, error)
-   static int dirFaceLR(vec2 dir); //(right=1, left=3, error)
-
-   //FIRST vec2i in vector is for the non-moving sprite, the others are for moving
-   std::vector<vec2i> dirs[4]; //up, right, down, left
-};
-
-struct NPC {
-   enum Type { Thief, Princess, Fairy, Skeleton, Cyclops, 
-      Bat, Bird, Squirrel, Chicken, Vulture, Bush, Cactus, 
-      BigFairy, Wizard, Ganon, Goblin, MaxNPC };
-   NPC() : alive(false), anim(0), type(MaxNPC) {}
-   
-   void init(vec2 pos, Type type);
-   void update(float fdt, Player &player);
-   void draw();
-   
-   Type type;
-   vec2 pos, dir;
-   bool alive, moving;
-   Animation *anim;
+   int id;
 };
 
 struct Item {
    enum Type { GreenRupee, RedRupee, BlueRupee, Explosion,  MaxItem };
-   Item() : alive(false), anim(0), type(MaxItem) {}
-   
+   Item(int id) : id(id), alive(false), anim(0), type(MaxItem) {}
    void init(vec2 pos, Type type);
-   void update(float fdt, Player &player);
+
+   void update();
    void draw();
    
    Type type;
    vec2 pos;
    bool alive;
    Animation *anim;
+   int id;
+};
+
+struct NPC {
+   enum Type { Thief, Princess, Fairy, Skeleton, Cyclops, 
+      Bat, Bird, Squirrel, Chicken, Vulture, Bush, Cactus, 
+      BigFairy, Wizard, Ganon, Goblin, MaxNPC };
+   NPC(int id) : id(id), alive(false) {}
+   void init(vec2 pos, Type type);
+
+   void update();
+   void draw();
+   
+   Type type;
+   vec2 pos, dir;
+   bool alive, moving;
+   Animation *anim;
+   int id;
+};
+
+struct ObjectHolder {
+   struct IdType {
+      enum { Player, Missile, Item, NPC };
+      IdType() {}
+      IdType(int index, int type) : index(index), type(type) {}
+      int index, type;
+   };
+   vector<Player> players;
+   vector<Missile> missiles;
+   vector<Item> items;
+   vector<NPC> npcs;
+   map<int, IdType> idToIndex;
+
+   void addPlayer(Player p);
+   void addMissile(Missile m);
+   void addItem(Item i);
+   void addNPC(NPC n);
+
+   Player getPlayer(int id);
+   Missile getMissile(int id);
+   Item getItem(int id);
+   NPC getNPC(int id);
+
+   bool checkObject(int id, int type);
+   void removeObject(int id);
+
+   void updateAll();
+   void drawAll();
+
 };
 
 #endif

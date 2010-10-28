@@ -1,4 +1,8 @@
 #include "Characters.h"
+#include "ClientUtil.h"
+#include "Constants.h"
+using namespace client;
+using namespace constants;
 
 namespace {
    Texture spriteTex;
@@ -35,6 +39,389 @@ namespace {
    Animation blueRupeeAnim;
    Animation explosionAnim;
 }
+
+void Player::setPos(mat::vec2 pos)
+{
+   if (!alive) {
+      alive = true;
+      dir = vec2(0.0, 1.0);
+   }
+
+   moving = false;
+   this->pos = pos;
+}
+
+void Player::moveTo(mat::vec2 pos)
+{
+   if (!alive)
+      setPos(pos);
+
+   if (!moving) {
+      animStart = getTicks();
+   }
+
+   vec2 newDir = to(this->pos, pos);
+   if (newDir.length() > 0.0)
+      dir = normalize(newDir);
+
+   this->pos = pos;
+   moving = true;
+   lastUpdate = getTicks();
+}
+
+void Player::update()
+{
+   if (getTicks() - lastUpdate < playerPredictTicks) {
+      pos = pos + dir * getDt() * playerSpeed;
+   } else {
+      moving = false;
+   }
+}
+
+void Player::draw()
+{
+   int frame, adir;
+   
+   if (!alive)
+      return;
+
+   if (moving)
+      frame = ((getTicks() - animStart) / 100) % 8;
+   else
+      frame = 0;
+
+   if (dir.y > 0.8)
+      adir = 2;
+   else if (dir.y < -0.8)
+      adir = 4;
+   else if (dir.x > 0)
+      adir = 3;
+   else
+      adir = 1;
+
+   glPushMatrix();
+   glTranslatef(pos.x, pos.y, 0.0);
+   glScalef(spriteZoom, spriteZoom, 1.0);
+   if (moving)
+      sprites32.draw(frame, adir);
+   else
+      sprites32.draw(adir-1, 0);
+   glPopMatrix();
+}
+
+void Missile::init(mat::vec2 pos, mat::vec2 dir, Missile::Type type)
+{
+   start = pos;
+   if (dir.length() > 0.0)
+      this->dir = normalize(dir);
+   else
+      this->dir = vec2(0.0, 1.0);
+   this->type = type;
+
+   this->pos = start + this->dir * 75.0;
+
+   alive = true;
+}
+
+void Missile::update()
+{
+   if (alive) {
+      pos = pos + dir * projectileSpeed * getDt();
+
+      if (dist(start, pos) > maxProjectileDist)
+         alive = false;
+   }
+}
+
+void Missile::draw()
+{
+   if (alive) {
+      glPushMatrix();
+      glTranslatef(pos.x, pos.y, 0.0);
+      glScalef(spriteZoom, spriteZoom, 1.0);
+      glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
+      
+      sprites16.draw(9,0); // firebolt
+      //sprites16.draw(8,0); // arrow
+
+      //sprites16x32.draw(18,1); // pillar
+
+      //sprites32.draw(12,2); // mini trident
+      //sprites32.draw(11,0); // small fireball
+      //sprites32.draw(6,0); // ball?
+      //sprites32.draw(5,0); // bomb (dont rotate)
+      //sprites32.draw(7,0); // boomerang (dont rotate, animation 7 - 10)
+      //sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
+      //sprites64.draw(7,0); // big ass spear
+      glPopMatrix();
+   }
+}
+
+void Item::init(vec2 pos, Type type)
+{
+    this->pos = pos;
+    this->type = type;
+    alive = true;
+
+   switch(type) {
+      case Item::GreenRupee :
+         anim = &greenRupeeAnim;
+         break;
+      case Item::RedRupee :
+         anim = &redRupeeAnim;
+         break;
+      case Item::BlueRupee :
+         anim = &blueRupeeAnim;
+         break;
+      case Item::Explosion :
+         anim = &explosionAnim;
+         break;
+      default:
+         printf("Error: invalid Item (Type %d) to animate.\n", type);
+   }
+}
+
+void Item::update()
+{
+   if (alive) {
+      //if within 40 pixels make not alive
+      if (dist(getPlayer().pos, pos) < 40)
+         alive = false;
+   }
+}
+
+void Item::draw()
+{
+   if (alive && anim) {
+      glPushMatrix();
+      glTranslatef(pos.x, pos.y, 0.0);
+      glScalef(spriteZoom, spriteZoom, 1.0);
+
+      anim->draw();
+      //sprites16.draw(13,0); // green rupee 1
+
+      glPopMatrix();
+   }  
+}
+
+void NPC::init(vec2 pos, Type type)
+{
+   this->type = type;
+   this->pos = pos;
+   moving = false;
+   alive = true;
+   dir = vec2(0, 0);
+
+   this->anim = type == NPC::Thief     ? &thiefAnim :
+                type == NPC::Princess  ? &princessAnim :
+                type == NPC::Fairy     ? &fairyAnim :
+                type == NPC::Skeleton  ? &skeletonAnim :
+                type == NPC::Cyclops   ? &cyclopsAnim :
+                type == NPC::Bat       ? &batAnim :
+                type == NPC::Bird      ? &birdAnim :
+                type == NPC::Squirrel  ? &squirrelAnim :
+                type == NPC::Chicken   ? &chickenAnim :
+                type == NPC::Vulture   ? &vultureAnim :
+                type == NPC::Cactus    ? &cactusAnim :
+                type == NPC::BigFairy  ? &bigFairyAnim :
+                type == NPC::Wizard    ? &wizardAnim :
+                type == NPC::Ganon     ? &ganonAnim :
+                type == NPC::Goblin    ? &goblinAnim :
+                (printf("Unknown NPC type: %d\n", type), 0);
+}
+
+void NPC::update()
+{
+   if(alive) {
+      vec2 dist = to(pos, getPlayer().pos);
+      bool ismoving = dist.length() > 40;
+      if(!moving && ismoving)
+         this->anim->animStart = getTicks();
+      moving = ismoving;
+      dir = normalize(dist);
+      if(moving)
+         this->pos = dir*npcSpeed*getDt() + pos;
+   }
+}
+
+void NPC::draw()
+{
+   if(alive && anim) {
+      glPushMatrix();
+      glTranslatef(pos.x, pos.y, 0.0);
+      glScalef(spriteZoom, spriteZoom, 1.0);
+      anim->draw(dir, moving);
+      glPopMatrix();
+   }
+}
+
+void ObjectHolder::addPlayer(Player p)
+{
+   if (!checkObject(p.id, IdType::Player)) {
+      players.push_back(p);
+      idToIndex[p.id] = IdType(players.size()-1, IdType::Player);
+   }
+}
+
+void ObjectHolder::addMissile(Missile m)
+{
+   if (!checkObject(m.id, IdType::Missile)) {
+      missiles.push_back(m);
+      idToIndex[m.id] = IdType(missiles.size()-1, IdType::Missile);
+   }
+}
+
+void ObjectHolder::addItem(Item i)
+{   
+   if (!checkObject(i.id, IdType::Item)) {
+      items.push_back(i);
+      idToIndex[i.id] = IdType(items.size()-1, IdType::Item);
+   }
+}
+
+void ObjectHolder::addNPC(NPC n)
+{
+   if (!checkObject(n.id, IdType::NPC)) {
+      npcs.push_back(n);
+      idToIndex[n.id] = IdType(npcs.size()-1, IdType::NPC);
+   }
+}
+
+
+Player ObjectHolder::getPlayer(int id)
+{
+   if (!checkObject(id, IdType::Player))
+      printf("Attempting to access Player that doesn't exist!\n");
+   return players[idToIndex[id].index];
+}
+
+Missile ObjectHolder::getMissile(int id)
+{
+   if (!checkObject(id, IdType::Missile))
+      printf("Attempting to access Missile that doesn't exist!\n");
+   return missiles[idToIndex[id].index];
+}
+
+Item ObjectHolder::getItem(int id)
+{
+   if (!checkObject(id, IdType::Item))
+      printf("Attempting to access Item that doesn't exist!\n");
+   return items[idToIndex[id].index];
+}
+
+NPC ObjectHolder::getNPC(int id)
+{
+   if (!checkObject(id, IdType::NPC))
+      printf("Attempting to access NPC that doesn't exist!\n");
+   return npcs[idToIndex[id].index];
+}
+
+bool ObjectHolder::checkObject(int id, int type)
+{
+   map<int,IdType>::iterator itr = idToIndex.find(id);
+   if (itr == idToIndex.end()) {
+      // Normally the behavior here should be an error,
+      // but for the moment we should just add a new object of that type.
+      const char *typeStr = 
+         type == IdType::Player  ? "Player" :
+         type == IdType::Missile ? "Missile" :
+         type == IdType::Item    ? "Item" :
+         type == IdType::NPC     ? "NPC" :
+                                   "Unknown type";
+      printf("Object with id %d not found in objects, creating an uninitalized %s\n", typeStr);
+      if (type == IdType::Player) {
+         addPlayer(Player(id));
+      } else if (type == IdType::Missile) {
+         addMissile(Missile(id));
+      } else if (type == IdType::Item) {
+         addItem(Item(id));
+      } else if (type == IdType::NPC) {
+         addNPC(NPC(id));
+      }
+      return true;
+      //return false;
+   } else if (itr->second.type != type) {
+      printf("Object with id %id already exists with different type! %d %d\n", type, itr->second.type);
+      return false;
+   }
+   return true;
+}
+
+template<typename T>
+void removeTempl(map<int, ObjectHolder::IdType> &idToIndex, vector<T> &objs, int id)
+{
+   int i = idToIndex[id].index;
+
+   idToIndex.erase(id);
+   if (objs.size() > 1) {
+      objs[i] = objs.back();
+      idToIndex[objs[i].id].index = i;
+   }
+   objs.pop_back();
+}
+
+void ObjectHolder::removeObject(int id)
+{
+   int i = idToIndex[id].index;
+
+   if (idToIndex[id].type == IdType::Player)
+      removeTempl(idToIndex, players, id);
+
+   else if (idToIndex[id].type == IdType::Missile)
+      removeTempl(idToIndex, missiles, id);
+
+   else if (idToIndex[id].type == IdType::Item)
+      removeTempl(idToIndex, items, id);
+
+   else if (idToIndex[id].type == IdType::NPC)
+      removeTempl(idToIndex, npcs, id);
+}
+
+// Didn't make this a member function because ugly
+// and nobody else needs to use it.
+template<typename T>
+void updateTempl(vector<T> &objs, ObjectHolder &o)
+{
+   for (unsigned i = 0; i < objs.size(); i++) {
+      objs[i].update();
+      if (!objs[i].alive) {
+         o.removeObject(objs[i].id);
+         i--;
+      }
+   }
+}
+
+void ObjectHolder::updateAll()
+{
+   updateTempl(players, *this);
+   updateTempl(missiles, *this);
+   updateTempl(items, *this);
+   updateTempl(npcs, *this);
+}
+
+void ObjectHolder::drawAll()
+{
+   for (unsigned i = 0; i < players.size(); i++)
+      players[i].draw();
+
+   for (unsigned i = 0; i < missiles.size(); i++)
+      missiles[i].draw();
+   
+   for (unsigned i = 0; i < items.size(); i++)
+      items[i].draw();
+
+   for (unsigned i = 0; i < npcs.size(); i++)
+      npcs[i].draw();
+}
+
+
+
+
+
+
+
+
+
 
 
 void initCharacterResources()
@@ -245,317 +632,4 @@ void initCharacterResources()
 
       initalized = true;
    }
-}
-
-void Player::update(mat::vec2 pos, mat::vec2 dir, bool moving)
-{
-   if (!this->moving && moving) {
-      animStart = SDL_GetTicks();
-   }
-
-   this->pos = pos;
-   if (dir.length() > 0.0)
-      this->dir = normalize(dir);
-   else
-      this->dir = vec2(0.0, 1.0);
-   this->moving = moving;
-}
-
-void Player::update(mat::vec2 pos, int ticks)
-{
-   animStart = ticks;
-
-   dir = to(this->pos, pos);
-   if (dir.length() == 0.0)
-      dir = vec2(0,1);
-   dir.normalize();
-
-   this->pos = pos;
-   this->moving = moving;
-}
-
-void Player::draw()
-{
-   int frame, adir;
-   
-   if (!alive)
-      return;
-
-   if (moving)
-      frame = ((SDL_GetTicks() - animStart) / 100) % 8;
-   else
-      frame = 0;
-
-   if (dir.y > 0.8)
-      adir = 2;
-   else if (dir.y < -0.8)
-      adir = 4;
-   else if (dir.x > 0)
-      adir = 3;
-   else
-      adir = 1;
-
-   glPushMatrix();
-   glTranslatef(pos.x, pos.y, 0.0);
-   glScalef(spriteZoom, spriteZoom, 1.0);
-   if (moving)
-      sprites32.draw(frame, adir);
-   else
-      sprites32.draw(adir-1, 0);
-   glPopMatrix();
-}
-
-void Missile::init(mat::vec2 pos, mat::vec2 dir, Missile::Type type)
-{
-   start = pos;
-   if (dir.length() > 0.0)
-      this->dir = normalize(dir);
-   else
-      this->dir = vec2(0.0, 1.0);
-   this->type = type;
-
-   this->pos = start + this->dir * 75.0;
-
-   alive = true;
-}
-
-void Missile::update(float fdt)
-{
-   if (alive) {
-      float speed = 800.0;
-
-      pos = pos + dir * speed * fdt;
-
-      if (dist(start, pos) > 500)
-         alive = false;
-   }
-}
-
-void Missile::draw()
-{
-   if (alive) {
-      glPushMatrix();
-      glTranslatef(pos.x, pos.y, 0.0);
-      glScalef(spriteZoom, spriteZoom, 1.0);
-      glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
-      
-      sprites16.draw(9,0); // firebolt
-      //sprites16.draw(8,0); // arrow
-
-      //sprites16x32.draw(18,1); // pillar
-
-      //sprites32.draw(12,2); // mini trident
-      //sprites32.draw(11,0); // small fireball
-      //sprites32.draw(6,0); // ball?
-      //sprites32.draw(5,0); // bomb (dont rotate)
-      //sprites32.draw(7,0); // boomerang (dont rotate, animation 7 - 10)
-      //sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
-      //sprites64.draw(7,0); // big ass spear
-      glPopMatrix();
-   }
-}
-
-void Item::init(vec2 pos, Type type)
-{
-    this->pos = pos;
-    this->type = type;
-    alive = true;
-
-   switch(type) {
-      case Item::GreenRupee :
-         anim = &greenRupeeAnim;
-         break;
-      case Item::RedRupee :
-         anim = &redRupeeAnim;
-         break;
-      case Item::BlueRupee :
-         anim = &blueRupeeAnim;
-         break;
-      case Item::Explosion :
-         anim = &explosionAnim;
-         break;
-      default:
-         printf("Error: invalid Item (Type %d) to animate.\n", type);
-   }
-}
-
-void Item::update(float fdt, Player &player)
-{
-   if (alive) {
-      //if within 40 pixels make not alive
-      if (dist(player.pos, pos) < 40)
-         alive = false;
-   }
-}
-
-void Item::draw()
-{
-   if (alive && anim) {
-      glPushMatrix();
-      glTranslatef(pos.x, pos.y, 0.0);
-      glScalef(spriteZoom, spriteZoom, 1.0);
-
-      anim->draw();
-      //sprites16.draw(13,0); // green rupee 1
-
-      glPopMatrix();
-   }  
-}
-
-void NPC::init(vec2 pos, Type type)
-{
-   this->type = type;
-   this->pos = pos;
-   moving = false;
-   alive = true;
-   dir = vec2(0, 0);
-   switch(type) {
-      case NPC::Thief :
-         this->anim = &thiefAnim;
-         break;
-      case NPC::Princess :
-         this->anim = &princessAnim;
-         break;
-      case NPC::Fairy :
-         this->anim = &fairyAnim;
-         break;
-      case NPC::Skeleton :
-         this->anim = &skeletonAnim;
-         break;
-      case NPC::Cyclops :
-         this->anim = &cyclopsAnim;
-         break;
-      case NPC::Bat :
-         this->anim = &batAnim;
-         break;
-      case NPC::Bird :
-         this->anim = &birdAnim;
-         break;
-      case NPC::Squirrel :
-         this->anim = &squirrelAnim;
-         break;
-      case NPC::Chicken :
-         this->anim = &chickenAnim;
-         break;
-      case NPC::Vulture :
-         this->anim = &vultureAnim;
-         break;
-      case NPC::Bush :
-         this->anim = &bushAnim;
-         break;
-      case NPC::Cactus :
-         this->anim = &cactusAnim;
-         break;
-      case NPC::BigFairy :
-         this->anim = &bigFairyAnim;
-         break;
-      case NPC::Wizard :
-         this->anim = &wizardAnim;
-         break;
-      case NPC::Ganon :
-         this->anim = &ganonAnim;
-         break;
-      case NPC::Goblin :
-         this->anim = &goblinAnim;
-         break;
-      default:
-         printf("Error: You forgot to add the Animation to NPC::init !\n");
-   }
-}
-
-void NPC::update(float fdt, Player &player)
-{
-   if(alive) {
-      float speed = 300;
-      vec2 dist = to(pos, player.pos);
-      bool ismoving = dist.length() > 40;
-      if(!moving && ismoving)
-         this->anim->animStart = SDL_GetTicks();
-      moving = ismoving;
-      dir = normalize(dist);
-      if(moving)
-         this->pos = dir*speed*fdt + pos;
-   }
-}
-
-void NPC::draw()
-{
-   if(alive && anim) {
-      glPushMatrix();
-      glTranslatef(pos.x, pos.y, 0.0);
-      glScalef(spriteZoom, spriteZoom, 1.0);
-      anim->draw(dir, moving);
-      glPopMatrix();
-   }
-}
-
-int Animation::dirFace(vec2 dir)
-{
-   int adir = 0;
-   if (fabs(dir.x) >= fabs(dir.y)) {
-      if(dir.x > 0)
-         adir = 1; //right
-      else
-         adir = 3; //left
-   } else {
-      if(dir.y > 0)
-         adir = 0; // up
-      else
-         adir = 2; //down
-   }
-   return adir;
-}
-
-int Animation::dirFaceLR(vec2 dir)
-{
-   int adir = 0;
-   if(dir.x > 0)
-      adir = 1; //right
-   else
-      adir = 3; //left
-   return adir;
-}
-
-void Animation::init(Sprite *sprite, Type type, bool alwaysAnim)
-{
-   this->sprite = sprite;
-   this->type = type;
-   this->alwaysAnim = alwaysAnim;
-}
-
-void Animation::draw(vec2 dir, bool moving)
-{
-   int dirIndex = 2; //down by default
-   switch(this->type) {
-      case Animation::Normal :
-         dirIndex = dirFace(dir);
-         break;
-      case Animation::LeftRight :
-         dirIndex = dirFaceLR(dir);
-         break;
-      case Animation::Forward :
-         //printf("anim::draw forward todo\n");
-         dirIndex = Animation::Down;
-         break;
-      default:
-         printf("Error: anim::draw invalid animation type");
-   }
-   int frames = dirs[dirIndex].size();
-   if(frames > 0) {
-      int frame;
-      if(alwaysAnim)
-         frame = ((SDL_GetTicks() - animStart) / speed) % frames;
-      else if(!moving)
-         frame = 0;
-      else
-         frame = 1 + ((SDL_GetTicks() - animStart) / speed) % (frames - 1);
-      sprite->draw(dirs[dirIndex][frame].x, 
-         dirs[dirIndex][frame].y);
-   } else
-      printf("Error: unable to draw animation\n");
-}
-
-void Animation::draw()
-{
-   draw(vec2(0.1,-0.9), true);
 }

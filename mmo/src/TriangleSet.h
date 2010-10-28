@@ -268,4 +268,56 @@ struct TriangleSet {
    }
 };
 
+inline TriangleSet icosahedron()
+{
+   TriangleSet set;
+
+   const float ratio = (1.0 + sqrt(5.0)) / 2.0;
+   const float radius = 1.0 / sqrt(ratio * sqrt(5.0));
+
+   vec3 p11 = vec3(0,  1,  ratio).normalize();
+   vec3 p12 = vec3(0,  1, -ratio).normalize();
+   vec3 p13 = vec3(0, -1,  ratio).normalize();
+   vec3 p14 = vec3(0, -1, -ratio).normalize();
+
+   vec3 p21 = vec3( 1,  ratio, 0).normalize();
+   vec3 p22 = vec3( 1, -ratio, 0).normalize();
+   vec3 p23 = vec3(-1,  ratio, 0).normalize();
+   vec3 p24 = vec3(-1, -ratio, 0).normalize();
+
+   vec3 p31 = vec3( ratio, 0,  1).normalize();
+   vec3 p32 = vec3(-ratio, 0,  1).normalize();
+   vec3 p33 = vec3( ratio, 0, -1).normalize();
+   vec3 p34 = vec3(-ratio, 0, -1).normalize();
+   
+   set.addFace(p11, p13, p31);
+   set.addFace(p13, p11, p32);
+   set.addFace(p14, p12, p33);
+   set.addFace(p12, p14, p34);
+ 
+   set.addFace(p21, p23, p11);
+   set.addFace(p23, p21, p12);
+   set.addFace(p24, p22, p13);
+   set.addFace(p22, p24, p14);
+ 
+   set.addFace(p31, p33, p21);
+   set.addFace(p33, p31, p22);
+   set.addFace(p34, p32, p23);
+   set.addFace(p32, p34, p24);
+ 
+   set.addFace(p11, p31, p21);
+   set.addFace(p11, p23, p32);
+
+   set.addFace(p12, p21, p33);
+   set.addFace(p12, p34, p23);
+
+   set.addFace(p13, p22, p31);
+   set.addFace(p13, p32, p24);
+
+   set.addFace(p14, p33, p22);
+   set.addFace(p14, p24, p34);
+
+   return set;
+}
+
 #endif

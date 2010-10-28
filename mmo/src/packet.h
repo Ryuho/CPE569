@@ -99,8 +99,9 @@ struct Connect {
 // Used to combine all simple signals into one packet
 struct Signal {
    enum { 
-      hello = 1,      // Not used yet... A simple ping
-      disconnect = 2  // Indicates the player with id in val disconnected
+      hello = 1,        // Not used yet... A simple ping
+      disconnect = 2,   // Indicates the player with id in val disconnected
+      stopped = 3,      // The player id(val) stopped moving
    };
    int sig, val;
    Signal() : sig(0) {}
