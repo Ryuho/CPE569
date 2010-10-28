@@ -684,7 +684,7 @@ vector<Connection> SelectSet::select(int ms)
 
 vector<Connection> SelectSet::nbRead(int ms)
 {
-   
+   return vector<Connection>();
 }
 
 void SelectSet::removeDisconnects()
