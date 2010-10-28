@@ -8,7 +8,7 @@ client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp
 	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU
 
 obj/CharacterGraphics.o: src/CharacterGraphics.cpp src/Characters.h
-	g++ -c -o obj/CharacterGraphics.o src/CharacterGraphics.cpp
+	g++ -c -o obj/CharacterGraphics.o src/CharacterGraphics.cpp -I/home/whess/glew-1.5.6/include
 
 obj/GameServer.o: src/GameServer.cpp src/GameServer.h src/packet.h src/ServerUtil.h
 	g++ -c -o obj/GameServer.o src/GameServer.cpp
