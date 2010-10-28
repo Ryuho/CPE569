@@ -1,4 +1,5 @@
 #include "GameServer.h"
+#include <cstdio>
 
 using namespace pack;
 

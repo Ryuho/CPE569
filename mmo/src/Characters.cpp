@@ -229,7 +229,7 @@ void NPC::init(vec2 pos, Type type)
                 type == NPC::Wizard    ? &wizardAnim :
                 type == NPC::Ganon     ? &ganonAnim :
                 type == NPC::Goblin    ? &goblinAnim :
-                (printf("Unknown NPC type: %d\n", type), 0);
+                (printf("Unknown NPC type: %d\n", type), (Animation*)0);
 }
 
 void NPC::update()
@@ -330,7 +330,7 @@ bool ObjectHolder::checkObject(int id, int type)
          type == IdType::Item    ? "Item" :
          type == IdType::NPC     ? "NPC" :
                                    "Unknown type";
-      printf("Object with id %d not found in objects, creating an uninitalized %s\n", typeStr);
+      printf("Object with id %d not found in objects, creating an uninitalized %s\n", id, typeStr);
       if (type == IdType::Player) {
          addPlayer(Player(id));
       } else if (type == IdType::Missile) {
