@@ -1,10 +1,12 @@
 #ifndef _CHARACTERS_H_
 #define _CHARACTERS_H_
 
-#include "GLUtil.h"
-#include "Sprite.h"
 #include <vector>
 #include <map>
+#include "matrix.h"
+
+using mat::vec2;
+struct Animation;
 
 void initCharacterResources();
 
@@ -41,6 +43,7 @@ struct Item {
    Item(int id) : id(id), alive(false), anim(0), type(MaxItem) {}
    void init(vec2 pos, Type type);
 
+   void initGraphics();
    void update();
    void draw();
    
@@ -58,6 +61,8 @@ struct NPC {
    NPC(int id) : id(id), alive(false) {}
    void init(vec2 pos, Type type);
 
+   void initGraphics();
+   void resetAnimation();
    void update();
    void draw();
    

@@ -4,6 +4,7 @@
 #include "packet.h"
 #include "Constants.h"
 #include "ClientUtil.h"
+#include "GLUtil.h"
 
 using namespace constants;
 
@@ -176,12 +177,12 @@ void World::move(mat::vec2 dir)
 
 void World::shootArrow(mat::vec2 dir)
 {
-   /*if (data->ticks - data->arrowTick > arrowCooldown) {
-      Missile m(0);
+   if (data->ticks - data->arrowTick > arrowCooldown) {
+      Missile m(game::getTicks()); // using get ticks here is a dumb hack, use newId() on the server
       m.init(data->player.pos, dir - vec2(data->width/2,data->height/2), Missile::Arrow);
-      data->missiles.push_back(m);
+      data->objs.addMissile(m);
       data->arrowTick = data->ticks;
-   }*/
+   }
 }
 
 void World::doSpecial()
@@ -235,7 +236,7 @@ void World::spawnNPC()
 
 // Global accessor functions
 
-namespace client {
+namespace game {
 
 int getTicks()
 {

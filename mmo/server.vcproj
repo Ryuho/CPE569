@@ -167,11 +167,23 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\src\Characters.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Characters.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\GameServer.cpp"
 			>
 		</File>
 		<File
 			RelativePath=".\src\GameServer.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\GameUtil.h"
 			>
 		</File>
 		<File

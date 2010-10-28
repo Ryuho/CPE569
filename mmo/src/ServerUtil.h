@@ -5,6 +5,7 @@
 #include <map>
 
 void sleepms(int ms);
+int currentTicks();
 int newId();
 
 struct ConnectionInfo {

@@ -3,6 +3,8 @@
 
 #ifdef WIN32
 #include <Windows.h>
+#else
+#include <time.h>
 #endif
 
 using namespace std;
@@ -11,15 +13,38 @@ using sock::Server;
 using sock::Packet;
 using sock::setupSockets;
 
+#ifdef WIN32
 void sleepms(int ms)
 {
-#ifdef WIN32
    Sleep(ms);
-#else
-   usleep(ms*1000);
-#endif
 }
 
+int currentTicks()
+{
+   static int offset = 0;
+   LARGE_INTEGER li, freq;
+   QueryPerformanceCounter(&li);
+   QueryPerformanceFrequency(&freq);
+   if (offset == 0)
+      offset = (int)(li.QuadPart * 1000 /freq.QuadPart );
+   return (int)(li.QuadPart * 1000 /freq.QuadPart ) - offset;
+}
+
+#else
+
+void sleepms(int ms)
+{
+   usleep(ms*1000);
+}
+
+int currentTicks()
+{
+   timespec ts;
+   clock_gettime(CLOCK_MONOTONIC, &ts);
+   return ts.tv_sec*1000 + ts.tv_nsec/1000000;
+}
+
+#endif
 int newId()
 {
    static int id = 100;
@@ -57,6 +82,8 @@ int main()
             }
          }
       }
+
+      gs.update(currentTicks());
       
       sleepms(3); // 3 ms delay, really fast...
    }
