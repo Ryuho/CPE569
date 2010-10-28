@@ -17,7 +17,7 @@ obj/server.o: src/server.cpp src/packet.h
 	g++ -c -o obj/server.o src/server.cpp
 
 obj/socket.o: src/socket.cpp
-	++ -c -o obj/socket.o src/socket.cpp
+	g++ -c -o obj/socket.o src/socket.cpp
 
 obj/Characters.o: src/Characters.cpp
 	g++ -c -o obj/Characters.o src/Characters.cpp -I/home/whess/glew-1.5.6/include
