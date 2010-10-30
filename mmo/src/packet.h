@@ -14,6 +14,7 @@ enum PacketType {
    connect = 3,
    signal = 4,
    // Add new packet types here, make values explicit
+   spawn = 5,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -96,12 +97,30 @@ struct Connect {
    }
 };
 
+struct UnitSpawn {
+   int id;
+   int type;
+   mat::vec2 pos;
+   UnitSpawn() : id(0), type(0) {}
+   UnitSpawn(int id, int type) : id(id), type(type) {}
+   UnitSpawn(Packet &p) {
+      p.data.readInt(id).readInt(type).readFloat(pos.x).readFloat(pos.y).reset();
+   }
+   Packet makePacket() {
+      Packet p(16, spawn);
+      p.data.writeInt(id).writeInt(type).writeFloat(pos.x).writeFloat(pos.y);
+      return p;
+   }
+};
+
 // Used to combine all simple signals into one packet
 struct Signal {
    enum { 
       hello = 1,        // Not used yet... A simple ping
       disconnect = 2,   // Indicates the player with id in val disconnected
       stopped = 3,      // The player id(val) stopped moving
+      death = 4,        // The NPC[or player?] id(val) is dead
+      playerconnect = 5,
    };
    int sig, val;
    Signal() : sig(0) {}

@@ -17,11 +17,6 @@ struct WorldData {
    int arrowTick, specialTick;
 
    ObjectHolder objs;
-   //map<int, int> idToIndex;
-   //vector<Player> players;
-   //vector<Missile> missiles;
-   //vector<Item> items;
-   //vector<NPC> npcs;
    Player player, shadow;
    Texture ground;
    
@@ -80,7 +75,7 @@ void WorldData::init()
    player.id = c.id;
    shadow.id = c.id;
 
-   printf("Connected to server successfully\n");
+   printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
 
 void World::graphicsInit(int width, int height)
@@ -123,16 +118,46 @@ void WorldData::processPacket(pack::Packet p)
    using namespace pack;
    if (p.type == pos) {
       Pos pos(p);
-      if (pos.id == player.id) {
+      if(pos.id == player.id) {
          shadow.setPos(pos.v);
-      } else {
-         objs.getPlayer(pos.id).moveTo(pos.v);
+      } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Player)) {
+         objs.getPlayer(pos.id)->moveTo(pos.v);
+      } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
+         NPC *npc = objs.getNPC(pos.id);
+         npc->pos = pos.v;
+      } else
+         printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
+   } else if (p.type == spawn) {
+      UnitSpawn unit(p);
+      if(!objs.checkObject(unit.id, ObjectHolder::IdType::NPC)) {
+         NPC npc(unit.id);
+         npc.init(unit.pos, (NPC::Type) unit.type);
+         objs.addNPC(npc);
+         printf("NPC spawned id=%d type=%d\n", npc.id, npc.type);
       }
    } else if (p.type == signal) {
       Signal sig(p);
       if (sig.sig == Signal::disconnect) {
          objs.removeObject(sig.val);
-      }
+         printf("Player %d disconnected\n", sig.val);
+      } else if(sig.sig == Signal::death) {
+         objs.removeObject(sig.val);
+      } else if(sig.sig == Signal::stopped) {
+         /*
+         if(objs.checkObject(sig.val, ObjectHolder::IdType::NPC)) {
+            objs.getNPC(sig.val).moving = false;
+         } else if(objs.checkObject(sig.val, ObjectHolder::IdType::Player))
+            objs.getPlayer(sig.val).moving = false;
+         */
+      } else if(sig.sig == Signal::playerconnect) {
+         if(sig.val != player.id) {
+            Player player(sig.val);
+            player.alive = true;
+            objs.addPlayer(player);
+            printf("Player %d connected\n", sig.val);
+         }
+      } else
+         printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    }
 }
 
