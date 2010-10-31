@@ -103,6 +103,7 @@ void NPC::init(vec2 pos, Type type)
 
 void NPC::update()
 {
+   /*
    if(alive) {
       vec2 dist = to(pos, getPlayer().pos);
       bool ismoving = dist.length() > 40;
@@ -113,106 +114,85 @@ void NPC::update()
       if(moving)
          this->pos = dir*npcSpeed*getDt() + pos;
    }
+   */
 }
 
 
 void ObjectHolder::addPlayer(Player p)
 {
    if (!checkObject(p.id, IdType::Player)) {
+      idToIndex[p.id] = IdType(players.size(), IdType::Player);
       players.push_back(p);
-      idToIndex[p.id] = IdType(players.size()-1, IdType::Player);
    }
 }
 
 void ObjectHolder::addMissile(Missile m)
 {
-   //if (!checkObject(m.id, IdType::Missile)) { // This should be put back in once checkObject is fixed
+   if (!checkObject(m.id, IdType::Missile)) {
+      idToIndex[m.id] = IdType(missiles.size(), IdType::Missile);   
       missiles.push_back(m);
-      idToIndex[m.id] = IdType(missiles.size()-1, IdType::Missile);
-   //}
+   }
 }
 
 void ObjectHolder::addItem(Item i)
-{   
+{
    if (!checkObject(i.id, IdType::Item)) {
+      idToIndex[i.id] = IdType(items.size(), IdType::Item);
       items.push_back(i);
-      idToIndex[i.id] = IdType(items.size()-1, IdType::Item);
    }
 }
 
 void ObjectHolder::addNPC(NPC n)
 {
    if (!checkObject(n.id, IdType::NPC)) {
+      idToIndex[n.id] = IdType(npcs.size(), IdType::NPC);
       npcs.push_back(n);
-      idToIndex[n.id] = IdType(npcs.size()-1, IdType::NPC);
    }
 }
 
 
-Player &ObjectHolder::getPlayer(int id)
+Player *ObjectHolder::getPlayer(int id)
 {
-   if (!checkObject(id, IdType::Player))
+   if (!checkObject(id, IdType::Player)) {
       printf("Attempting to access Player that doesn't exist!\n");
-   return players[idToIndex[id].index];
+      return 0;
+   }
+   return &players[idToIndex[id].index];
 }
 
-Missile &ObjectHolder::getMissile(int id)
+Missile *ObjectHolder::getMissile(int id)
 {
-   if (!checkObject(id, IdType::Missile))
+   if (!checkObject(id, IdType::Missile)) {
       printf("Attempting to access Missile that doesn't exist!\n");
-   return missiles[idToIndex[id].index];
+      return 0;
+   }
+   return &missiles[idToIndex[id].index];
 }
 
-Item &ObjectHolder::getItem(int id)
+Item *ObjectHolder::getItem(int id)
 {
-   if (!checkObject(id, IdType::Item))
+   if (!checkObject(id, IdType::Item)) {
       printf("Attempting to access Item that doesn't exist!\n");
-   return items[idToIndex[id].index];
+      return 0;
+   }
+   return &items[idToIndex[id].index];
 }
 
-NPC &ObjectHolder::getNPC(int id)
+NPC *ObjectHolder::getNPC(int id)
 {
-   if (!checkObject(id, IdType::NPC))
+   if (!checkObject(id, IdType::NPC)) {
       printf("Attempting to access NPC that doesn't exist!\n");
-   return npcs[idToIndex[id].index];
+      return 0;
+   }
+   return &npcs[idToIndex[id].index];
 }
 
 // Checks to see if the object exists already
 bool ObjectHolder::checkObject(int id, int type)
 {
    map<int,IdType>::iterator itr = idToIndex.find(id);
-   if (itr == idToIndex.end()) {
-      // Normally the behavior here should be an error,
-      // but for the moment we should just add a new object of that type.
-      // Later on lets make object creation explicit
-      const char *typeStr = 
-         type == IdType::Player  ? "Player" :
-         type == IdType::Missile ? "Missile" :
-         type == IdType::Item    ? "Item" :
-         type == IdType::NPC     ? "NPC" :
-                                   "Unknown type";
-      printf("Object with id %d not found in objects, creating an uninitalized %s\n", id, typeStr);
-      if (type == IdType::Player) {
-         idToIndex[id] = IdType(players.size(), IdType::Player);
-         players.push_back(Player(id));
-      } else if (type == IdType::Missile) {
-         idToIndex[id] = IdType(missiles.size(), IdType::Missile);
-         missiles.push_back(Missile(id));
-      } else if (type == IdType::Item) {
-         idToIndex[id] = IdType(items.size(), IdType::Item);
-         items.push_back(Item(id));
-      } else if (type == IdType::NPC) {
-         idToIndex[id] = IdType(npcs.size(), IdType::NPC);
-         npcs.push_back(NPC(id));
-      }
-
-      return true;
-      //return false;
-   } else if (itr->second.type != type) {
-      printf("Object with id %id already exists with different type! %d %d\n", id, type, itr->second.type);
-      return false;
-   }
-   return true;
+   return itr != idToIndex.end() && itr->second.type == type;
+   //   printf("Object with id %id already exists with different type! existing=%d new=%d\n", id, type, itr->second.type);
 }
 
 template<typename T>
@@ -256,6 +236,57 @@ void updateTempl(vector<T> &objs, ObjectHolder &o)
          o.removeObject(objs[i].id);
          i--;
       }
+   }
+}
+
+//Server update code for NPCs
+//passed in a list of close players, hostile players, or whatever
+//if empty, then do not move unless its in the AI
+void NPC::updateServer(std::vector<vec2> dests)
+{
+   //find closest player
+   if(!alive) {
+      printf("Cannot update NPC %d: not alive\n", id);
+      return;
+   }
+
+   /*
+   //AI part, will eventually be changed with plugabble AI
+   vec2 dest(pos);
+   float length = 2000.0; //would use MAX_FLOAT but I'm too lazy to include
+   if(alive) {
+      for(unsigned i = 0; i < dests.size(); i++) {
+         float d = dist(pos, dests[i]);
+         if(d < length && d > 500.0) {
+            length = d;
+            dest = dests[i];
+            dir = mat::to(pos, dests[i]).normalize();
+         }
+      }
+      moving = length > 0;
+      if(moving)
+         pos = dir*npcSpeed*getDt() + pos;
+   }
+   */
+
+
+   //AI part, will eventually be changed with plugabble AI
+   if(alive) {
+      if(dir.length() < 0.5 || dir.length() > 2) {
+         dir = vec2(rand()%500, rand()%500).normalize();
+      }
+      float d = mat::dist(pos, vec2(0,0));
+      if(d > 800.0 || d < -800.0) {
+         pos = vec2(0,0);
+         if(dests.size() != 0) {
+            vec2 dest(mat::to(pos, dests[rand() % dests.size()]));
+            if(dest.length() > 0.1 || dest.length() < -0.1)
+               dir = dest.normalize();
+            else
+               dir = vec2(rand()%500, rand()%500).normalize();
+         }
+      }
+      pos = dir*npcSpeed*getDt() + pos;
    }
 }
 

@@ -5,6 +5,32 @@ using namespace pack;
 
 GameServer *serverState;
 
+void spawnNPC(int id)
+{
+   NPC n(id);
+
+   int minv, maxv, midv;
+   minv = 700;
+   maxv = 1200;
+   midv = 400;
+   vec2 _pos = vec2((float)(rand()%maxv - minv), (float)(rand()%maxv - minv));
+   if(_pos.x >= 0.0 && _pos.x < midv)
+      _pos.x = (float) midv;
+   else if(_pos.x < 0.0 && _pos.x > -midv)
+      _pos.x = (float) -midv;
+   if(_pos.y >= 0.0 && _pos.y < midv)
+      _pos.y = (float) midv;
+   else if(_pos.y < 0.0 && _pos.y > -midv)
+      _pos.y = (float) -midv;
+
+   n.init(vec2(), (NPC::Type) (rand() % ((int)NPC::MaxNPC)));
+   n.moving = true;
+   n.dir = vec2(0,1);
+   n.alive = true;
+   serverState->objs.addNPC(n);
+   //printf("server npc id=%d type=%d (1)\n", n.id, n.type);
+}
+
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
 {
    serverState = this;
@@ -18,8 +44,25 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
 void GameServer::newConnection(int id)
 {
    printf("New connection: %d\n", id);
-   cm.sendPacket(Connect(id), id);
    objs.addPlayer(Player(id));
+   cm.sendPacket(Connect(id), id);
+   cm.broadcast(Signal(Signal::playerconnect, id));
+
+
+   int npcid = newId();
+   spawnNPC(npcid);
+   NPC *npc = objs.getNPC(npcid);
+   cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
+   cm.broadcast(pack::Pos(npc->pos, npcid));
+   //printf("server npc id=%d type=%d (2)\n", npc->id, npc->type);
+   for(unsigned i = 0; i < objs.npcs.size(); i++) {
+      cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
+      cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
+   }
+   for(unsigned i = 0; i < objs.players.size(); i++) {
+      cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
+      cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
+   }
 }
 
 void GameServer::disconnect(int id)
@@ -34,16 +77,38 @@ void GameServer::processPacket(pack::Packet p, int id)
    if (p.type == pack::pos) {
       Pos pos(p);
       pos.id = id;
-      objs.getPlayer(id).moveTo(pos.v);
-      cm.broadcast(pos);
+      Player *player = objs.getPlayer(id);
+      if(!player)
+         printf("GameServer::processPacket: Player %d does not exist\n", id);
+      else {
+         objs.getPlayer(id)->moveTo(pos.v);
+         cm.broadcast(pos);
+      }
    }
 }
 
 void GameServer::update(int ticks)
 {
-   dt = (ticks - this->ticks)/1000.0;
+   dt = (float)((ticks - this->ticks)/1000.0);
    this->ticks = ticks;
 
+   std::vector<vec2> playerPoses;
+   for(unsigned i = 0; i < objs.players.size(); i++) {
+      playerPoses.push_back(objs.players[i].pos);
+   }
+   for(unsigned i = 0; i < objs.npcs.size(); i++) {
+      if(objs.npcs[i].alive) {
+         objs.npcs[i].updateServer(playerPoses);
+         if(objs.npcs[i].moving)
+            cm.broadcast(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id));
+         else
+            cm.broadcast(Signal(Signal::stopped, objs.npcs[i].id));
+      }
+      else { //!alive
+         cm.broadcast(pack::Signal(Signal::death,objs.npcs[i].id).makePacket());
+         objs.removeObject(objs.npcs[i].id);
+      }
+   }
 }
 
 namespace game {

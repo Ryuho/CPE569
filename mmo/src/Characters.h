@@ -63,6 +63,7 @@ struct NPC {
 
    void initGraphics();
    void resetAnimation();
+   void updateServer(std::vector<mat::vec2> dests);
    void update();
    void draw();
    
@@ -80,6 +81,7 @@ struct ObjectHolder {
       IdType(int index, int type) : index(index), type(type) {}
       int index, type;
    };
+
    std::vector<Player> players;
    std::vector<Missile> missiles;
    std::vector<Item> items;
@@ -91,17 +93,16 @@ struct ObjectHolder {
    void addItem(Item i);
    void addNPC(NPC n);
 
-   Player &getPlayer(int id);
-   Missile &getMissile(int id);
-   Item &getItem(int id);
-   NPC &getNPC(int id);
+   Player *getPlayer(int id);
+   Missile *getMissile(int id);
+   Item *getItem(int id);
+   NPC *getNPC(int id);
 
    bool checkObject(int id, int type);
    void removeObject(int id);
 
    void updateAll();
    void drawAll();
-
 };
 
 #endif
