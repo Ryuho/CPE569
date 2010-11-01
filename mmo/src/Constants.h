@@ -12,6 +12,8 @@ namespace constants {
    const float projectileSpeed = 800;
 
    const int playerPredictTicks = 200;
+
+	const float PI = 3.14159265359;
 }
 
 #endif
