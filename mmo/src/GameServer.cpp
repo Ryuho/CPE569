@@ -1,4 +1,5 @@
 #include "GameServer.h"
+#include "Constants.h"
 #include <cstdio>
 
 using namespace pack;
@@ -50,7 +51,7 @@ void GameServer::newConnection(int id)
 
 
    int npcid = newId();
-   spawnNPC(npcid);
+   /**spawnNPC(npcid);
    NPC *npc = objs.getNPC(npcid);
    cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
    cm.broadcast(pack::Pos(npc->pos, npcid));
@@ -58,7 +59,7 @@ void GameServer::newConnection(int id)
    for(unsigned i = 0; i < objs.npcs.size(); i++) {
       cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
       cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
-   }
+   }**/
    for(unsigned i = 0; i < objs.players.size(); i++) {
       cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
       cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
@@ -85,6 +86,36 @@ void GameServer::processPacket(pack::Packet p, int id)
          cm.broadcast(pos);
       }
    }
+	else if (p.type == pack::signal) {
+		printf("recieved signal! id = %d\n", id);
+		Player* play = objs.getPlayer(id);
+		for (int i = 0; i < constants::numArrows; i++) {
+         float t = i/(float)constants::numArrows;
+         int arrowID = newId();
+			Arrow ar(vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)), play->pos, arrowID);
+			Missile arrow(arrowID);
+         arrow.init(play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)), Missile::Arrow);
+			objs.addMissile(arrow);
+			arrow.id = arrowID;
+			cm.broadcast(ar);
+      }
+	}
+	else if (p.type == pack::arrow) {
+		//printf("recieved arrow!\n");
+		int arrowID = newId();
+		Arrow ar(p);
+		Player* play = objs.getPlayer(id);		
+		Missile m(arrowID);
+		//m.init(play->pos, ar.orig, Missile::Arrow);				
+		m.init(ar.orig, ar.direction, Missile::Arrow);
+      objs.addMissile(m);		
+		ar.id = arrowID;
+		ar.orig = play->pos;
+		//ar.orig = ar.direction;		
+		//ar.direction = play->pos;
+	
+		cm.broadcast(ar);
+	}
 }
 
 void GameServer::update(int ticks)

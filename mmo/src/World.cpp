@@ -115,7 +115,7 @@ void WorldData::update()
 
 void WorldData::processPacket(pack::Packet p)
 {
-   using namespace pack;
+	using namespace pack;
    if (p.type == pos) {
       Pos pos(p);
       if(pos.id == player.id) {
@@ -159,7 +159,13 @@ void WorldData::processPacket(pack::Packet p)
          }
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
-   }
+   } else if (p.type == arrow) {
+			Arrow ar(p);
+			Missile m(ar.id); // using get ticks here is a dumb hack, use newId() on the server
+		   //m.init(ar.direction, ar.orig, Missile::Arrow);
+			m.init(ar.orig, ar.direction, Missile::Arrow);		   
+			objs.addMissile(m);
+	}
 }
 
 void WorldData::draw()
@@ -203,17 +209,24 @@ void World::move(mat::vec2 dir)
 
 void World::shootArrow(mat::vec2 dir)
 {
-   if (data->ticks - data->arrowTick > arrowCooldown) {
+	//pack::Arrow ar(data->player.pos, dir - vec2(data->width/2,data->height/2), clientState->player.id);
+	pack::Arrow ar(dir - vec2(data->width/2,data->height/2), clientState->player.id);	
+	ar.makePacket().sendTo(clientState->conn);
+	//printf("arrow packet sent!\n");      
+	/**if (data->ticks - data->arrowTick > arrowCooldown) {
       Missile m(game::getTicks()); // using get ticks here is a dumb hack, use newId() on the server
       m.init(data->player.pos, dir - vec2(data->width/2,data->height/2), Missile::Arrow);
       data->objs.addMissile(m);
       data->arrowTick = data->ticks;
-   }
+   }**/
 }
 
 void World::doSpecial()
 {
-   /*if (data->ticks - data->specialTick > specialCooldown) {
+	pack::Signal sig(pack::Signal::special, clientState->player.id);
+   sig.makePacket().sendTo(clientState->conn);	
+	printf("special packet sent!\n");   
+	/*if (data->ticks - data->specialTick > specialCooldown) {
       for (int i = 0; i < numArrows; i++) {
          float t = i/(float)numArrows;
          Missile arrow;

@@ -15,6 +15,7 @@ enum PacketType {
    signal = 4,
    // Add new packet types here, make values explicit
    spawn = 5,
+	arrow = 6,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -121,6 +122,7 @@ struct Signal {
       stopped = 3,      // The player id(val) stopped moving
       death = 4,        // The NPC[or player?] id(val) is dead
       playerconnect = 5,
+		special = 6,		// The player id(val) casts a special attack
    };
    int sig, val;
    Signal() : sig(0) {}
@@ -132,6 +134,25 @@ struct Signal {
    Packet makePacket() {
       Packet p(8, signal);
       p.data.writeInt(sig).writeInt(val);
+      return p;
+   }
+};
+
+// used for an arrow
+struct Arrow {
+	mat::vec2 orig;
+	mat::vec2 direction;
+   int id;
+   Arrow() {}
+   Arrow(mat::vec2 dir) : orig(0), direction(dir), id(0) {}
+   Arrow(mat::vec2 dir, int id) : orig(0), direction(dir), id(id) {}
+	Arrow(mat::vec2 dir, mat::vec2 orig, int id) : orig(orig), direction(dir), id(id) {}
+   Arrow(Packet &p) {
+      p.data.readInt(id).readFloat(orig.x).readFloat(orig.y).readFloat(direction.x).readFloat(direction.y).reset();
+   }
+   Packet makePacket() {
+      Packet p(20, arrow);
+      p.data.writeInt(id).writeFloat(orig.x).writeFloat(orig.y).writeFloat(direction.x).writeFloat(direction.y);
       return p;
    }
 };
