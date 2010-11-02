@@ -239,7 +239,19 @@
 			>
 		</File>
 		<File
+			RelativePath=".\src\GameServer.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\GameUtil.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Geometry.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Geometry.h"
 			>
 		</File>
 		<File

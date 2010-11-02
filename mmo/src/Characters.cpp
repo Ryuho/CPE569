@@ -6,8 +6,9 @@
 using namespace game;
 using namespace constants;
 using namespace std;
+using namespace geom;
 
-   int stopAfterTicks = 100;
+int stopAfterTicks = 100;
 
 void Player::setPos(mat::vec2 pos)
 {
@@ -96,7 +97,7 @@ void NPC::init(vec2 pos, Type type)
    this->pos = pos;
    moving = false;
    alive = true;
-   dir = vec2(0, 0);
+   dir = vec2(0, -1);
 
    initGraphics();
 }
@@ -273,7 +274,7 @@ void NPC::updateServer(std::vector<vec2> dests)
    //AI part, will eventually be changed with plugabble AI
    if(alive) {
       if(dir.length() < 0.5 || dir.length() > 2) {
-         dir = vec2(rand()%500, rand()%500).normalize();
+         dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
       }
       float d = mat::dist(pos, vec2(0,0));
       if(d > 800.0 || d < -800.0) {
@@ -283,7 +284,7 @@ void NPC::updateServer(std::vector<vec2> dests)
             if(dest.length() > 0.1 || dest.length() < -0.1)
                dir = dest.normalize();
             else
-               dir = vec2(rand()%500, rand()%500).normalize();
+               dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
          }
       }
       pos = dir*npcSpeed*getDt() + pos;
@@ -313,12 +314,12 @@ void ObjectHolder::drawAll()
       npcs[i].draw();
 }
 
+Circle Player::bounds()
+{
+   return Circle(radius, pos);
+}
 
-
-
-
-
-
-
-
-
+Circle NPC::bounds()
+{
+   return Circle(radius, pos);
+}

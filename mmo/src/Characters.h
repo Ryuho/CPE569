@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "matrix.h"
+#include "Geometry.h"
 
 using mat::vec2;
 struct Animation;
@@ -17,8 +18,10 @@ struct Player {
 
    void update();
    void draw();
+   geom::Circle bounds();
 
-   vec2 pos, dir;
+   vec2 dir, pos;
+   float radius;
    bool moving, alive;
    int animStart, lastUpdate;
    int id;
@@ -66,9 +69,11 @@ struct NPC {
    void updateServer(std::vector<mat::vec2> dests);
    void update();
    void draw();
+   geom::Circle bounds();
    
    Type type;
-   vec2 pos, dir;
+   vec2 dir, pos;
+   float radius;
    bool alive, moving;
    Animation *anim;
    int id;

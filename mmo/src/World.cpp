@@ -125,6 +125,7 @@ void WorldData::processPacket(pack::Packet p)
       } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
          npc->pos = pos.v;
+         npc->pos = pos.v;
       } else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    } else if (p.type == spawn) {
