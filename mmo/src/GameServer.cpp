@@ -46,20 +46,22 @@ void GameServer::newConnection(int id)
 {
    printf("New connection: %d\n", id);
    objs.addPlayer(Player(id));
+   //Tell all current players about the new player. 
+   //This includes telling the player about themself, which is handled and ignored
    cm.sendPacket(Connect(id), id);
    cm.broadcast(Signal(Signal::playerconnect, id));
 
-
+   //Spawn new NPC on user login and tell everybody about it
    int npcid = newId();
-   /**spawnNPC(npcid);
+   spawnNPC(npcid);
    NPC *npc = objs.getNPC(npcid);
    cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
    cm.broadcast(pack::Pos(npc->pos, npcid));
-   //printf("server npc id=%d type=%d (2)\n", npc->id, npc->type);
    for(unsigned i = 0; i < objs.npcs.size(); i++) {
       cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
       cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
-   }**/
+   }
+   //Tell the new user about all other users on the server (and their position)
    for(unsigned i = 0; i < objs.players.size(); i++) {
       cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
       cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
