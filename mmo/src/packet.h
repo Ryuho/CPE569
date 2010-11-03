@@ -16,6 +16,7 @@ enum PacketType {
    // Add new packet types here, make values explicit
    spawn = 5,
 	arrow = 6,
+	initialize = 7,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -153,6 +154,24 @@ struct Arrow {
    Packet makePacket() {
       Packet p(20, arrow);
       p.data.writeInt(id).writeFloat(orig.x).writeFloat(orig.y).writeFloat(direction.x).writeFloat(direction.y);
+      return p;
+   }
+};
+
+// A general packet for starting a player with all existing objects in the scene.
+struct Initialize {
+   enum { player = 1, missile = 2, npc = 3, item = 4, };
+   int id, type, subType;
+   mat::vec2 pos, dir;
+   Initialize() {}
+   Initialize(int id, int type, int subType, mat::vec2 pos, mat::vec2 dir)
+      : id(id), type(type), subType(subType), pos(pos), dir(dir) {}
+   Initialize(Packet &p) {
+      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).reset();
+   }
+   Packet makePacket() {
+      Packet p(28, initialize);
+      p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
       return p;
    }
 };

@@ -9,7 +9,13 @@ using namespace std;
 
    int stopAfterTicks = 100;
 
-void Player::setPos(mat::vec2 pos)
+Player::Player(int id, vec2 pos, vec2 dir)
+   : id(id), pos(pos), dir(dir), moving(false), alive(true)
+{
+   lastUpdate = getTicks();
+}
+
+void Player::setPos(vec2 pos)
 {
    if (!alive) {
       alive = true;
@@ -20,7 +26,7 @@ void Player::setPos(mat::vec2 pos)
    this->pos = pos;
 }
 
-void Player::moveTo(mat::vec2 pos)
+void Player::moveTo(vec2 pos)
 {
    if (!alive)
       setPos(pos);
@@ -48,7 +54,7 @@ void Player::update()
    }
 }
 
-void Missile::init(mat::vec2 pos, mat::vec2 dir, Missile::Type type)
+void Missile::init(vec2 pos, vec2 dir, Missile::Type type)
 {
    start = pos;
    if (dir.length() > 0.0)
@@ -260,7 +266,7 @@ void NPC::updateServer(std::vector<vec2> dests)
          if(d < length && d > 500.0) {
             length = d;
             dest = dests[i];
-            dir = mat::to(pos, dests[i]).normalize();
+            dir = to(pos, dests[i]).normalize();
          }
       }
       moving = length > 0;
@@ -275,11 +281,11 @@ void NPC::updateServer(std::vector<vec2> dests)
       if(dir.length() < 0.5 || dir.length() > 2) {
          dir = vec2(rand()%500, rand()%500).normalize();
       }
-      float d = mat::dist(pos, vec2(0,0));
+      float d = dist(pos, vec2(0,0));
       if(d > 800.0 || d < -800.0) {
          pos = vec2(0,0);
          if(dests.size() != 0) {
-            vec2 dest(mat::to(pos, dests[rand() % dests.size()]));
+            vec2 dest(to(pos, dests[rand() % dests.size()]));
             if(dest.length() > 0.1 || dest.length() < -0.1)
                dir = dest.normalize();
             else

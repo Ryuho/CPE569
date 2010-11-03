@@ -15,6 +15,7 @@ struct WorldData {
    float dt;
    vec2 playerMoveDir;
    int arrowTick, specialTick;
+   bool showShadow;
 
    ObjectHolder objs;
    Player player, shadow;
@@ -49,6 +50,7 @@ void WorldData::init()
 
    arrowTick = 0;
    specialTick = 0;
+   showShadow = true;
 
    sock::setupSockets();
 
@@ -72,8 +74,26 @@ void WorldData::init()
    }
    
    pack::Connect c(p);
-   player.id = c.id;
-   shadow.id = c.id;
+
+   if (!conn.select(1000)) {
+      printf("Timed out waiting for initalize packet\n");
+      exit(-1);
+   }
+   
+   p = pack::readPacket(conn);
+   if (p.type != pack::initialize) {
+      printf("Expecting initalize, got %d\n", p.type);
+      exit(-1);
+   }
+   
+   pack::Initialize i(p);
+   if (i.id != c.id || i.type != pack::Initialize::player) {
+      printf("Bad init packet\n");
+      exit(-1);
+   }
+   
+   player = Player(i.id, i.pos, i.dir);
+   shadow = player;
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
@@ -84,8 +104,6 @@ void World::graphicsInit(int width, int height)
 
    data->width = width;
    data->height = height;
-   data->player.setPos(vec2(width/2, height/2));
-   data->shadow.setPos(vec2(width/2, height/2));
 
    data->ground = fromTGA("grass.tga");
 }
@@ -116,6 +134,7 @@ void WorldData::update()
 void WorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
+   
    if (p.type == pos) {
       Pos pos(p);
       if(pos.id == player.id) {
@@ -127,7 +146,18 @@ void WorldData::processPacket(pack::Packet p)
          npc->pos = pos.v;
       } else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
-   } else if (p.type == spawn) {
+   }
+   
+   else if (p.type == initialize) {
+      Initialize i(p);
+      if (i.type == Initialize::player && i.id != player.id) {
+         objs.addPlayer(Player(i.id, i.pos, i.dir));
+         
+         printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
+      }
+   }
+   
+   else if (p.type == spawn) {
       UnitSpawn unit(p);
       if(!objs.checkObject(unit.id, ObjectHolder::IdType::NPC)) {
          NPC npc(unit.id);
@@ -135,7 +165,9 @@ void WorldData::processPacket(pack::Packet p)
          objs.addNPC(npc);
          printf("NPC spawned id=%d type=%d\n", npc.id, npc.type);
       }
-   } else if (p.type == signal) {
+   } 
+   
+   else if (p.type == signal) {
       Signal sig(p);
       if (sig.sig == Signal::disconnect) {
          objs.removeObject(sig.val);
@@ -158,7 +190,9 @@ void WorldData::processPacket(pack::Packet p)
          }
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
-   } else if (p.type == arrow) {
+   } 
+   
+   else if (p.type == arrow) {
 			Arrow ar(p);
 			Missile m(ar.id); // using get ticks here is a dumb hack, use newId() on the server
 		   //m.init(ar.direction, ar.orig, Missile::Arrow);
@@ -194,11 +228,20 @@ void WorldData::draw()
 
    player.draw();
 
-   glColor4ub(255,255,255,128);
-   shadow.draw();
-   glColor4ub(255,255,255,255);
-
+   if (showShadow) {
+      glColor4ub(255,255,255,128);
+      shadow.draw();
+      glColor4ub(255,255,255,255);
+   }
+   
    objs.drawAll();
+   
+   glColor4ub(255,0,0,255);
+   glPointSize(20.0);
+   glBegin(GL_POINTS);
+   glVertex3f(0,0,0);
+   glEnd();
+   glColor4ub(255,255,255,255);
 }
 
 void World::move(mat::vec2 dir)

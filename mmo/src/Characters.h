@@ -12,6 +12,7 @@ void initCharacterResources();
 
 struct Player {
    Player(int id) : id(id), alive(false) {}
+   Player(int id, vec2 pos, vec2 dir);
    void setPos(vec2 pos);
    void moveTo(vec2 pos);
 

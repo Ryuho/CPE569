@@ -341,6 +341,13 @@ Server::Server(int port, const char *addr)
       return;  
    }
    
+   int yes = 1;
+
+   if (setsockopt(info->sd, SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+      sockError();
+      return;
+   }
+   
    info->port = ntohs(sinRemote.sin_port);
    info->active = true;
 }

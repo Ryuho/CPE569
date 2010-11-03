@@ -45,12 +45,21 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
 void GameServer::newConnection(int id)
 {
    printf("New connection: %d\n", id);
-   objs.addPlayer(Player(id));
+   
+   vec2 pos(rand()%500, rand()%500);
+   
+   Player newPlayer(id, pos, vec2(0,1));
+   objs.addPlayer(newPlayer);
+
    cm.sendPacket(Connect(id), id);
-   cm.broadcast(Signal(Signal::playerconnect, id));
+   cm.broadcast(Initialize(newPlayer.id, Initialize::player, 0, newPlayer.pos, newPlayer.dir));
 
-
-   int npcid = newId();
+   for(unsigned i = 0; i < objs.players.size(); i++) {
+      Player &p = objs.players[i];
+      Initialize init(p.id, Initialize::player, 0, p.pos, p.dir);
+      cm.sendPacket(init, id);
+   }
+   
    /**spawnNPC(npcid);
    NPC *npc = objs.getNPC(npcid);
    cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
@@ -60,10 +69,10 @@ void GameServer::newConnection(int id)
       cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
       cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
    }**/
-   for(unsigned i = 0; i < objs.players.size(); i++) {
+   /*for(unsigned i = 0; i < objs.players.size(); i++) {
       cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
       cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
-   }
+   }*/
 }
 
 void GameServer::disconnect(int id)
