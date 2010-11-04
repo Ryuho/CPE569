@@ -301,12 +301,12 @@ struct vector_impl : public B {
       return _self_const->v[i];
    }
 
-   float dot(const T &rhs)
+   float dot(const T &rhs) const
    {
       float ret = 0;
 
       for (int i = 0; i < rows; i++) {
-         ret += _self->v[i] * rhs.v[i];
+         ret += _self_const->v[i] * rhs.v[i];
       }
 
       return ret;

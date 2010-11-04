@@ -1,75 +1,81 @@
 #include "Geometry.h"
-#include <stdio.h>
-using namespace geom;
 
+namespace geom {
+using namespace mat;
+using namespace std;
 
-void Circle::init(vec2 pos, float radius) {
-   this->radius = radius;
-   this->pos = pos;
+bool CircleCircle(const Circle *c1, const Circle *c2)
+{
+   return dist(c1->pos, c1->pos) < c1->radius + c2->radius;
 }
 
-bool Circle::collision(Geometry *other) {
+bool CirclePlane(const Circle *c, const Plane *p)
+{
+   return abs(p->norm.dot(c->pos) + p->d) < c->radius + p->radius;
+}
+
+bool PlanePlane(const Plane *p1, const Plane *p2)
+{
+   if (abs(p1->norm.dot(p2->norm)) == 1.0) // parallel planes
+      return abs(p1->d - p2->d) < p1->radius + p2->radius;
+   else
+      return true;
+}
+
+
+bool Circle::collision(const GeometryBase *other) const
+{
    return other->collision(this);
 }
 
-bool Circle::collision(Circle *other) {
-   return mat::dist(pos, other->pos) < other->radius + radius;
+bool Circle::collision(const Circle *other) const
+{
+   return CircleCircle(this, other);
 }
 
-bool Circle::collision(Square *other) {
-   printf("unimplemented\n");
-   return true; //TODO
+bool Circle::collision(const Plane *other) const
+{
+   return CirclePlane(this, other);
 }
 
-bool Circle::collision(Plane *other) {
-   printf("unimplemented\n");
-   return true; //TODO
-}
-
-void Square::init(vec2 bottomLeft, vec2 size) {
-   this->bottomLeft = bottomLeft;
-   this->size = size;
-}
-
-bool Square::collision(Geometry *other) {
+bool Plane::collision(const GeometryBase *other) const
+{
    return other->collision(this);
 }
 
-bool Square::collision(Circle *other) {
-   printf("unimplemented\n");
-   return true; //TODO
+bool Plane::collision(const Circle *other) const
+{
+   return CirclePlane(other, this);
 }
 
-bool Square::collision(Square *other) {
-   printf("unimplemented\n");
-   return true; //TODO
+bool Plane::collision(const Plane *other) const
+{
+   return PlanePlane(this, other);
 }
 
-bool Square::collision(Plane *other) {
-   printf("unimplemented\n");
-   return true; //TODO
+bool GeometrySet::collision(const GeometryBase *other) const
+{
+   for (unsigned i = 0; i < set.size(); i++)
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
-void Plane::init(vec2 pos, float slope) {
-   this->pos = pos;
-   this->slope = slope;
+bool GeometrySet::collision(const Circle *other) const
+{
+   for (unsigned i = 0; i < set.size(); i++)
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
-bool Plane::collision(Geometry *other) {
-   return other->collision(this);
+bool GeometrySet::collision(const Plane *other) const
+{
+   for (unsigned i = 0; i < set.size(); i++)
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
-bool Plane::collision(Circle *other) {
-   printf("unimplemented\n");
-   return true; //TODO
-}
 
-bool Plane::collision(Square *other) {
-   printf("unimplemented\n");
-   return true; //TODO
-}
-
-bool Plane::collision(Plane *other) {
-   printf("unimplemented\n");
-   return true; //TODO
-}
+} // end geom namespace
