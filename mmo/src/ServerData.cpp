@@ -1,5 +1,6 @@
 #include "ServerData.h"
 #include "GameServer.h"
+#include "Geometry.h"
 
 namespace server {
 using namespace mat;
