@@ -38,6 +38,26 @@ void Missile::update()
    pos = pos + dir * projectileSpeed * getDt();
 }
 
+// NPC
+
+NPC::NPC(int id, vec2 pos, vec2 dir, int type)
+   : id(id), pos(pos), dir(dir), type(type)
+{
+
+}
+
+void NPC::update() 
+{
+   
+}
+
+// Item
+
+Item::Item(int id, vec2 pos, int type)
+   : id(id), pos(pos), type(type)
+{
+
+}
 
 // Object Manager
 

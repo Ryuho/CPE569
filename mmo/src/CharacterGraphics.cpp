@@ -76,41 +76,39 @@ void Player::draw()
 
 void Missile::draw()
 {
-   if (alive) {
-      glPushMatrix();
-      glTranslatef(pos.x, pos.y, 0.0);
-      glScalef(spriteZoom, spriteZoom, 1.0);
-      glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
-      
-      sprites16.draw(9,0); // firebolt
-      //sprites16.draw(8,0); // arrow
+   glPushMatrix();
+   glTranslatef(pos.x, pos.y, 0.0);
+   glScalef(spriteZoom, spriteZoom, 1.0);
+   glRotatef(toDeg(atan2(dir.y, dir.x)), 0, 0, 1);
+   
+   sprites16.draw(9,0); // firebolt
+   //sprites16.draw(8,0); // arrow
 
-      //sprites16x32.draw(18,1); // pillar
+   //sprites16x32.draw(18,1); // pillar
 
-      //sprites32.draw(12,2); // mini trident
-      //sprites32.draw(11,0); // small fireball
-      //sprites32.draw(6,0); // ball?
-      //sprites32.draw(5,0); // bomb (dont rotate)
-      //sprites32.draw(7,0); // boomerang (dont rotate, animation 7 - 10)
-      //sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
-      //sprites64.draw(7,0); // big ass spear
-      glPopMatrix();
-   }
+   //sprites32.draw(12,2); // mini trident
+   //sprites32.draw(11,0); // small fireball
+   //sprites32.draw(6,0); // ball?
+   //sprites32.draw(5,0); // bomb (dont rotate)
+   //sprites32.draw(7,0); // boomerang (dont rotate, animation 7 - 10)
+   //sprites32.draw(12,0); // strange 4 orb thing. rotate and animate 12-13
+   //sprites64.draw(7,0); // big ass spear
+   glPopMatrix();
 }
 
 void Item::initGraphics()
 {
    switch(type) {
-      case Item::GreenRupee :
+      case ItemType::GreenRupee :
          anim = &greenRupeeAnim;
          break;
-      case Item::RedRupee :
+      case ItemType::RedRupee :
          anim = &redRupeeAnim;
          break;
-      case Item::BlueRupee :
+      case ItemType::BlueRupee :
          anim = &blueRupeeAnim;
          break;
-      case Item::Explosion :
+      case ItemType::Explosion :
          anim = &explosionAnim;
          break;
       default:
@@ -134,21 +132,21 @@ void Item::draw()
 
 void NPC::initGraphics()
 {
-   this->anim = type == NPC::Thief     ? &thiefAnim :
-                type == NPC::Princess  ? &princessAnim :
-                type == NPC::Fairy     ? &fairyAnim :
-                type == NPC::Skeleton  ? &skeletonAnim :
-                type == NPC::Cyclops   ? &cyclopsAnim :
-                type == NPC::Bat       ? &batAnim :
-                type == NPC::Bird      ? &birdAnim :
-                type == NPC::Squirrel  ? &squirrelAnim :
-                type == NPC::Chicken   ? &chickenAnim :
-                type == NPC::Vulture   ? &vultureAnim :
-                type == NPC::Cactus    ? &cactusAnim :
-                type == NPC::BigFairy  ? &bigFairyAnim :
-                type == NPC::Wizard    ? &wizardAnim :
-                type == NPC::Ganon     ? &ganonAnim :
-                type == NPC::Goblin    ? &goblinAnim :
+   this->anim = type == NPCType::Thief     ? &thiefAnim :
+                type == NPCType::Princess  ? &princessAnim :
+                type == NPCType::Fairy     ? &fairyAnim :
+                type == NPCType::Skeleton  ? &skeletonAnim :
+                type == NPCType::Cyclops   ? &cyclopsAnim :
+                type == NPCType::Bat       ? &batAnim :
+                type == NPCType::Bird      ? &birdAnim :
+                type == NPCType::Squirrel  ? &squirrelAnim :
+                type == NPCType::Chicken   ? &chickenAnim :
+                type == NPCType::Vulture   ? &vultureAnim :
+                type == NPCType::Cactus    ? &cactusAnim :
+                type == NPCType::BigFairy  ? &bigFairyAnim :
+                type == NPCType::Wizard    ? &wizardAnim :
+                type == NPCType::Ganon     ? &ganonAnim :
+                type == NPCType::Goblin    ? &goblinAnim :
                 (printf("Unknown NPC type: %d\n", type), (Animation*)0);
 }
 

@@ -8,8 +8,6 @@ GameServer *serverState;
 
 void spawnNPC(int id)
 {
-   /*NPC n(id);
-
    int minv, maxv, midv;
    minv = 700;
    maxv = 1200;
@@ -24,12 +22,9 @@ void spawnNPC(int id)
    else if(_pos.y < 0.0 && _pos.y > -midv)
       _pos.y = (float) -midv;
 
-   n.init(vec2(), (NPC::Type) (rand() % ((int)NPC::MaxNPC)));
-   n.moving = true;
-   n.dir = vec2(0,1);
-   n.alive = true;
-   serverState->objs.addNPC(n);
-   //printf("server npc id=%d type=%d (1)\n", n.id, n.type);*/
+   NPC n(id, _pos, vec2(0,1), (rand() % ((int)NPCType::Goblin)));
+   serverState->om.addNPC(n);
+   printf("server npc id=%d type=%d\n", n.id, n.type);
 }
 
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
@@ -43,7 +38,7 @@ void GameServer::newConnection(int id)
 {
    printf("New connection: %d\n", id);
    
-   vec2 pos(rand()%200, rand()%200);
+   vec2 pos((float)(rand()%200), (float)(rand()%200));
    
    Player newPlayer(id, pos, vec2(0,1));
    om.addPlayer(newPlayer);
@@ -57,19 +52,16 @@ void GameServer::newConnection(int id)
       cm.sendPacket(init, id);
    }
    
-   /**spawnNPC(npcid);
-   NPC *npc = objs.getNPC(npcid);
-   cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
-   cm.broadcast(pack::Pos(npc->pos, npcid));
-   for(unsigned i = 0; i < objs.npcs.size(); i++) {
-      cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
-      cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
+   //tell new player about previous NPCs
+   for(unsigned i = 0; i < om.npcs.size(); i++) {
+      NPC &npc = *om.npcs[i];
+      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, npc.type, npc.pos, npc.dir).makePacket(), id);
    }
-   //Tell the new user about all other users on the server (and their position)
-   for(unsigned i = 0; i < objs.players.size(); i++) {
-      cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
-      cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
-   }*/
+   //make a new NPC and tell everybody about it
+   int npcid = newId();
+   spawnNPC(npcid);
+   NPC *npc = om.getNpc(npcid);
+   cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir).makePacket());
 }
 
 void GameServer::disconnect(int id)
@@ -113,23 +105,14 @@ void GameServer::update(int ticks)
    dt = (float)((ticks - this->ticks)/1000.0);
    this->ticks = ticks;
 
-   /*std::vector<vec2> playerPoses;
-   for(unsigned i = 0; i < om.players.size(); i++) {
-      playerPoses.push_back(om.players[i].pos);
-   }
    for(unsigned i = 0; i < om.npcs.size(); i++) {
-      if(om.npcs[i].alive) {
-         om.npcs[i].updateServer(playerPoses);
-         if(om.npcs[i].moving)
-            cm.broadcast(pack::Pos(om.npcs[i].pos, om.npcs[i].id));
-         else
-            cm.broadcast(Signal(Signal::stopped, om.npcs[i].id));
+      if(om.players.size() > 0) {
+         NPC &npc = *om.npcs[i];
+         npc.pos = vec2(5,5) + om.players[0]->pos;
+         npc.update();
+         cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
       }
-      else { //!alive
-         cm.broadcast(pack::Signal(Signal::death,om.npcs[i].id).makePacket());
-         om.removeObject(om.npcs[i].id);
-      }
-   }*/
+   }
 }
 
 int getTicks()

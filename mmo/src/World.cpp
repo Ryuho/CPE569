@@ -8,7 +8,7 @@
 using namespace constants;
 
 struct WorldData {
-   WorldData() : player(0), shadow(0) {}
+   WorldData() {};
    int width, height;
    int ticks;
    float dt;
@@ -135,14 +135,23 @@ void WorldData::processPacket(pack::Packet p)
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Player)) {
-         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         Player *p = objs.getPlayer(pos.id);
+         if(p)
+            p->move(pos.pos, pos.dir, pos.moving != 0);
+         else
+            printf("Accessing unkown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
-         npc->pos = pos.pos;
+         //if(!npc)
+         //   printf(".");
+         //else
+         if(npc)
+            npc->pos = pos.pos;
+         else
+            printf("Accessing unkown NPC %d\n", pos.id);
       } else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    }
-   
    else if (p.type == initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.id) {
@@ -151,49 +160,23 @@ void WorldData::processPacket(pack::Packet p)
          printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
       }
       else if (i.type == ObjectType::Missile) {
-         Missile m(i.id);
-         m.init(i.pos, i.dir, i.subType);
-         objs.addMissile(m);
+         objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
+      } else if (i.type == ObjectType::NPC) {
+         objs.addNPC(NPC(i.id, i.subType, i.pos, i.dir, false));
+         printf("Added NPC %d \n", i.id);
       }
-   }
-   
-   else if (p.type == spawn) {
-      UnitSpawn unit(p);
-      if(!objs.checkObject(unit.id, ObjectHolder::IdType::NPC)) {
-         NPC npc(unit.id);
-         npc.init(unit.pos, (NPC::Type) unit.type);
-         objs.addNPC(npc);
-         printf("NPC spawned id=%d type=%d\n", npc.id, npc.type);
-      }
-   } else if (p.type == signal) {
+   } 
+   else if (p.type == signal) {
       Signal sig(p);
       if (sig.sig == Signal::disconnect) {
          objs.removeObject(sig.val);
          printf("Player %d disconnected\n", sig.val);
-      } else if(sig.sig == Signal::death) {
-         objs.removeObject(sig.val);
-      } else if(sig.sig == Signal::stopped) {
-         /*
-         if(objs.checkObject(sig.val, ObjectHolder::IdType::NPC)) {
-            objs.getNPC(sig.val).moving = false;
-         } else if(objs.checkObject(sig.val, ObjectHolder::IdType::Player))
-            objs.getPlayer(sig.val).moving = false;
-         */
-      } else if(sig.sig == Signal::playerconnect) {
-         if(sig.val != player.id) {
-            Player player(sig.val);
-            player.alive = true;
-            objs.addPlayer(player);
-            printf("Player %d connected\n", sig.val);
-         }
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
-   } else if (p.type == arrow) {
+   } 
+   else if (p.type == arrow) {
 			Arrow ar(p);
-			Missile m(ar.id); // using get ticks here is a dumb hack, use newId() on the server
-		   //m.init(ar.direction, ar.orig, Missile::Arrow);
-			m.init(ar.orig, ar.direction, Missile::Arrow);		   
-			objs.addMissile(m);
+			objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
 }
 

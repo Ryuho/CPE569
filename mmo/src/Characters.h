@@ -12,7 +12,7 @@ struct Animation;
 void initCharacterResources();
 
 struct Player {
-   Player(int id) : id(id), alive(false) {}
+   Player() : id(0), alive(false) {}
    Player(int id, vec2 pos, vec2 dir);
    void move(vec2 pos, vec2 dir, bool moving);
    void stop();
@@ -28,25 +28,20 @@ struct Player {
 };
 
 struct Missile {
-   enum Type { Arrow };
-   Missile(int id) : id(id), alive(false) {}
-   void init(vec2 pos, vec2 dir, int type);
+   Missile(int id, int type, vec2 pos, vec2 dir);
 
    void update();
    void draw();
 
    int type;
-   vec2 pos, dir, start;
    bool alive;
+   vec2 pos, dir;
    int id;
 };
 
 struct Item {
-   enum Type { GreenRupee, RedRupee, BlueRupee, Explosion,  MaxItem };
-   Item(int id) : id(id), alive(false), anim(0), type(MaxItem) {}
-   void init(vec2 pos, Type type);
+   Item(int id, int type, vec2 pos);
 
-   void initGraphics();
    void update();
    void draw();
    
@@ -55,16 +50,13 @@ struct Item {
    bool alive;
    Animation *anim;
    int id;
+private:
+   void initGraphics();
 };
 
 struct NPC {
-   enum Type { Thief, Princess, Fairy, Skeleton, Cyclops, 
-      Bat, Bird, Squirrel, Chicken, Vulture, Bush, Cactus, 
-      BigFairy, Wizard, Ganon, Goblin, MaxNPC };
-   NPC(int id) : id(id), alive(false) {}
-   void init(vec2 pos, Type type);
+   NPC(int id, int type, vec2 pos, vec2 dir, bool moving);
 
-   void initGraphics();
    void resetAnimation();
    void updateServer(std::vector<mat::vec2> dests);
    void update();
@@ -75,6 +67,8 @@ struct NPC {
    bool alive, moving;
    Animation *anim;
    int id;
+private:
+   void initGraphics();
 };
 
 struct ObjectHolder {

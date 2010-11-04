@@ -40,73 +40,41 @@ void Player::update()
    }
 }
 
-void Missile::init(vec2 pos, vec2 dir, int type)
+Missile::Missile(int id, int type, vec2 pos, vec2 dir)
+   : id(id), type(type), pos(pos)
 {
-   start = pos;
-   if (dir.length() > 0.0)
-      this->dir = normalize(dir);
-   else
-      this->dir = vec2(0.0, 1.0);
-   this->type = type;
-
-   this->pos = start + this->dir * 75.0;
-
-   alive = true;
+   this->dir = dir;
+   if (this->dir.length() > 0.0)
+      this->dir = normalize(this->dir);
 }
 
 void Missile::update()
 {
-   if (alive) {
-      pos = pos + dir * projectileSpeed * getDt();
-
-      if (dist(start, pos) > maxProjectileDist)
-         alive = false;
-   }
+   pos = pos + dir * projectileSpeed * getDt();
 }
 
-void Item::init(vec2 pos, Type type)
+Item::Item(int id, int type, vec2 pos) 
+   : id(id), type(type), pos(pos)
 {
-    this->pos = pos;
-    this->type = type;
     alive = true;
-
     initGraphics();
 }
 
 void Item::update()
 {
-   if (alive) {
-      //if within 40 pixels make not alive
-      if (dist(getPlayer().pos, pos) < 40)
-         alive = false;
-   }
+
 }
 
-void NPC::init(vec2 pos, Type type)
+NPC::NPC(int id, int type, vec2 pos, vec2 dir, bool moving)
+   : id(id), type(type), pos(pos), dir(dir), moving(moving)
 {
-   this->type = type;
-   this->pos = pos;
-   moving = false;
    alive = true;
-   dir = vec2(0, -1);
-
    initGraphics();
 }
 
 void NPC::update()
 {
-   /*
-   if(alive) {
-      vec2 dist = to(pos, getPlayer().pos);
-      bool ismoving = dist.length() > 40;
-      if(!moving && ismoving)
-         resetAnimation();
-      moving = ismoving;
-      dir = normalize(dist);
-      if(moving)
-         this->pos = dir*npcSpeed*getDt() + pos;
-   }
-   */
+
 }
 
 
