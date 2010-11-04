@@ -17,6 +17,7 @@ enum PacketType {
    // Add new packet types here, make values explicit
    spawn = 5,
 	arrow = 6,
+   initialize = 7,
 };
 
 // Simple structure for reading/writing using sockets.

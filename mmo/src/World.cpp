@@ -101,8 +101,6 @@ void World::graphicsInit(int width, int height)
 
    data->width = width;
    data->height = height;
-   data->player.setPos(vec2(width/2, height/2));
-   data->shadow.setPos(vec2(width/2, height/2));
 
    data->ground = fromTGA("grass.tga");
 }
@@ -235,7 +233,7 @@ void WorldData::draw()
 
 void World::move(mat::vec2 dir)
 {
-   data->playerMoveDir = dir;
+   data->playerMoveDir = dir.normalize();
 }
 
 void World::shootArrow(mat::vec2 dir)

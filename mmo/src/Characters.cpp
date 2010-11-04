@@ -305,12 +305,3 @@ void ObjectHolder::drawAll()
       npcs[i].draw();
 }
 
-Circle Player::bounds()
-{
-   return Circle(radius, pos);
-}
-
-Circle NPC::bounds()
-{
-   return Circle(radius, pos);
-}

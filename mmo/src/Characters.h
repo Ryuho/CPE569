@@ -19,7 +19,6 @@ struct Player {
 
    void update();
    void draw();
-   geom::Circle bounds();
 
    vec2 dir, pos;
    float radius;
@@ -70,7 +69,6 @@ struct NPC {
    void updateServer(std::vector<mat::vec2> dests);
    void update();
    void draw();
-   geom::Circle bounds();
    
    int type;
    vec2 pos, dir;

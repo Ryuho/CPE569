@@ -69,7 +69,7 @@ void GameServer::newConnection(int id)
    for(unsigned i = 0; i < objs.players.size(); i++) {
       cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
       cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
-   }
+   }*/
 }
 
 void GameServer::disconnect(int id)
