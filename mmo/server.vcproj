@@ -121,6 +121,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4244"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -168,14 +169,6 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\src\Characters.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\src\Characters.h"
-			>
-		</File>
-		<File
 			RelativePath=".\src\GameServer.cpp"
 			>
 		</File>
@@ -201,6 +194,14 @@
 		</File>
 		<File
 			RelativePath=".\src\server.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\ServerData.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\ServerData.h"
 			>
 		</File>
 		<File

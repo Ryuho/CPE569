@@ -7,9 +7,10 @@
 #include <string>
 
 namespace pack {
+using namespace mat;
 
 enum PacketType {
-   pos = 1,
+   position = 1,
    message = 2,
    connect = 3,
    signal = 4,
@@ -52,18 +53,23 @@ inline Packet readPacket(sock::Connection conn) {
 
 // Update of a player position. 
 // id is not used when sending to server (can't trust pesky client)
-struct Pos {
-   mat::vec2 v;
-   int id;
-   Pos() {}
-   Pos(mat::vec2 v) : v(v), id(0) {}
-   Pos(mat::vec2 v, int id) : v(v), id(id) {}
-   Pos(Packet &p) {
-      p.data.readInt(id).readFloat(v.x).readFloat(v.y).reset();
+struct Position {
+   vec2 pos, dir;
+   int id, moving;
+   Position() {}
+   Position(vec2 pos, vec2 dir, bool moving, int id) 
+      : pos(pos), dir(dir), moving(moving), id(id) {}
+   Position(Packet &p) {
+      p.data.readInt(id).readInt(moving)
+         .readFloat(pos.x).readFloat(pos.y)
+         .readFloat(dir.x).readFloat(dir.y)
+         .reset();
    }
    Packet makePacket() {
-      Packet p(12, pos);
-      p.data.writeInt(id).writeFloat(v.x).writeFloat(v.y);
+      Packet p(24, position);
+      p.data.writeInt(id).writeInt(moving)
+         .writeFloat(pos.x).writeFloat(pos.y)
+         .writeFloat(dir.x).writeFloat(dir.y);
       return p;
    }
 };
@@ -102,7 +108,7 @@ struct Connect {
 struct UnitSpawn {
    int id;
    int type;
-   mat::vec2 pos;
+   vec2 pos;
    UnitSpawn() : id(0), type(0) {}
    UnitSpawn(int id, int type) : id(id), type(type) {}
    UnitSpawn(Packet &p) {
@@ -141,13 +147,13 @@ struct Signal {
 
 // used for an arrow
 struct Arrow {
-	mat::vec2 orig;
-	mat::vec2 direction;
+	vec2 orig;
+	vec2 direction;
    int id;
    Arrow() {}
-   Arrow(mat::vec2 dir) : orig(0), direction(dir), id(0) {}
-   Arrow(mat::vec2 dir, int id) : orig(0), direction(dir), id(id) {}
-	Arrow(mat::vec2 dir, mat::vec2 orig, int id) : orig(orig), direction(dir), id(id) {}
+   Arrow(vec2 dir) : orig(0), direction(dir), id(0) {}
+   Arrow(vec2 dir, int id) : orig(0), direction(dir), id(id) {}
+	Arrow(vec2 dir, vec2 orig, int id) : orig(orig), direction(dir), id(id) {}
    Arrow(Packet &p) {
       p.data.readInt(id).readFloat(orig.x).readFloat(orig.y).readFloat(direction.x).readFloat(direction.y).reset();
    }
@@ -160,11 +166,10 @@ struct Arrow {
 
 // A general packet for starting a player with all existing objects in the scene.
 struct Initialize {
-   enum { player = 1, missile = 2, npc = 3, item = 4, };
    int id, type, subType;
-   mat::vec2 pos, dir;
+   vec2 pos, dir;
    Initialize() {}
-   Initialize(int id, int type, int subType, mat::vec2 pos, mat::vec2 dir)
+   Initialize(int id, int type, int subType, vec2 pos, vec2 dir)
       : id(id), type(type), subType(subType), pos(pos), dir(dir) {}
    Initialize(Packet &p) {
       p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).reset();

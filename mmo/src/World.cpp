@@ -3,7 +3,6 @@
 #include "Texture.h"
 #include "packet.h"
 #include "Constants.h"
-#include "GameUtil.h"
 #include "GLUtil.h"
 
 using namespace constants;
@@ -87,7 +86,7 @@ void WorldData::init()
    }
    
    pack::Initialize i(p);
-   if (i.id != c.id || i.type != pack::Initialize::player) {
+   if (i.id != c.id || i.type != ObjectType::Player) {
       printf("Bad init packet\n");
       exit(-1);
    }
@@ -119,14 +118,12 @@ void WorldData::update()
       }
    }
 
-   if (playerMoveDir.length() > 0.0) {
-      player.moveTo(player.pos + playerMoveDir * dt * playerSpeed);
-      pack::Pos pos(player.pos + playerMoveDir * dt * playerSpeed);
-      pos.makePacket().sendTo(conn);
-   } else if (player.moving) {
-      // todo: Send a stopping signal to server
-      player.moving = false;
-   }
+   if (playerMoveDir.length() > 0.0)
+      player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
+   else
+      player.stop();
+
+   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
 
    objs.updateAll();
 }
@@ -135,25 +132,30 @@ void WorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == pos) {
-      Pos pos(p);
+   if (p.type == position) {
+      Position pos(p);
       if(pos.id == player.id) {
-         shadow.setPos(pos.v);
+         shadow.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Player)) {
-         objs.getPlayer(pos.id)->moveTo(pos.v);
+         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
       } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
-         npc->pos = pos.v;
+         npc->pos = pos.pos;
       } else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    }
    
    else if (p.type == initialize) {
       Initialize i(p);
-      if (i.type == Initialize::player && i.id != player.id) {
+      if (i.type == ObjectType::Player && i.id != player.id) {
          objs.addPlayer(Player(i.id, i.pos, i.dir));
          
          printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
+      }
+      else if (i.type == ObjectType::Missile) {
+         Missile m(i.id);
+         m.init(i.pos, i.dir, i.subType);
+         objs.addMissile(m);
       }
    }
    
@@ -317,8 +319,6 @@ void World::spawnNPC()
 
 // Global accessor functions
 
-namespace game {
-
 int getTicks()
 {
    return clientState->ticks;
@@ -333,5 +333,3 @@ Player &getPlayer()
 {
    return clientState->player;
 }
-
-} // end client namespace

@@ -1,10 +1,9 @@
 #include "Characters.h"
 #include "GLUtil.h"
 #include "Sprite.h"
-#include "GameUtil.h"
+#include "World.h"
 #include "Constants.h"
 
-using namespace game;
 using namespace constants;
 using namespace std;
 

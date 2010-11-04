@@ -1,9 +1,8 @@
 #include "Characters.h"
-#include "GameUtil.h"
+#include "World.h"
 #include "Constants.h"
 #include <cstdio>
 
-using namespace game;
 using namespace constants;
 using namespace std;
 
@@ -15,46 +14,32 @@ Player::Player(int id, vec2 pos, vec2 dir)
    lastUpdate = getTicks();
 }
 
-void Player::setPos(vec2 pos)
+void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   if (!alive) {
-      alive = true;
-      dir = vec2(0.0, 1.0);
-   }
+   lastUpdate = getTicks();
+   if (moving && !this->moving)
+      animStart = getTicks();
 
-   moving = false;
    this->pos = pos;
+   this->dir = dir;
+   this->moving = moving;
 }
 
-void Player::moveTo(vec2 pos)
+void Player::stop()
 {
-   if (!alive)
-      setPos(pos);
-
-   if (!moving) {
-      animStart = getTicks();
-   }
-
-   vec2 newDir = to(this->pos, pos);
-   if (newDir.length() > 0.0)
-      dir = normalize(newDir);
-
-   this->pos = pos;
-   moving = true;
-   lastUpdate = getTicks();
+   moving = false;
 }
 
 void Player::update()
 {
-   if (getTicks() - lastUpdate < playerPredictTicks) {
-      // this code is terribly broken
-      //pos = pos + dir * getDt() * playerSpeed;
+   if (moving && getTicks() - lastUpdate < playerPredictTicks) {
+      pos = pos + dir * getDt() * playerSpeed;
    } else {
       moving = false;
    }
 }
 
-void Missile::init(vec2 pos, vec2 dir, Missile::Type type)
+void Missile::init(vec2 pos, vec2 dir, int type)
 {
    start = pos;
    if (dir.length() > 0.0)

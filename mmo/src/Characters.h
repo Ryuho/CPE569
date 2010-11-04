@@ -13,8 +13,8 @@ void initCharacterResources();
 struct Player {
    Player(int id) : id(id), alive(false) {}
    Player(int id, vec2 pos, vec2 dir);
-   void setPos(vec2 pos);
-   void moveTo(vec2 pos);
+   void move(vec2 pos, vec2 dir, bool moving);
+   void stop();
 
    void update();
    void draw();
@@ -28,12 +28,12 @@ struct Player {
 struct Missile {
    enum Type { Arrow };
    Missile(int id) : id(id), alive(false) {}
-   void init(vec2 pos, vec2 dir, Type type);
+   void init(vec2 pos, vec2 dir, int type);
 
    void update();
    void draw();
 
-   Type type;
+   int type;
    vec2 pos, dir, start;
    bool alive;
    int id;
@@ -48,7 +48,7 @@ struct Item {
    void update();
    void draw();
    
-   Type type;
+   int type;
    vec2 pos;
    bool alive;
    Animation *anim;
@@ -68,7 +68,7 @@ struct NPC {
    void update();
    void draw();
    
-   Type type;
+   int type;
    vec2 pos, dir;
    bool alive, moving;
    Animation *anim;
@@ -104,6 +104,12 @@ struct ObjectHolder {
 
    void updateAll();
    void drawAll();
+};
+
+namespace game {
+   int getTicks();
+   float getDt();
+   Player &getPlayer(); // available only on client
 };
 
 #endif

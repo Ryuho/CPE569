@@ -341,9 +341,13 @@ Server::Server(int port, const char *addr)
       return;  
    }
    
+#ifdef WIN32
+   char yes = 1;
+   if (setsockopt(info->sd, SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(char)) == -1) {
+#else
    int yes = 1;
-
    if (setsockopt(info->sd, SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+#endif
       sockError();
       return;
    }

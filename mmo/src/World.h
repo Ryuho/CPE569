@@ -24,4 +24,8 @@ protected:
    boost::shared_ptr<WorldData> data;
 };
 
+int getTicks();
+float getDt();
+Player &getPlayer(); // available only on client
+
 #endif

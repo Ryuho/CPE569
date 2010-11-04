@@ -13,7 +13,23 @@ namespace constants {
 
    const int playerPredictTicks = 200;
 
-	const float PI = 3.14159265359;
+	const float PI = 3.14159265359f;
+
+   namespace ObjectType { enum {
+      Player, NPC, Missile, Item,
+   };}
+   namespace NPCType { enum {
+      Thief, Princess, Fairy, Skeleton, Cyclops,
+      Bat, Bird, Squirrel, Chicken, Vulture, Bush, Cactus,
+      BigFairy, Wizard, Ganon, Goblin,
+   };}
+   namespace ItemType { enum {
+      GreenRupee, RedRupee, BlueRupee, Explosion
+   };}
+   namespace MissileType { enum {
+      Arrow
+   };}
+
 }
 
 #endif

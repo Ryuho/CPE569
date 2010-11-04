@@ -2,7 +2,9 @@
 #define _GAME_SERVER_H_
 
 #include "ServerUtil.h"
-#include "Characters.h"
+#include "ServerData.h"
+
+using namespace server;
 
 struct GameServer {
    GameServer(ConnectionManager &cm);
@@ -12,10 +14,13 @@ struct GameServer {
    void update(int ticks);
 
    ConnectionManager &cm;
-   ObjectHolder objs;
+   ObjectManager om;
 
    int ticks;
    float dt;
 };
+
+int getTicks();
+float getDt();
 
 #endif
