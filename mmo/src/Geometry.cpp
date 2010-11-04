@@ -11,7 +11,7 @@ bool CircleCircle(const Circle *c1, const Circle *c2)
 
 bool CirclePlane(const Circle *c, const Plane *p)
 {
-   return p->norm.dot(c->pos) + p->d < c->radius;
+   return abs(p->norm.dot(c->pos) + p->d) < c->radius + p->radius;
 }
 
 bool PlanePlane(const Plane *p1, const Plane *p2)
@@ -56,25 +56,25 @@ bool Plane::collision(const Plane *other) const
 bool GeometrySet::collision(const GeometryBase *other) const
 {
    for (unsigned i = 0; i < set.size(); i++)
-      if (set[i].ptr->collision(other))
-         return true;
-   return false;
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
 bool GeometrySet::collision(const Circle *other) const
 {
    for (unsigned i = 0; i < set.size(); i++)
-      if (set[i].ptr->collision(other))
-         return true;
-   return false;
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
 bool GeometrySet::collision(const Plane *other) const
 {
    for (unsigned i = 0; i < set.size(); i++)
-      if (set[i].ptr->collision(other))
-         return true;
-   return false;
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
 }
 
 
