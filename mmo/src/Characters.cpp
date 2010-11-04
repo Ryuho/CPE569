@@ -5,8 +5,9 @@
 
 using namespace constants;
 using namespace std;
+using namespace geom;
 
-   int stopAfterTicks = 100;
+int stopAfterTicks = 100;
 
 Player::Player(int id, vec2 pos, vec2 dir)
    : id(id), pos(pos), dir(dir), moving(false), alive(true)
@@ -87,7 +88,7 @@ void NPC::init(vec2 pos, Type type)
    this->pos = pos;
    moving = false;
    alive = true;
-   dir = vec2(0, 0);
+   dir = vec2(0, -1);
 
    initGraphics();
 }
@@ -251,7 +252,7 @@ void NPC::updateServer(std::vector<vec2> dests)
          if(d < length && d > 500.0) {
             length = d;
             dest = dests[i];
-            dir = to(pos, dests[i]).normalize();
+            dir = mat::to(pos, dests[i]).normalize();
          }
       }
       moving = length > 0;
@@ -264,17 +265,17 @@ void NPC::updateServer(std::vector<vec2> dests)
    //AI part, will eventually be changed with plugabble AI
    if(alive) {
       if(dir.length() < 0.5 || dir.length() > 2) {
-         dir = vec2(rand()%500, rand()%500).normalize();
+         dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
       }
-      float d = dist(pos, vec2(0,0));
+      float d = mat::dist(pos, vec2(0,0));
       if(d > 800.0 || d < -800.0) {
          pos = vec2(0,0);
          if(dests.size() != 0) {
-            vec2 dest(to(pos, dests[rand() % dests.size()]));
+            vec2 dest(mat::to(pos, dests[rand() % dests.size()]));
             if(dest.length() > 0.1 || dest.length() < -0.1)
                dir = dest.normalize();
             else
-               dir = vec2(rand()%500, rand()%500).normalize();
+               dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
          }
       }
       pos = dir*npcSpeed*getDt() + pos;
@@ -304,12 +305,12 @@ void ObjectHolder::drawAll()
       npcs[i].draw();
 }
 
+Circle Player::bounds()
+{
+   return Circle(radius, pos);
+}
 
-
-
-
-
-
-
-
-
+Circle NPC::bounds()
+{
+   return Circle(radius, pos);
+}

@@ -61,15 +61,15 @@ void GameServer::newConnection(int id)
    NPC *npc = objs.getNPC(npcid);
    cm.broadcast(UnitSpawn(npcid, npc->type).makePacket());
    cm.broadcast(pack::Pos(npc->pos, npcid));
-   //printf("server npc id=%d type=%d (2)\n", npc->id, npc->type);
    for(unsigned i = 0; i < objs.npcs.size(); i++) {
       cm.sendPacket(UnitSpawn(objs.npcs[i].id, objs.npcs[i].type).makePacket(), id);
       cm.sendPacket(pack::Pos(objs.npcs[i].pos, objs.npcs[i].id), id);
-   }**/
-   /*for(unsigned i = 0; i < objs.players.size(); i++) {
+   }
+   //Tell the new user about all other users on the server (and their position)
+   for(unsigned i = 0; i < objs.players.size(); i++) {
       cm.sendPacket(Signal(Signal::playerconnect, objs.players[i].id), id);
       cm.sendPacket(pack::Pos(objs.players[i].pos, objs.players[i].id), id);
-   }*/
+   }
 }
 
 void GameServer::disconnect(int id)

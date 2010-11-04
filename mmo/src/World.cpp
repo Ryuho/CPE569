@@ -14,7 +14,6 @@ struct WorldData {
    float dt;
    vec2 playerMoveDir;
    int arrowTick, specialTick;
-   bool showShadow;
 
    ObjectHolder objs;
    Player player, shadow;
@@ -49,7 +48,6 @@ void WorldData::init()
 
    arrowTick = 0;
    specialTick = 0;
-   showShadow = true;
 
    sock::setupSockets();
 
@@ -103,6 +101,8 @@ void World::graphicsInit(int width, int height)
 
    data->width = width;
    data->height = height;
+   data->player.setPos(vec2(width/2, height/2));
+   data->shadow.setPos(vec2(width/2, height/2));
 
    data->ground = fromTGA("grass.tga");
 }
@@ -167,9 +167,7 @@ void WorldData::processPacket(pack::Packet p)
          objs.addNPC(npc);
          printf("NPC spawned id=%d type=%d\n", npc.id, npc.type);
       }
-   } 
-   
-   else if (p.type == signal) {
+   } else if (p.type == signal) {
       Signal sig(p);
       if (sig.sig == Signal::disconnect) {
          objs.removeObject(sig.val);
@@ -192,9 +190,7 @@ void WorldData::processPacket(pack::Packet p)
          }
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
-   } 
-   
-   else if (p.type == arrow) {
+   } else if (p.type == arrow) {
 			Arrow ar(p);
 			Missile m(ar.id); // using get ticks here is a dumb hack, use newId() on the server
 		   //m.init(ar.direction, ar.orig, Missile::Arrow);
@@ -230,20 +226,11 @@ void WorldData::draw()
 
    player.draw();
 
-   if (showShadow) {
-      glColor4ub(255,255,255,128);
-      shadow.draw();
-      glColor4ub(255,255,255,255);
-   }
-   
-   objs.drawAll();
-   
-   glColor4ub(255,0,0,255);
-   glPointSize(20.0);
-   glBegin(GL_POINTS);
-   glVertex3f(0,0,0);
-   glEnd();
+   glColor4ub(255,255,255,128);
+   shadow.draw();
    glColor4ub(255,255,255,255);
+
+   objs.drawAll();
 }
 
 void World::move(mat::vec2 dir)
