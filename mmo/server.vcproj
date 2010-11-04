@@ -185,10 +185,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\src\Geometry.h"
-			>
-		</File>
-		<File
 			RelativePath=".\src\matrix.h"
 			>
 		</File>
