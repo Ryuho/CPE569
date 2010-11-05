@@ -140,17 +140,22 @@ void WorldData::processPacket(pack::Packet p)
          if(p)
             p->move(pos.pos, pos.dir, pos.moving != 0);
          else
-            printf("Accessing unkown Player %d\n", pos.id);
+            printf("Accessing unknown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
-         //if(!npc)
-         //   printf(".");
-         //else
-         if(npc)
+         if(npc) {
             npc->pos = pos.pos;
+         }
          else
-            printf("Accessing unkown NPC %d\n", pos.id);
-      } else
+            printf("Accessing unknown NPC %d\n", pos.id);
+      } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Item)) {
+         Item *item = objs.getItem(pos.id);
+         if(item)
+            item->pos = pos.pos;
+         else
+            printf("Accessing unknown Item %d\n", pos.id);
+      }
+      else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    }
    else if (p.type == initialize) {
@@ -162,9 +167,14 @@ void WorldData::processPacket(pack::Packet p)
       }
       else if (i.type == ObjectType::Missile) {
          objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
-      } else if (i.type == ObjectType::NPC) {
+      } 
+      else if (i.type == ObjectType::NPC) {
          objs.addNPC(NPC(i.id, i.subType, i.pos, i.dir, false));
          printf("Added NPC %d \n", i.id);
+      }
+      else if (i.type == ObjectType::Item) {
+         objs.addItem(Item(i.id, i.subType, i.pos));
+         printf("Added Item %d \n", i.id);
       }
    } 
    else if (p.type == signal) {

@@ -32,6 +32,8 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
    serverState = this;
    ticks = 0;
    dt = 0;
+
+   om.addItem(Item(newId(), vec2(500, 0), rand() % (ItemType::Explosion)));
 }
 
 void GameServer::newConnection(int id)
@@ -46,12 +48,18 @@ void GameServer::newConnection(int id)
    cm.sendPacket(Connect(id), id);
    cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
 
+   //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
-      Player *p = om.players[i];
-      Initialize init(p->id, ObjectType::Player, 0, p->pos, p->dir, p->hp);
+      Player &p = *om.players[i];
+      Initialize init(p.id, ObjectType::Player, 0, p.pos, p.dir, p.hp);
       cm.sendPacket(init, id);
    }
-   
+   //tell new player about previous Items
+   for(unsigned i = 0; i < om.items.size(); i++) {
+      Item &item = *om.items[i];
+      cm.sendPacket(Initialize(item.id, ObjectType::Item, item.type,
+         item.pos, vec2(), 0), id);
+   }
    //tell new player about previous NPCs
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];

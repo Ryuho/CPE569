@@ -19,18 +19,18 @@ namespace constants {
    const int playerMaxHp = 100;
 
    namespace ObjectType { enum {
-      Player, NPC, Missile, Item,
+      Player=0, NPC, Missile, Item,
    };}
    namespace NPCType { enum {
-      Thief, Princess, Fairy, Skeleton, Cyclops,
+      Thief=0, Princess, Fairy, Skeleton, Cyclops,
       Bat, Bird, Squirrel, Chicken, Vulture, Bush, Cactus,
       BigFairy, Wizard, Ganon, Goblin,
    };}
    namespace ItemType { enum {
-      GreenRupee, RedRupee, BlueRupee, Explosion
+      GreenRupee=0, RedRupee, BlueRupee, Explosion,
    };}
    namespace MissileType { enum {
-      Arrow
+      Arrow=0,
    };}
 
 }
