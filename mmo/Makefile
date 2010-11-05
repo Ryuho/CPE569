@@ -1,11 +1,14 @@
 
 all: client server
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/Characters.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/Characters.o obj/ServerData.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o
 	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU
+
+obj/ServerData.o: src/ServerData.h src/ServerData.cpp
+	g++ -c -o obj/ServerData.o src/ServerData.cpp
 
 obj/CharacterGraphics.o: src/CharacterGraphics.cpp src/Characters.h
 	g++ -c -o obj/CharacterGraphics.o src/CharacterGraphics.cpp -I/home/whess/glew-1.5.6/include
