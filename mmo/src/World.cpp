@@ -116,9 +116,10 @@ void WorldData::update()
       }
    }
 
-   if (playerMoveDir.length() > 0.0)
+   if (playerMoveDir.length() > 0.0) {
+      playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
-   else
+   } else
       player.stop();
 
    pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
@@ -216,7 +217,7 @@ void WorldData::draw()
 
 void World::move(mat::vec2 dir)
 {
-   data->playerMoveDir = dir.normalize();
+   data->playerMoveDir = dir;
 }
 
 void World::shootArrow(mat::vec2 dir)

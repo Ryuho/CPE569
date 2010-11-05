@@ -1,7 +1,7 @@
 
 all: client server
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/Characters.o obj/ServerData.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o
