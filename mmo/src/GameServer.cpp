@@ -79,12 +79,12 @@ void GameServer::processPacket(pack::Packet p, int id)
       pos.id = id;
       cm.broadcast(pos);
    }
-	else if (p.type == pack::signal) {
+   else if (p.type == pack::signal) {
       Signal signal(p);
 
       if (signal.sig == Signal::special) {
-		   Player* play = om.getPlayer(id);
-		   for (int i = 0; i < constants::numArrows; i++) {
+         Player* play = om.getPlayer(id);
+         for (int i = 0; i < constants::numArrows; i++) {
             float t = i/(float)constants::numArrows;
             int arrowID = newId();
             Missile m(newId(), play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
@@ -94,19 +94,18 @@ void GameServer::processPacket(pack::Packet p, int id)
          }
       }
       else if (signal.sig == Signal::hurtme) {
-         printf("Hurting player\n");
          Player *p = om.getPlayer(id);
          p->takeDamage(rand()%6 + 5);
          cm.broadcast(HealthChange(id, p->hp));
       }
-	}
-	else if (p.type == pack::arrow) {
+   }
+   else if (p.type == pack::arrow) {
       Arrow ar(p);
       Missile m(newId(), om.getPlayer(id)->pos, ar.direction);
       om.addMissile(m);
       Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
       cm.broadcast(init);
-	}
+   }
 }
 
 void GameServer::update(int ticks)
