@@ -17,6 +17,7 @@ enum PacketType {
    // Add new packet types here, make values explicit
 	arrow = 5,
    initialize = 6,
+   healthChange = 7,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -110,6 +111,7 @@ struct Signal {
       hello = 1,        // Not used yet... A simple ping
       disconnect = 2,   // Indicates the player with id in val disconnected
 		special = 3,		// The player id(val) casts a special attack
+      hurtme = 4,       // damages the player
    };
    int sig, val;
    Signal() : sig(0) {}
@@ -146,21 +148,33 @@ struct Arrow {
 
 // A general packet for starting a player with all existing objects in the scene.
 struct Initialize {
-   int id, type, subType;
+   int id, type, subType, hp;
    vec2 pos, dir;
    Initialize() {}
-   Initialize(int id, int type, int subType, vec2 pos, vec2 dir)
-      : id(id), type(type), subType(subType), pos(pos), dir(dir) {}
+   Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp)
+      : id(id), type(type), subType(subType), pos(pos), dir(dir), hp(hp) {}
    Initialize(Packet &p) {
-      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).reset();
+      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
    }
    Packet makePacket() {
-      Packet p(28, initialize);
-      p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
+      Packet p(32, initialize);
+      p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp);
       return p;
    }
 };
 
+struct HealthChange {
+   int id, hp;
+   HealthChange(int id, int hp) : id(id), hp(hp) {}
+   HealthChange(Packet &p) {
+      p.data.readInt(id).readInt(hp).reset();
+   }
+   Packet makePacket() {
+      Packet p(8, healthChange);
+      p.data.writeInt(id).writeInt(hp);
+      return p;
+   }
+};
 
 } // end pack namespace
 

@@ -42,6 +42,33 @@ namespace {
    Animation explosionAnim;
 }
 
+void drawQuad(vec2 bl, vec2 tr)
+{
+   glBegin(GL_QUADS);
+
+   glVertex2f(bl.x, bl.y);
+   glVertex2f(tr.x, bl.y);
+   glVertex2f(tr.x, tr.y);
+   glVertex2f(bl.x, tr.y);
+
+   glEnd();
+}
+
+void drawHpBar(float percent, int width, int height)
+{
+   float center = (width*2 * percent) - width;
+
+   if (percent == 1.0)
+      return;
+
+   glDisable(GL_TEXTURE_2D);
+   glColor4ub(0, 255, 0, 100);
+   drawQuad(vec2(-width, height), vec2(center, height+2));
+   glColor4ub(255, 0, 0, 100);
+   drawQuad(vec2(center, height), vec2(width, height+2));
+   glColor4ub(255, 255, 255, 255);
+   glEnable(GL_TEXTURE_2D);
+}
 
 void Player::draw()
 {
@@ -71,6 +98,10 @@ void Player::draw()
       sprites32.draw(frame, adir);
    else
       sprites32.draw(adir-1, 0);
+
+   glTranslatef(-1,0,0); // needs this offset or else it looks strange
+   drawHpBar((float)hp / playerMaxHp, 11, 13);
+
    glPopMatrix();
 }
 

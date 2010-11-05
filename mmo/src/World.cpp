@@ -88,8 +88,8 @@ void WorldData::init()
       printf("Bad init packet\n");
       exit(-1);
    }
-   
-   player = Player(i.id, i.pos, i.dir);
+
+   player = Player(i.id, i.pos, i.dir, playerMaxHp);
    shadow = player;
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);
@@ -156,7 +156,7 @@ void WorldData::processPacket(pack::Packet p)
    else if (p.type == initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.id) {
-         objs.addPlayer(Player(i.id, i.pos, i.dir));
+         objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
          
          printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
       }
@@ -176,9 +176,18 @@ void WorldData::processPacket(pack::Packet p)
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
    else if (p.type == arrow) {
-			Arrow ar(p);
-			objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
+	   Arrow ar(p);
+		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
+   else if (p.type == healthChange) {
+      HealthChange hc(p);
+      if (hc.id == player.id) {
+         player.hp = hc.hp;
+         shadow.hp = hc.hp;
+      } else {
+         objs.getPlayer(hc.id)->hp = hc.hp;
+      }
+   }
 }
 
 void WorldData::draw()
@@ -206,13 +215,13 @@ void WorldData::draw()
    
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 
-   player.draw();
-
-   glColor4ub(255,255,255,128);
+   /*glColor4ub(255,255,255,128);
    shadow.draw();
-   glColor4ub(255,255,255,255);
+   glColor4ub(255,255,255,255);*/
 
    objs.drawAll();
+   
+   player.draw();
 }
 
 void World::move(mat::vec2 dir)
@@ -261,6 +270,7 @@ void World::spawnItem()
 
 void World::spawnNPC()
 {
+   pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
 /*
    NPC n;
    //float t = rand()/(float)RAND_MAX;

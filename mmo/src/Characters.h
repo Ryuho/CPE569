@@ -13,7 +13,7 @@ void initCharacterResources();
 
 struct Player {
    Player() : id(0), alive(false) {}
-   Player(int id, vec2 pos, vec2 dir);
+   Player(int id, vec2 pos, vec2 dir, int hp);
    void move(vec2 pos, vec2 dir, bool moving);
    void stop();
 
@@ -25,6 +25,7 @@ struct Player {
    bool moving, alive;
    int animStart, lastUpdate;
    int id;
+   int hp;
 };
 
 struct Missile {

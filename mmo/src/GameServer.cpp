@@ -40,28 +40,28 @@ void GameServer::newConnection(int id)
    
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
-   Player newPlayer(id, pos, vec2(0,1));
+   Player newPlayer(id, pos, vec2(0,1), playerMaxHp);
    om.addPlayer(newPlayer);
 
    cm.sendPacket(Connect(id), id);
-   cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir));
+   cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
 
    for(unsigned i = 0; i < om.players.size(); i++) {
       Player *p = om.players[i];
-      Initialize init(p->id, ObjectType::Player, 0, p->pos, p->dir);
+      Initialize init(p->id, ObjectType::Player, 0, p->pos, p->dir, p->hp);
       cm.sendPacket(init, id);
    }
    
    //tell new player about previous NPCs
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];
-      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, npc.type, npc.pos, npc.dir).makePacket(), id);
+      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, npc.type, npc.pos, npc.dir, 0).makePacket(), id);
    }
    //make a new NPC and tell everybody about it
    int npcid = newId();
    spawnNPC(npcid);
    NPC *npc = om.getNpc(npcid);
-   cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir).makePacket());
+   cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir, 0).makePacket());
 }
 
 void GameServer::disconnect(int id)
@@ -80,22 +80,31 @@ void GameServer::processPacket(pack::Packet p, int id)
       cm.broadcast(pos);
    }
 	else if (p.type == pack::signal) {
-		printf("recieved signal! id = %d\n", id);
-		Player* play = om.getPlayer(id);
-		for (int i = 0; i < constants::numArrows; i++) {
-         float t = i/(float)constants::numArrows;
-         int arrowID = newId();
-         Missile m(newId(), play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
-         om.addMissile(m);
-         Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir);
-         cm.broadcast(init);
+      Signal signal(p);
+
+      if (signal.sig == Signal::special) {
+		   Player* play = om.getPlayer(id);
+		   for (int i = 0; i < constants::numArrows; i++) {
+            float t = i/(float)constants::numArrows;
+            int arrowID = newId();
+            Missile m(newId(), play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
+            om.addMissile(m);
+            Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
+            cm.broadcast(init);
+         }
+      }
+      else if (signal.sig == Signal::hurtme) {
+         printf("Hurting player\n");
+         Player *p = om.getPlayer(id);
+         p->takeDamage(rand()%6 + 5);
+         cm.broadcast(HealthChange(id, p->hp));
       }
 	}
 	else if (p.type == pack::arrow) {
       Arrow ar(p);
       Missile m(newId(), om.getPlayer(id)->pos, ar.direction);
       om.addMissile(m);
-      Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir);
+      Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
       cm.broadcast(init);
 	}
 }

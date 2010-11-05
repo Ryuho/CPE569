@@ -9,8 +9,8 @@ using namespace geom;
 
 int stopAfterTicks = 100;
 
-Player::Player(int id, vec2 pos, vec2 dir)
-   : id(id), pos(pos), dir(dir), moving(false), alive(true)
+Player::Player(int id, vec2 pos, vec2 dir, int hp)
+   : id(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp)
 {
    lastUpdate = getTicks();
 }
@@ -260,16 +260,16 @@ void ObjectHolder::updateAll()
 
 void ObjectHolder::drawAll()
 {
-   for (unsigned i = 0; i < players.size(); i++)
-      players[i].draw();
+   for (unsigned i = 0; i < items.size(); i++)
+      items[i].draw();
 
    for (unsigned i = 0; i < missiles.size(); i++)
       missiles[i].draw();
    
-   for (unsigned i = 0; i < items.size(); i++)
-      items[i].draw();
-
    for (unsigned i = 0; i < npcs.size(); i++)
       npcs[i].draw();
+
+   for (unsigned i = 0; i < players.size(); i++)
+      players[i].draw();
 }
 

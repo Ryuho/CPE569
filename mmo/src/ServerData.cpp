@@ -9,8 +9,8 @@ using namespace constants;
 
 // Player
 
-Player::Player(int id, vec2 pos, vec2 dir)
-   : id(id), pos(pos), dir(dir), moving(false)
+Player::Player(int id, vec2 pos, vec2 dir, int hp)
+   : id(id), pos(pos), dir(dir), moving(false), hp(hp)
 {
    
 }
@@ -21,6 +21,11 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
    this->pos = pos;
    this->dir = dir;
    this->moving = moving;
+}
+
+void Player::takeDamage(int damage)
+{
+   hp = max(0, hp-damage);
 }
 
 

@@ -13,12 +13,14 @@ namespace server {
    using namespace constants;
 
    struct Player {
-      Player(int id, vec2 pos, vec2 dir);
+      Player(int id, vec2 pos, vec2 dir, int hp);
       void move(vec2 pos, vec2 dir, bool moving = true);
+      void takeDamage(int damage);
 
       vec2 pos, dir;
       bool moving;
       int id;
+      int hp;
    };
 
    struct Missile {
