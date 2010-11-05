@@ -179,9 +179,13 @@ void WorldData::processPacket(pack::Packet p)
    } 
    else if (p.type == signal) {
       Signal sig(p);
-      if (sig.sig == Signal::disconnect) {
-         objs.removeObject(sig.val);
-         printf("Player %d disconnected\n", sig.val);
+      if (sig.sig == Signal::remove) {
+         if(sig.val == this->player.id)
+            printf("\n\n!!! Disconnected from server !!!\n\n");
+         else {
+            objs.removeObject(sig.val);
+            printf("Object %d disconnected\n", sig.val);
+         }
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
@@ -198,6 +202,8 @@ void WorldData::processPacket(pack::Packet p)
          objs.getPlayer(hc.id)->hp = hc.hp;
       }
    }
+   else
+      printf("Unknown packet type=%d size=%d\n", p.type, p.size);
 }
 
 void WorldData::draw()
@@ -267,6 +273,14 @@ void World::doSpecial()
          data->specialTick = data->ticks;
       }
    }*/
+}
+
+void World::rightClick(vec2 mousePos)
+{
+   vec2 clickPos = clientState->player.pos + mousePos 
+      - vec2(data->width/2,data->height/2);
+   pack::Click(clickPos, clientState->player.id).makePacket().sendTo(data->conn);
+   printf("Clicked <%5.1f %5.1f>\n", mousePos.x, mousePos.y);
 }
 
 void World::spawnItem()

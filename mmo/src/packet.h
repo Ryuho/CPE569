@@ -18,6 +18,7 @@ enum PacketType {
 	arrow = 5,
    initialize = 6,
    healthChange = 7,
+   click = 8,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -74,6 +75,25 @@ struct Position {
    }
 };
 
+struct Click {
+   Click() : id(0) {}
+   Click(vec2 pos, int id) 
+      : pos(pos), id(id) {}
+   Click(Packet &p) {
+      p.data.readInt(id).readFloat(pos.x)
+         .readFloat(pos.y).reset();
+   }
+   Packet makePacket() {
+      Packet p(12, click);
+      p.data.writeInt(id).writeFloat(pos.x)
+         .writeFloat(pos.y);
+      return p;
+   }
+
+   vec2 pos;
+   int id;
+};
+
 // Player/Server sends a text message?
 struct Message {
    std::string str;
@@ -109,7 +129,7 @@ struct Connect {
 struct Signal {
    enum { 
       hello = 1,        // Not used yet... A simple ping
-      disconnect = 2,   // Indicates the player with id in val disconnected
+      remove = 2,      // Indicates the object with id is no longer seen
 		special = 3,		// The player id(val) casts a special attack
       hurtme = 4,       // damages the player
    };

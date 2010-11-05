@@ -19,6 +19,7 @@ struct World {
    void doSpecial();
    void spawnItem();
    void spawnNPC();
+   void rightClick(vec2 mousePos);
 
 protected:
    boost::shared_ptr<WorldData> data;

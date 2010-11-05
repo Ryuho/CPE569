@@ -6,25 +6,38 @@ using namespace pack;
 
 GameServer *serverState;
 
+vec2 randPos(int minxy, int maxxy)
+{
+   float x = (float)minxy + (rand() % (maxxy - minxy));
+   float y = (float)minxy + (rand() % (maxxy - minxy));
+   return vec2(x, y);
+}
+
+vec2 randPos2(int minRadius, int maxRadius)
+{
+   float angle = (float) (rand() % 359);
+   float radius = (float)(minRadius + (rand() % (maxRadius - minRadius)));
+   return vec2(sin(angle)*radius, cos(angle)*radius);
+}
+
 void spawnNPC(int id)
 {
-   int minv, maxv, midv;
-   minv = 700;
-   maxv = 1200;
-   midv = 400;
-   vec2 _pos = vec2((float)(rand()%maxv - minv), (float)(rand()%maxv - minv));
-   if(_pos.x >= 0.0 && _pos.x < midv)
-      _pos.x = (float) midv;
-   else if(_pos.x < 0.0 && _pos.x > -midv)
-      _pos.x = (float) -midv;
-   if(_pos.y >= 0.0 && _pos.y < midv)
-      _pos.y = (float) midv;
-   else if(_pos.y < 0.0 && _pos.y > -midv)
-      _pos.y = (float) -midv;
-
-   NPC n(id, _pos, vec2(0,1), (rand() % ((int)NPCType::Goblin)));
+   NPC n(id, randPos(400, 1200), vec2(0,1), (rand() % ((int)NPCType::Goblin)));
    serverState->om.addNPC(n);
-   printf("server npc id=%d type=%d\n", n.id, n.type);
+   printf("Spawn NPC id=%d type=%d\n", n.id, n.type);
+   serverState->cm.broadcast(Initialize(n.id, ObjectType::NPC, 
+      n.type, n.pos, n.dir, 0).makePacket());
+}
+
+void spawnItem(int id)
+{
+   vec2 pos = randPos2(200, 350);
+   //vec2 pos = vec2(500, 500);
+   Item item(id, pos, rand() % (ItemType::Explosion));
+   serverState->om.addItem(item);
+   printf("Spawn Item id=%d type=%d\n", item.id, item.type);
+   serverState->cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
+         item.pos, vec2(), 0));
 }
 
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
@@ -33,7 +46,7 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
    ticks = 0;
    dt = 0;
 
-   om.addItem(Item(newId(), vec2(500, 0), rand() % (ItemType::Explosion)));
+   spawnItem(newId());
 }
 
 void GameServer::newConnection(int id)
@@ -68,14 +81,14 @@ void GameServer::newConnection(int id)
    //make a new NPC and tell everybody about it
    int npcid = newId();
    spawnNPC(npcid);
-   NPC *npc = om.getNpc(npcid);
-   cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir, 0).makePacket());
+   //NPC *npc = om.getNpc(npcid);
+   //cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir, 0).makePacket());
 }
 
 void GameServer::disconnect(int id)
 {
    printf("Client %d disconnected\n", id);
-   cm.broadcast(Signal(Signal::disconnect, id).makePacket());
+   cm.broadcast(Signal(Signal::remove, id).makePacket());
    om.remove(id);
 }
 
@@ -114,6 +127,20 @@ void GameServer::processPacket(pack::Packet p, int id)
       Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
       cm.broadcast(init);
    }
+   else if (p.type == pack::click) {
+      Click click(p);
+      for(unsigned i = 0; i < om.items.size(); i++) {
+         Item &item = *om.items[i];
+         if(mat::dist(item.pos, click.pos) < 20) {
+            om.remove(item.id);
+            cm.broadcast(Signal(Signal::remove, item.id));
+            spawnItem(newId());
+            break;
+         } 
+      }
+   }
+   else
+      printf("Unknown packet type=%d size=%d\n", p.type, p.size);
 }
 
 void GameServer::update(int ticks)
@@ -129,6 +156,7 @@ void GameServer::update(int ticks)
          cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
       }
    }
+   
 }
 
 int getTicks()
