@@ -159,9 +159,9 @@ void GameServer::update(int ticks)
    
    //missles
    for(size_t i = 0; i < om.missiles.size(); i++) {
-      //printf("%f,%f\n",om.missiles[i]->pos.x,om.missiles[i]->pos.y);
       //missle out of bound
       if(mat::dist(om.missiles[i]->pos, vec2(0,0)) >= 5000){
+         cm.broadcast(Signal(Signal::remove, om.missiles[i]->id).makePacket());
          om.remove(om.missiles[i]->id);
          i--;
       }
@@ -180,14 +180,14 @@ void GameServer::update(int ticks)
          for(size_t j = 0; j < om.missiles.size(); j++) {
             //printf("%f\n",mat::dist(om.npcs[i]->pos, om.missiles[j]->pos));
             if(mat::dist(om.npcs[i]->pos, om.missiles[j]->pos) <= 30){
-               //printf("Removing NPC %d!\n",om.npcs[i]->id);
-               cm.broadcast(Signal(Signal::remove, om.npcs[i]->id).makePacket());
+               cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
                removeNPC = true;
                break;
             }
          }
          if(removeNPC){
+            cm.broadcast(Signal(Signal::remove, om.npcs[i]->id).makePacket());
             om.remove(om.npcs[i]->id);
             i--;
          }
