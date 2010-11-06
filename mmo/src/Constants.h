@@ -17,6 +17,8 @@ namespace constants {
 	const float PI = 3.14159265359f;
 
    const int playerMaxHp = 100;
+	const int worldHeight = 5000;
+	const int worldWidth = 500;
 
    namespace ObjectType { enum {
       Player=0, NPC, Missile, Item,
