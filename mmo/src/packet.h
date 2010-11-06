@@ -176,27 +176,14 @@ struct Initialize {
    Initialize() {}
 	Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp)
       : id(id), type(type), subType(subType), pos(pos), dir(dir), hp(hp) {}
-   //Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp, int width, int height)
-   //   : id(id), type(type), subType(subType), pos(pos), dir(dir), hp(hp), worldWidth(width), worldHeight(height) {}
    Initialize(Packet &p) {
       p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
    }
-	/**Initialize(Packet &p) {
-      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).readInt(worldWidth).readInt(worldHeight).reset();
-   }**/
-	/**Initialize(Packet &p) {
-      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
-   }**/
    Packet makePacket() {
       Packet p(32, initialize);
       p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp);
       return p;
    }
-	/**Packet makePacket() {
-      Packet p(40, initialize);
-      p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp).writeInt(worldWidth).writeInt(worldHeight);
-      return p;
-   }**/
 };
 
 struct HealthChange {

@@ -31,7 +31,7 @@ struct WorldData {
 WorldData* clientState;
 int wHeight;
 int wWidth;
-GLfloat boarderWidth = 3;
+GLfloat boarderWidth = .05;
 
 // Interface stubs
 void World::init(const char *host, int port) {
@@ -255,7 +255,7 @@ void WorldData::draw()
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 	
 	glColor3ub(0, 0, 0);
-	glLineWidth (boarderWidth);
+	//glLineWidth (boarderWidth);
 	glBegin(GL_LINES);
 	glVertex2f(wWidth, wHeight);
 	glVertex2f(-wWidth, wHeight);
