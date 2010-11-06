@@ -19,7 +19,7 @@ namespace server {
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
       void gainExp(int exp);
-      GeometryBase* getGeom();
+      Geometry getGeom();
       
       vec2 pos, dir;
       bool moving, alive;
@@ -29,7 +29,7 @@ namespace server {
    struct Missile {
       Missile(int id, vec2 pos, vec2 dir, int type = MissileType::Arrow);
       void update();
-      GeometryBase* getGeom();
+      Geometry getGeom();
 
       vec2 pos, dir;
       int id, type, spawnTime;
@@ -38,7 +38,7 @@ namespace server {
    struct NPC {
       NPC(int id, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       void update();
-      GeometryBase* getGeom();
+      Geometry getGeom();
       
       vec2 pos, dir;
       int id, type;
@@ -46,7 +46,7 @@ namespace server {
 
    struct Item {
       Item(int id, vec2 pos, int type = ItemType::GreenRupee);
-      GeometryBase* getGeom();
+      Geometry getGeom();
 
       vec2 pos;
       int id, type;

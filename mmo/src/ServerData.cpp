@@ -33,7 +33,7 @@ void Player::gainExp(int exp)
 
 }
 
-GeometryBase* Player::getGeom()
+Geometry Player::getGeom()
 {
    return new Circle(pos, playerRadius);
 }
@@ -56,7 +56,7 @@ void Missile::update()
    pos = pos + dir * projectileSpeed * getDt();
 }
 
-GeometryBase* Missile::getGeom()
+Geometry Missile::getGeom()
 {
    return new Circle(pos, arrowRadius);
 }
@@ -82,7 +82,7 @@ void NPC::update()
    }
 }
 
-GeometryBase* NPC::getGeom()
+Geometry NPC::getGeom()
 {
    return new Circle(pos, NPCRadius);
 }
@@ -95,7 +95,7 @@ Item::Item(int id, vec2 pos, int type)
 
 }
 
-GeometryBase* Item::getGeom()
+Geometry Item::getGeom()
 {
    return new Circle(pos, NPCRadius);
 }

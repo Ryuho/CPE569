@@ -177,8 +177,7 @@ void GameServer::update(int ticks)
       if(om.players.size() > 0) {
          removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
-            //printf("%f\n",mat::dist(om.npcs[i]->pos, om.missiles[j]->pos));
-            if(mat::dist(om.npcs[i]->pos, om.missiles[j]->pos) <= 30){
+            if( om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom()) ){
                cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
                removeNPC = true;
