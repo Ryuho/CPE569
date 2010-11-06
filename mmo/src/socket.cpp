@@ -691,6 +691,7 @@ vector<Connection> SelectSet::select(int ms)
       if (FD_ISSET(info->conns[i].getSocket(), &reads))
          ret.push_back(info->conns[i]);
    }
+   return ret;
 }
 
 vector<Connection> SelectSet::nbRead(int ms)

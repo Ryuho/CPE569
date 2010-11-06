@@ -35,6 +35,9 @@ Missile::Missile(int id, mat::vec2 pos, mat::vec2 dir, int type)
    : id(id), pos(pos), dir(dir), type(type)
 {
    spawnTime = getTicks();
+   this->dir = dir;
+   if (this->dir.length() > 0.0)
+      this->dir = normalize(this->dir);
 }
 
 
@@ -53,7 +56,15 @@ NPC::NPC(int id, vec2 pos, vec2 dir, int type)
 
 void NPC::update() 
 {
-   
+   //currently stupid AI that goes to center, and stops
+   dir = mat::to(pos,vec2(0,0));
+   dir.normalize();
+   if(mat::dist(pos, vec2(0,0)) <= mat::dist(dir * getDt() * playerSpeed, vec2(0,0))){
+      //pos = vec2(0,0);    this makes the NPC dissapear?
+   }
+   else{
+      pos = pos + dir * getDt() * playerSpeed;
+   }
 }
 
 // Item

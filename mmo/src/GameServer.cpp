@@ -1,6 +1,8 @@
 #include "GameServer.h"
 #include "Constants.h"
 #include <cstdio>
+#include <time.h>
+#include "Numbers.h"
 
 using namespace pack;
 
@@ -148,12 +150,52 @@ void GameServer::update(int ticks)
    dt = (float)((ticks - this->ticks)/1000.0);
    this->ticks = ticks;
 
-   for(unsigned i = 0; i < om.npcs.size(); i++) {
+   if(om.players.size() > 0) {
+      if(rint(5) == 0 && om.npcs.size() <= 6){
+         int npcid = newId();
+         spawnNPC(npcid);
+      }
+   }
+   
+   //missles
+   for(size_t i = 0; i < om.missiles.size(); i++) {
+      //printf("%f,%f\n",om.missiles[i]->pos.x,om.missiles[i]->pos.y);
+      //missle out of bound
+      if(mat::dist(om.missiles[i]->pos, vec2(0,0)) >= 5000){
+         om.remove(om.missiles[i]->id);
+         i--;
+      }
+      else{
+         Missile &missle = *om.missiles[i];
+         missle.update();
+      }
+   }
+
+   //NPC
+   bool removeNPC = false;
+   for(size_t i = 0; i < om.npcs.size(); i++) {
       if(om.players.size() > 0) {
-         NPC &npc = *om.npcs[i];
-         npc.pos = vec2(5,5) + om.players[0]->pos;
-         npc.update();
-         cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
+         //crappy collision detection.. not sure if it's suppose to be here
+         removeNPC = false;
+         for(size_t j = 0; j < om.missiles.size(); j++) {
+            //printf("%f\n",mat::dist(om.npcs[i]->pos, om.missiles[j]->pos));
+            if(mat::dist(om.npcs[i]->pos, om.missiles[j]->pos) <= 30){
+               //printf("Removing NPC %d!\n",om.npcs[i]->id);
+               cm.broadcast(Signal(Signal::remove, om.npcs[i]->id).makePacket());
+               om.remove(om.missiles[j]->id);
+               removeNPC = true;
+               break;
+            }
+         }
+         if(removeNPC){
+            om.remove(om.npcs[i]->id);
+            i--;
+         }
+         else{
+            NPC &npc = *om.npcs[i];
+            npc.update();
+            cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
+         }
       }
    }
    
