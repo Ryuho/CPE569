@@ -40,6 +40,7 @@ namespace {
    Animation redRupeeAnim;
    Animation blueRupeeAnim;
    Animation explosionAnim;
+   Animation stumpAnim;
 }
 
 void drawQuad(vec2 bl, vec2 tr)
@@ -141,6 +142,9 @@ void Item::initGraphics()
          break;
       case ItemType::Explosion :
          anim = &explosionAnim;
+         break;
+      case ItemType::Stump :
+         anim = &stumpAnim;
          break;
       default:
          printf("Error: invalid Item (Type %d) to animate.\n", type);
@@ -404,6 +408,10 @@ void initCharacterResources()
       explosionAnim.dirs[Animation::Down].push_back(vec2i(7,5));
       explosionAnim.dirs[Animation::Down].push_back(vec2i(7,6));
       explosionAnim.dirs[Animation::Down].push_back(vec2i(7,7));
+
+      stumpAnim.init(&sprites32, Animation::Forward, true);
+      stumpAnim.speed = 1000;
+      stumpAnim.dirs[Animation::Down].push_back(vec2i(9,2));
 
       initalized = true;
    }

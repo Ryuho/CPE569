@@ -42,13 +42,25 @@ void spawnItem(int id)
          item.pos, vec2(), 0));
 }
 
+void spawnStump(int id)
+{
+   vec2 pos = randPos2(200, 350);
+   //vec2 pos = vec2(500, 500);
+   Item item(id, pos, ItemType::Stump);
+   serverState->om.addItem(item);
+   printf("Spawn Stump id=%d type=%d\n", item.id, item.type);
+   serverState->cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
+         item.pos, vec2(), 0));
+}
+
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
 {
    serverState = this;
    ticks = 0;
    dt = 0;
 
-   spawnItem(newId());
+   //spawnItem(newId());
+   spawnStump(newId());
 }
 
 void GameServer::newConnection(int id)

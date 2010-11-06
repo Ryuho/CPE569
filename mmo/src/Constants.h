@@ -27,7 +27,7 @@ namespace constants {
       BigFairy, Wizard, Ganon, Goblin,
    };}
    namespace ItemType { enum {
-      GreenRupee=0, RedRupee, BlueRupee, Explosion,
+      GreenRupee=0, RedRupee, BlueRupee, Explosion, Stump,
    };}
    namespace MissileType { enum {
       Arrow=0,
