@@ -28,6 +28,16 @@ void Player::takeDamage(int damage)
    hp = max(0, hp-damage);
 }
 
+void Player::gainExp(int exp)
+{
+
+}
+
+GeometryBase* Player::getGeom()
+{
+   return new Circle(pos, playerRadius);
+}
+
 
 // Missile
 
@@ -44,6 +54,11 @@ Missile::Missile(int id, mat::vec2 pos, mat::vec2 dir, int type)
 void Missile::update()
 {
    pos = pos + dir * projectileSpeed * getDt();
+}
+
+GeometryBase* Missile::getGeom()
+{
+   return new Circle(pos, arrowRadius);
 }
 
 // NPC
@@ -67,12 +82,22 @@ void NPC::update()
    }
 }
 
+GeometryBase* NPC::getGeom()
+{
+   return new Circle(pos, NPCRadius);
+}
+
 // Item
 
 Item::Item(int id, vec2 pos, int type)
    : id(id), pos(pos), type(type)
 {
 
+}
+
+GeometryBase* Item::getGeom()
+{
+   return new Circle(pos, NPCRadius);
 }
 
 // Object Manager

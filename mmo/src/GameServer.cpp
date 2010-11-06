@@ -172,7 +172,7 @@ void GameServer::update(int ticks)
    //missles
    for(size_t i = 0; i < om.missiles.size(); i++) {
       //missle out of bound
-      if(mat::dist(om.missiles[i]->pos, vec2(0,0)) >= 5000){
+      if(ticks - om.missiles[i]->spawnTime  >= 500){
          cm.broadcast(Signal(Signal::remove, om.missiles[i]->id).makePacket());
          om.remove(om.missiles[i]->id);
          i--;
@@ -187,7 +187,6 @@ void GameServer::update(int ticks)
    bool removeNPC = false;
    for(size_t i = 0; i < om.npcs.size(); i++) {
       if(om.players.size() > 0) {
-         //crappy collision detection.. not sure if it's suppose to be here
          removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
             //printf("%f\n",mat::dist(om.npcs[i]->pos, om.missiles[j]->pos));
