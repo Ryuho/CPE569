@@ -21,7 +21,7 @@ struct WorldData {
    
    sock::Connection conn;
 
-   void init();
+   void init(const char *host, int port);
    void update();
    void draw();
    void processPacket(pack::Packet p);
@@ -31,9 +31,9 @@ struct WorldData {
 WorldData* clientState;
 
 // Interface stubs
-void World::init() {
+void World::init(const char *host, int port) {
    data.reset(new WorldData);
-   data->init();
+   data->init(host,port);
 }
 void World::update(int ticks, float dt) { 
    data->ticks = ticks;
@@ -42,7 +42,7 @@ void World::update(int ticks, float dt) {
 }
 void World::draw() { data->draw(); }
 
-void WorldData::init()
+void WorldData::init(const char *host, int port)
 {
    clientState = this;
 
@@ -52,7 +52,7 @@ void WorldData::init()
    sock::setupSockets();
 
    // Maybe ask for a hostname here, along with other info (name, class etc.)
-   conn = sock::Connection("localhost", 27027);
+   conn = sock::Connection(host, port);
 
    if (!conn) {
       printf("Could not connect!\n");

@@ -2,11 +2,11 @@
 #include <ctime>
 using namespace mat;
 
-void SDLApp::init()
+void SDLApp::init(const char *host, int port)
 {
    // Initalize connection before showing graphics
    srand(time(0));
-   world.init();
+   world.init(host,port);
 
    // Set up the window and other stuff
    settings.width = 1024;
