@@ -9,7 +9,7 @@ struct WorldData;
 struct World {
    World() {}
 
-   void init();
+   void init(const char *host, int port);
    void graphicsInit(int width, int height);
    void update(int ticks, float dt);
    void draw();

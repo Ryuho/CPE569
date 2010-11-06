@@ -1,5 +1,8 @@
 #include "GameServer.h"
 #include <cstdio>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -53,8 +56,28 @@ int newId()
 
 int main()
 {  
+   int portNumber = 27027;
+   //look at serverrc and see what port to use
+   std::ifstream myfile("serverrc");
+   if (myfile.is_open())
+   {
+      std::string data;
+      //read in a comment
+      std::getline (myfile,data);
+      //read in the port number
+      std::getline (myfile,data);
+      cout << "Port=" << data << endl;
+      portNumber = atoi(data.c_str());
+      //myfile << "This is another line.\n";
+      myfile.close();
+   }
+   else
+   {
+      cout << "serverrc file missing!";
+   }
+  
    setupSockets();
-   Server serv(27027);
+   Server serv(portNumber);
    serv.listen(5);
 
    ConnectionManager cm;

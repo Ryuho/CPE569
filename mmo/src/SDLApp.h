@@ -9,7 +9,7 @@ using mat::vec3;
 
 struct SDLApp {
 
-   void init();
+   void init(const char *host, int port);
    void update();
    void draw();
 
