@@ -17,6 +17,11 @@ namespace constants {
 	const float PI = 3.14159265359f;
 
    const int playerMaxHp = 100;
+   
+   const int playerRadius = 40; // used for collision detection
+   const int arrowRadius = 40; // used for collision detection
+   const int NPCRadius = 40; // used for collision detection
+   const int itemRadius = 40;
 
    namespace ObjectType { enum {
       Player=0, NPC, Missile, Item,
