@@ -113,14 +113,17 @@ struct Message {
 // Sent to the connecting client to tell them their id.
 struct Connect {
    int id;
+	int worldHeight;
+	int worldWidth;
    Connect() : id(0) {}
    Connect(int id) : id(id) {}
+	Connect(int id, int height, int width) : id(id), worldHeight(height), worldWidth(width) {}
    Connect(Packet &p) {
-      p.data.readInt(id).reset();
+      p.data.readInt(id).readInt(worldHeight).readInt(worldWidth).reset();
    }
    Packet makePacket() {
-      Packet p(4, connect);
-      p.data.writeInt(id);
+      Packet p(12, connect);
+      p.data.writeInt(id).writeInt(worldHeight).writeInt(worldWidth);
       return p;
    }
 };
@@ -168,19 +171,32 @@ struct Arrow {
 
 // A general packet for starting a player with all existing objects in the scene.
 struct Initialize {
-   int id, type, subType, hp;
+   int id, type, subType, hp;//, worldWidth, worldHeight;
    vec2 pos, dir;
    Initialize() {}
-   Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp)
+	Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp)
       : id(id), type(type), subType(subType), pos(pos), dir(dir), hp(hp) {}
+   //Initialize(int id, int type, int subType, vec2 pos, vec2 dir, int hp, int width, int height)
+   //   : id(id), type(type), subType(subType), pos(pos), dir(dir), hp(hp), worldWidth(width), worldHeight(height) {}
    Initialize(Packet &p) {
       p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
    }
+	/**Initialize(Packet &p) {
+      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).readInt(worldWidth).readInt(worldHeight).reset();
+   }**/
+	/**Initialize(Packet &p) {
+      p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
+   }**/
    Packet makePacket() {
       Packet p(32, initialize);
       p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp);
       return p;
    }
+	/**Packet makePacket() {
+      Packet p(40, initialize);
+      p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp).writeInt(worldWidth).writeInt(worldHeight);
+      return p;
+   }**/
 };
 
 struct HealthChange {

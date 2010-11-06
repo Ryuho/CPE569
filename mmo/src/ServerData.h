@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include "matrix.h"
 #include "packet.h"
+#include "Geometry.h"
 #include <vector>
 #include <map>
 
@@ -11,21 +12,24 @@ namespace server {
    using namespace std;
    using namespace mat;
    using namespace constants;
+   using namespace geom;
 
    struct Player {
       Player(int id, vec2 pos, vec2 dir, int hp);
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
-
+      void gainExp(int exp);
+      GeometryBase* getGeom();
+      
       vec2 pos, dir;
-      bool moving;
-      int id;
-      int hp;
+      bool moving, alive;
+      int id, hp, exp;
    };
 
    struct Missile {
       Missile(int id, vec2 pos, vec2 dir, int type = MissileType::Arrow);
       void update();
+      GeometryBase* getGeom();
 
       vec2 pos, dir;
       int id, type, spawnTime;
@@ -34,13 +38,15 @@ namespace server {
    struct NPC {
       NPC(int id, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       void update();
-
+      GeometryBase* getGeom();
+      
       vec2 pos, dir;
       int id, type;
    };
 
    struct Item {
       Item(int id, vec2 pos, int type = ItemType::GreenRupee);
+      GeometryBase* getGeom();
 
       vec2 pos;
       int id, type;
