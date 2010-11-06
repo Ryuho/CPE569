@@ -60,8 +60,9 @@ void GameServer::newConnection(int id)
    Player newPlayer(id, pos, vec2(0,1), playerMaxHp);
    om.addPlayer(newPlayer);
 
-   cm.sendPacket(Connect(id), id);
-   cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
+   //cm.sendPacket(Connect(id, worldHeight, worldWidth), id, constants::worldHeight, constants::worldWidth);
+	cm.sendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
+	cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
 
    //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
