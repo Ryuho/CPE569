@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
    }
    else
    {
-      cout << "clientrc file missing!";
+      cout << "clientrc file missing!" << endl;
    }
 
    app.init(host->c_str(),port);

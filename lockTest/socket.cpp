@@ -684,8 +684,10 @@ vector<int> SelectSet::select(int ms)
 
    if (selectVal == SOCKET_ERROR)
       sockError();
-   else if (selectVal == 0)
-      return ret;
+     
+   printf("selectval: %d\n", selectVal);
+   //else if (selectVal == 0) 
+   //   return ret;
 
    for (size_t i = 0; i < info->sds.size(); i++) {
       if (FD_ISSET(info->sds[i], &reads))

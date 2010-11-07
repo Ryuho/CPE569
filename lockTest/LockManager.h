@@ -8,10 +8,19 @@
 
 struct LMData;
 
+namespace ops {
+   enum {
+      acquire,
+      release,
+      success,
+   };
+}
+
+
 struct LockManager {
    LockManager() {}
    
-   void startThread();
+   void startThread(int port = 27030);
    void addLocalLock(int id);
    void addRemoteLock(int id, int host);
 

@@ -9,14 +9,6 @@ using namespace sock;
 using namespace std;
 using namespace boost;
 
-namespace ops {
-   enum {
-      acquire,
-      release,
-      success,
-   };
-}
-
 struct Lock {
    Lock(int owner) : owner(owner) {}
    mutex m;
@@ -40,10 +32,10 @@ private: // Thread private storage
    Connection toSelf;
 };
 
-void LockManager::startThread()
+void LockManager::startThread(int port)
 {
    setupSockets();
-   Server serv(27030);
+   Server serv(port);
    serv.listen(5);
    data = new LMData(serv);
 
@@ -63,9 +55,13 @@ void LMData::operator()()
 
    ss.add(serv.getSocket());
    ss.add(toSelf.getSocket());
+   
+   printf("t- ready\n");
 
    while (1) {
       vector<int> readySds = ss.select(-1);
+      
+      printf("t- selected %d\n", readySds.size());
       
       for (unsigned i = 0; i < readySds.size(); i++) {
          if (readySds[i] == serv.getSocket()) {
@@ -169,6 +165,9 @@ void LockManager::release(int id)
    Lock *l = data->locks[id];
    if (l->owner == -1) {
       l->m.unlock();
+      if (l->waitList.size() > 0) {
+         data->self.send(Packet().writeInt(ops::release).writeInt(id));
+      }
       data->m.unlock_shared();
    } else {
       data->m.unlock_shared();
