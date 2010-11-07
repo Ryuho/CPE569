@@ -42,13 +42,25 @@ void spawnItem(int id)
          item.pos, vec2(), 0));
 }
 
+void spawnStump(int id)
+{
+   vec2 pos = randPos2(200, 350);
+   //vec2 pos = vec2(500, 500);
+   Item item(id, pos, ItemType::Stump);
+   serverState->om.addItem(item);
+   printf("Spawn Stump id=%d type=%d\n", item.id, item.type);
+   serverState->cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
+         item.pos, vec2(), 0));
+}
+
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
 {
    serverState = this;
    ticks = 0;
    dt = 0;
 
-   spawnItem(newId());
+   //spawnItem(newId());
+   spawnStump(newId());
 }
 
 void GameServer::newConnection(int id)
@@ -60,8 +72,8 @@ void GameServer::newConnection(int id)
    Player newPlayer(id, pos, vec2(0,1), playerMaxHp);
    om.addPlayer(newPlayer);
 
-   cm.sendPacket(Connect(id), id);
-   cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
+	cm.sendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
+	cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
 
    //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
@@ -160,7 +172,7 @@ void GameServer::update(int ticks)
    //missles
    for(size_t i = 0; i < om.missiles.size(); i++) {
       //missle out of bound
-      if(mat::dist(om.missiles[i]->pos, vec2(0,0)) >= 5000){
+      if(ticks - om.missiles[i]->spawnTime  >= 500){
          cm.broadcast(Signal(Signal::remove, om.missiles[i]->id).makePacket());
          om.remove(om.missiles[i]->id);
          i--;
@@ -175,11 +187,9 @@ void GameServer::update(int ticks)
    bool removeNPC = false;
    for(size_t i = 0; i < om.npcs.size(); i++) {
       if(om.players.size() > 0) {
-         //crappy collision detection.. not sure if it's suppose to be here
          removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
-            //printf("%f\n",mat::dist(om.npcs[i]->pos, om.missiles[j]->pos));
-            if(mat::dist(om.npcs[i]->pos, om.missiles[j]->pos) <= 30){
+            if( om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom()) ){
                cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
                removeNPC = true;

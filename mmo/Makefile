@@ -1,7 +1,7 @@
 
 all: client server
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o
@@ -48,6 +48,9 @@ obj/Texture.o: src/Texture.cpp
 
 obj/World.o: src/World.cpp src/packet.h src/socket.h
 	g++ -c -o obj/World.o src/World.cpp -I/home/whess/glew-1.5.6/include
+
+obj/Geometry.o: src/Geometry.cpp src/Geometry.h
+	g++ -c -o obj/Geometry.o src/Geometry.cpp
 
 clean:
 	rm obj/*.o client server

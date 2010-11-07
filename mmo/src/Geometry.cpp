@@ -6,7 +6,7 @@ using namespace std;
 
 bool CircleCircle(const Circle *c1, const Circle *c2)
 {
-   return dist(c1->pos, c1->pos) < c1->radius + c2->radius;
+   return dist(c1->pos, c2->pos) < c1->radius + c2->radius;
 }
 
 bool CirclePlane(const Circle *c, const Plane *p)

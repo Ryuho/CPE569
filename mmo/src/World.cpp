@@ -29,6 +29,9 @@ struct WorldData {
 
 // This pointer points to the current 
 WorldData* clientState;
+int wHeight;
+int wWidth;
+GLfloat boarderWidth = .05;
 
 // Interface stubs
 void World::init(const char *host, int port) {
@@ -71,7 +74,9 @@ void WorldData::init(const char *host, int port)
    }
    
    pack::Connect c(p);
-
+	
+	wHeight = c.worldHeight;
+	wWidth = c.worldWidth;
    if (!conn.select(1000)) {
       printf("Timed out waiting for initalize packet\n");
       exit(-1);
@@ -88,7 +93,7 @@ void WorldData::init(const char *host, int port)
       printf("Bad init packet\n");
       exit(-1);
    }
-
+	
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
    shadow = player;
 
@@ -119,6 +124,22 @@ void WorldData::update()
    if (playerMoveDir.length() > 0.0) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
+		if (player.pos.x > worldWidth)
+		{
+			player.pos.x = worldWidth;
+		}
+		else if (player.pos.x < -worldWidth)
+		{
+			player.pos.x = -worldWidth;
+		}
+		if (player.pos.y > worldHeight)
+		{
+			player.pos.y = worldHeight;
+		}
+		else if (player.pos.y < -worldHeight)
+		{
+			player.pos.y = -worldHeight;
+		}
    } else
       player.stop();
 
@@ -228,12 +249,27 @@ void WorldData::draw()
    glTexCoord2f(xoffset,1+yoffset);
    glVertex2f(0, height);
    glEnd();
+
+	
    
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
-
+	
+	glColor3ub(0, 0, 0);
+	//glLineWidth (boarderWidth);
+	glBegin(GL_LINES);
+	glVertex2f(wWidth, wHeight);
+	glVertex2f(-wWidth, wHeight);
+	glVertex2f(wWidth, wHeight);
+	glVertex2f(wWidth, -wHeight);
+	glVertex2f(wWidth, -wHeight);
+	glVertex2f(-wWidth, -wHeight);
+	glVertex2f(-wWidth, -wHeight);
+	glVertex2f(-wWidth, wHeight);
+	glEnd();
    /*glColor4ub(255,255,255,128);
    shadow.draw();
    glColor4ub(255,255,255,255);*/
+	glColor3ub(255, 255, 255);
 
    objs.drawAll();
    

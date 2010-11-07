@@ -17,6 +17,14 @@ namespace constants {
 	const float PI = 3.14159265359f;
 
    const int playerMaxHp = 100;
+	const int worldHeight = 5000;
+	const int worldWidth = 500;
+   
+   const int playerRadius = 20; // used for collision detection
+   const int arrowRadius = 20; // used for collision detection
+   const int NPCRadius = 20; // used for collision detection
+   const int itemRadius = 20;
+
 
    namespace ObjectType { enum {
       Player=0, NPC, Missile, Item,
@@ -27,7 +35,7 @@ namespace constants {
       BigFairy, Wizard, Ganon, Goblin,
    };}
    namespace ItemType { enum {
-      GreenRupee=0, RedRupee, BlueRupee, Explosion,
+      GreenRupee=0, RedRupee, BlueRupee, Explosion, Stump,
    };}
    namespace MissileType { enum {
       Arrow=0,
