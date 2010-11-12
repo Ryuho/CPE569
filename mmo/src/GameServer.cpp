@@ -250,4 +250,10 @@ float getDt()
    return serverState->dt;
 }
 
+ObjectManager &getOM()
+{
+   return serverState->om;
+}
+
+
 // empty stubs of character graphics-related functions

@@ -65,21 +65,61 @@ Geometry Missile::getGeom()
 // NPC
 
 NPC::NPC(int id, vec2 pos, vec2 dir, int type)
-   : id(id), pos(pos), dir(dir), type(type)
+   : id(id), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
+   aiTicks(0), attackId(0), initPos(pos)
 {
 
 }
 
 void NPC::update() 
 {
-   //currently stupid AI that goes to center, and stops
-   dir = mat::to(pos,vec2(0,0));
-   dir.normalize();
-   if(mat::dist(pos, vec2(0,0)) <= mat::dist(dir * getDt() * playerSpeed, vec2(0,0))) {
-      //pos = vec2(0,0);    this makes the NPC dissapear?
+   Player *p = 0;
+   if(mat::dist(pos, initPos) > maxNpcMoveDist) {
+      aiType = AIType::Walking;
+      dir = mat::to(pos, initPos);
+      dir.normalize();
+      aiTicks = getTicks() + rand() % 1000;
    }
-   else {
-      pos = pos + dir * getDt() * playerSpeed;
+   for(unsigned i = 0; i < getOM().players.size(); i++) {
+      if(mat::dist(getOM().players[i]->pos, pos) < npcAggroRange) {
+         p = getOM().players[i];
+         aiType = AIType::Attacking;
+         attackId = p->id;
+         //printf("%d attacking %d\n", id, attackId);
+      }
+   }
+   if(aiType == AIType::Attacking) {
+      p = getOM().getPlayer(attackId);
+      if(!p || mat::dist(p->pos, pos) >= npcAggroRange) {
+         attackId = 0;
+         aiType = AIType::Stopped;
+         return;
+      }
+   }
+   if(aiTicks - getTicks() <= 0) {
+      if(aiType == AIType::Stopped || aiType == AIType::Walking) {
+         aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
+         aiTicks = getTicks() + rand() % 1000 + 300;
+         if(aiType == AIType::Walking) {
+            float angle = ((rand() % 360) / 180.0f) * PI;
+            dir = vec2(cos(angle), sin(angle));
+            dir.normalize();
+         }
+      }
+   }
+   if(aiType == AIType::Attacking) {
+      vec2 newDir = mat::to(pos, p->pos);
+      if(newDir.length() > 0.2f) {
+         newDir.normalize();
+         dir = newDir;
+         vec2 newPos = pos + dir * getDt() * npcAttackSpeed;
+         if(mat::dist(newPos, p->pos) > attackRange) {
+            pos = newPos;
+         }
+      }
+   }
+   else if(aiType == AIType::Walking) {
+      pos = pos + dir * getDt() * npcWalkSpeed;
    }
 }
 
@@ -89,7 +129,7 @@ Geometry NPC::getGeom()
       case NPCType::Fairy: //16x16
       case NPCType::Bat:
       case NPCType::Bird:
-         return new Circle(pos, 16*3);
+         return new Circle(pos, 16*1.5f);
          break;
       case NPCType::Thief: //16x32
       case NPCType::Squirrel: 
@@ -98,7 +138,7 @@ Geometry NPC::getGeom()
       case NPCType::Cactus:
       case NPCType::Wizard:
       case NPCType::Goblin:
-         return new Circle(pos, 30*3);
+         return new Circle(pos, 25*1.5f);
          break;
       case NPCType::Cyclops: //32x32
       case NPCType::Chicken:
@@ -106,7 +146,7 @@ Geometry NPC::getGeom()
       case NPCType::Bush:
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         return new Circle(pos, 32*3);
+         return new Circle(pos, 30*1.5f);
          break;
       default:
          printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
@@ -128,13 +168,13 @@ Geometry Item::getGeom()
       case ItemType::GreenRupee:
       case ItemType::RedRupee:
       case ItemType::BlueRupee:
-         return new Circle(pos, 24.0f);
+         return new Circle(pos, 8*1.5f);
          break; //unreachable
       case ItemType::Explosion:
-         return new Circle(pos, 24.0f);
+         return new Circle(pos, 25*1.5f);
          break;
       case ItemType::Stump:
-         return new Circle(pos, 48.0f);
+         return new Circle(pos, 168*1.5f);
          break;
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);

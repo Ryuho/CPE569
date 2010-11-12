@@ -40,7 +40,8 @@ namespace server {
       void update();
       Geometry getGeom();
       
-      vec2 pos, dir;
+      vec2 pos, dir, initPos;
+      int aiTicks, aiType, attackId;
       int id, type;
    };
 
