@@ -5,7 +5,7 @@
 namespace constants {
    const float playerSpeed = 400; // Number of pixels per second the player can move
    const float npcAttackSpeed = 300;
-   const float npcWalkSpeed = 100;
+   const float npcWalkSpeed = 130;
    const int numArrows = 30; // Number of arrows that are fired in the special attack
    const int arrowCooldown = 150; // Number of ms between arrow shots
    const int specialCooldown = 2000; // ms between special attacks
@@ -17,16 +17,17 @@ namespace constants {
 
 	const float PI = 3.14159265359f;
 
-   const int playerMaxHp = 100;
+   const int npcMaxHp = 120;
+   const int playerMaxHp = 200;
 	const int worldHeight = 5000;
 	const int worldWidth = 5000;
    
    const float playerRadius = 20.0f; // used for collision detection
    const float arrowRadius = 16.0f; // used for collision detection
    const float NPCRadius = 20.0f; // used for collision detection
-   const float attackRange = 50.0f;
-   const float maxNpcMoveDist = 5000.0f;
-   const float npcAggroRange = 400.0f;
+   const float attackRange = 200.0f;
+   const float maxNpcMoveDist = 2000.0f;
+   const float npcAggroRange = 325.0f;
 
 
    namespace ObjectType { enum {

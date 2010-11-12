@@ -36,14 +36,15 @@ namespace server {
    };
 
    struct NPC {
-      NPC(int id, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
+      NPC(int id, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       void update();
+      void takeDamage(int damage);
       Geometry getGeom();
       int getLoot();
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
-      int id, type;
+      int id, hp, type;
    };
 
    struct Item {
@@ -55,32 +56,51 @@ namespace server {
    };
 
 
-   struct ObjectManager {
-      struct Index {
-         Index() {}
-         Index(int index, int type) : index(index), type(type) {}
-         int index, type;
-      };
+struct Region {
+     vector<Player *> players;
+     vector<Missile *> missiles;
+     vector<NPC *> npcs;
+     vector<Item *> items;
+  };
+ 
 
-      void addPlayer(Player p);
-      void addMissile(Missile m);
-      void addNPC(NPC n);
-      void addItem(Item i);
+struct ObjectManager {
+     struct Index {
+        Index() {}
+        Index(int index, int type) : index(index), type(type) {}
+        int index, type;
+     };
+     
+     void init(float width, float length, float regionWidth);
 
-      Player *getPlayer(int id);
-      Missile *getMissile(int id);
-      NPC *getNpc(int id);
-      Item *getItem(int id);
+     void addPlayer(Player p);
+     void addMissile(Missile m);
+     void addNPC(NPC n);
+     void addItem(Item i);
 
-      void remove(int id);
-      bool check(int id, int type);
+     Player *getPlayer(int id);
+     Missile *getMissile(int id);
+     NPC *getNpc(int id);
+     Item *getItem(int id);
+     
+     vector<Player *> collidingPlayers(Geometry g, vec3 center);
+     vector<Missile *> collidingMissiles(Geometry g, vec3 center);
+     vector<NPC *> collidingNPCs(Geometry g, vec3 center);
+     vector<Item *> collidingItems(Geometry g, vec3 center);
+     void updateRegions();
 
-      map<int, Index> idToIndex;
-      vector<Player *> players;
-      vector<Missile *> missiles;
-      vector<NPC *> npcs;
-      vector<Item *> items;
-   };
+     void remove(int id);
+     bool check(int id, int type);
+
+     map<int, Index> idToIndex;
+     vector<Player *> players;
+     vector<Missile *> missiles;
+     vector<NPC *> npcs;
+     vector<Item *> items;
+     
+     vector<vector<Region> > regions;
+  };
+
 
 } // end server namespace
 
