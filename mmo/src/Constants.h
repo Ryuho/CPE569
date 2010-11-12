@@ -20,10 +20,9 @@ namespace constants {
 	const int worldHeight = 5000;
 	const int worldWidth = 500;
    
-   const int playerRadius = 20; // used for collision detection
-   const int arrowRadius = 20; // used for collision detection
-   const int NPCRadius = 20; // used for collision detection
-   const int itemRadius = 20;
+   const float playerRadius = 20.0f; // used for collision detection
+   const float arrowRadius = 20.0f; // used for collision detection
+   const float NPCRadius = 20.0f; // used for collision detection
 
 
    namespace ObjectType { enum {

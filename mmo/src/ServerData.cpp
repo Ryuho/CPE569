@@ -35,7 +35,7 @@ void Player::gainExp(int exp)
 
 Geometry Player::getGeom()
 {
-   return new Circle(pos, playerRadius);
+   return new Circle(pos, (float)playerRadius);
 }
 
 
@@ -74,17 +74,43 @@ void NPC::update()
    //currently stupid AI that goes to center, and stops
    dir = mat::to(pos,vec2(0,0));
    dir.normalize();
-   if(mat::dist(pos, vec2(0,0)) <= mat::dist(dir * getDt() * playerSpeed, vec2(0,0))){
+   if(mat::dist(pos, vec2(0,0)) <= mat::dist(dir * getDt() * playerSpeed, vec2(0,0))) {
       //pos = vec2(0,0);    this makes the NPC dissapear?
    }
-   else{
+   else {
       pos = pos + dir * getDt() * playerSpeed;
    }
 }
 
 Geometry NPC::getGeom()
 {
-   return new Circle(pos, NPCRadius);
+      switch(type) {
+      case NPCType::Fairy: //16x16
+      case NPCType::Bat:
+      case NPCType::Bird:
+         return new Circle(pos, 16*3);
+         break;
+      case NPCType::Thief: //16x32
+      case NPCType::Squirrel: 
+      case NPCType::Princess:
+      case NPCType::Skeleton:
+      case NPCType::Cactus:
+      case NPCType::Wizard:
+      case NPCType::Goblin:
+         return new Circle(pos, 30*3);
+         break;
+      case NPCType::Cyclops: //32x32
+      case NPCType::Chicken:
+      case NPCType::Vulture:
+      case NPCType::Bush:
+      case NPCType::BigFairy:
+      case NPCType::Ganon:
+         return new Circle(pos, 32*3);
+         break;
+      default:
+         printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
+   }
+   return new Circle(pos, 0.00001f);
 }
 
 // Item
@@ -97,7 +123,22 @@ Item::Item(int id, vec2 pos, int type)
 
 Geometry Item::getGeom()
 {
-   return new Circle(pos, NPCRadius);
+   switch (type) {
+      case ItemType::GreenRupee:
+      case ItemType::RedRupee:
+      case ItemType::BlueRupee:
+         return new Circle(pos, 24.0f);
+         break; //unreachable
+      case ItemType::Explosion:
+         return new Circle(pos, 24.0f);
+         break;
+      case ItemType::Stump:
+         return new Circle(pos, 48.0f);
+         break;
+      default:
+         printf("Error Item::getGeom - Unknown item type %d\n", type);
+   }
+   return new Circle(pos, 0.00001f);
 }
 
 // Object Manager

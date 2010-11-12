@@ -145,7 +145,7 @@ void GameServer::processPacket(pack::Packet p, int id)
       Click click(p);
       for(unsigned i = 0; i < om.items.size(); i++) {
          Item &item = *om.items[i];
-         if(mat::dist(item.pos, click.pos) < 20) {
+         if(item.getGeom().collision(geom::Point(click.pos))) {
             om.remove(item.id);
             cm.broadcast(Signal(Signal::remove, item.id));
             spawnItem(newId());
