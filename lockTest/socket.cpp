@@ -230,7 +230,7 @@ bool Connection::recv(Packet &p, int size)
       select();
       size = available();
       if (size == 0) {
-         cerr << "-- Socket closed: select->avail->0" << endl;
+         cerr << "remote end hung up while waiting for recv" << endl;
          info->active = false;
          return false;
       }
@@ -684,17 +684,13 @@ vector<int> SelectSet::select(int ms)
 
    if (selectVal == SOCKET_ERROR)
       sockError();
-     
-   printf("selectval: %d\n", selectVal);
-   //else if (selectVal == 0) 
-   //   return ret;
 
    for (size_t i = 0; i < info->sds.size(); i++) {
       if (FD_ISSET(info->sds[i], &reads))
          ret.push_back(info->sds[i]);
    }
 
-   return vector<int>();
+   return ret;
 }
 
 /*struct SelectInfo {

@@ -13,6 +13,9 @@ namespace ops {
       acquire,
       release,
       success,
+      available,
+      newHost,
+      connect,
    };
 }
 
@@ -20,7 +23,9 @@ namespace ops {
 struct LockManager {
    LockManager() {}
    
-   void startThread(int port = 27030);
+   void startThread(int port, int id);
+   void addHost(const char *hostname, int port, int id);
+
    void addLocalLock(int id);
    void addRemoteLock(int id, int host);
 
