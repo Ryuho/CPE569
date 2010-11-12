@@ -29,6 +29,10 @@ namespace constants {
    const float maxNpcMoveDist = 2000.0f;
    const float npcAggroRange = 325.0f;
 
+   const int greenRupeeValue = 1;
+   const int blueRupeeValue = 3;
+   const int redRupeeValue = 5;
+
 
    namespace ObjectType { enum {
       Player=0, NPC, Missile, Item,

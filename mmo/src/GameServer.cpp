@@ -144,15 +144,26 @@ void GameServer::processPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::click) {
       Click click(p);
-      for(unsigned i = 0; i < om.items.size(); i++) {
-         Item &item = *om.items[i];
-         if(item.getGeom().collision(new geom::Point(click.pos))) {
-            om.remove(item.id);
-            cm.broadcast(Signal(Signal::remove, item.id));
-            //spawnItem(newId());
-            break;
-         } 
-      }
+      Player *p = om.getPlayer(click.id);
+      if(p) {
+         for(unsigned i = 0; i < om.items.size(); i++) {
+            Item &item = *om.items[i];
+            if(item.getGeom().collision(new geom::Point(click.pos))) {
+               cm.broadcast(Signal(Signal::remove, item.id));
+               int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+                  item.type == ItemType::BlueRupee ? blueRupeeValue :
+                  item.type == ItemType::RedRupee ? redRupeeValue :
+                  0;
+               if(rupees > 0) {
+                  p->gainRupees(rupees);
+                  cm.sendPacket(Signal(Signal::changeRupee, rupees), click.id);
+               }
+               om.remove(item.id);
+               break;
+            } 
+         }
+      } else
+         printf("Error invalid click Player id %d\n", click.id);
    }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.size);
@@ -172,60 +183,63 @@ void GameServer::update(int ticks)
    }
    
    //players loop, checks for hp == 0, or if it is hit with an arrow
-   for(size_t pidx = 0; pidx < om.players.size(); pidx++) {
+   for(unsigned pidx = 0; pidx < om.players.size(); pidx++) {
+      Player &p = *om.players[pidx];
       //if player is colliding with any missle that is not owned by it, take dmg
-      for(size_t midx = 0; midx < om.missiles.size(); midx++){
-         if( om.players[pidx]->id != om.missiles[midx]->owned &&
-               om.players[pidx]->getGeom().collision(om.missiles[midx]->getGeom()) ){
-            om.players[pidx]->takeDamage(rand()%6 + 5);
-            cm.broadcast(HealthChange(om.players[pidx]->id, om.players[pidx]->hp));
-            cm.broadcast(Signal(Signal::remove, om.missiles[midx]->id).makePacket());
-            om.remove(om.missiles[midx]->id);
+      for(unsigned midx = 0; midx < om.missiles.size(); midx++) {
+         Missile &m = *om.missiles[midx];
+         if(p.id != m.owned && p.getGeom().collision(m.getGeom())) {
+            p.takeDamage(rand()%6 + 5);
+            cm.broadcast(HealthChange(p.id, p.hp));
+            cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+            om.remove(m.id);
          }
       }
-
       //if hp is 0, remove the player
-      if(om.players[pidx]->hp == 0){
-         cm.broadcast(Signal(Signal::remove, om.players[pidx]->id).makePacket());
-         cm.removeConnection(om.players[pidx]->id);
-         om.remove(om.players[pidx]->id);
+      if(p.hp == 0) {
+         cm.broadcast(Signal(Signal::remove, p.id).makePacket());
+         cm.removeConnection(p.id);
+         om.remove(p.id);
          pidx--;
          continue;
       }
    }
-   
 
    //missles loop, checks for missles TOF, remove if above set value, else move the position
-   for(size_t i = 0; i < om.missiles.size(); i++) {
+   for(unsigned i = 0; i < om.missiles.size(); i++) {
       //missle out of bound
-      if(ticks - om.missiles[i]->spawnTime  >= 500){
-         cm.broadcast(Signal(Signal::remove, om.missiles[i]->id).makePacket());
-         om.remove(om.missiles[i]->id);
+      Missile &m = *om.missiles[i];
+      if(ticks - m.spawnTime >= 500){
+         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+         om.remove(m.id);
          i--;
       }
-      else{
-         Missile &missle = *om.missiles[i];
-         missle.update();
-      }
+      else
+         m.update();
    }
 
-   //NPC
+   //NPC update - collision detection with missiles, death, exp/loot distribution
    if(om.players.size() > 0) {
-      for(size_t i = 0; i < om.npcs.size(); i++) {
+      for(unsigned i = 0; i < om.npcs.size(); i++) {
          NPC &npc = *om.npcs[i];
          bool removeNPC = false;
-         for(size_t j = 0; j < om.missiles.size(); j++) {
-            if(npc.getGeom().collision(om.missiles[j]->getGeom())) {
-               om.npcs[i]->takeDamage(rand()%6);
-               cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
-               om.remove(om.missiles[j]->id);
-            }
-            if(om.npcs[i]->hp == 0) {
-               removeNPC = true;
-               break;
+         int mowned = 0;
+         for(unsigned j = 0; j < om.missiles.size() && !removeNPC; j++) {
+            Missile &m = *om.missiles[j];
+            mowned = m.owned;
+            if(npc.getGeom().collision(m.getGeom())) {
+               npc.takeDamage(rand()%6);
+               if(npc.hp == 0) {
+                  removeNPC = true;
+                  mowned = m.owned;
+               }
+               cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+               om.remove(m.id);
+               j--;
             }
          }
          if(removeNPC) {
+            cm.sendPacket(Signal(Signal::changeExp, npc.getExp()).makePacket(), mowned);
             int lootItem = npc.getLoot();
             if(lootItem >= 0) {
                Item item(newId(), npc.pos, lootItem);

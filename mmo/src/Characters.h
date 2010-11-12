@@ -25,7 +25,7 @@ struct Player {
    bool moving, alive;
    int animStart, lastUpdate;
    int id;
-   int hp;
+   int hp, rupees, exp;
 };
 
 struct Missile {

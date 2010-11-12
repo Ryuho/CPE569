@@ -135,6 +135,9 @@ struct Signal {
       remove = 2,      // Indicates the object with id is no longer seen
 		special = 3,		// The player id(val) casts a special attack
       hurtme = 4,       // damages the player
+      changeExp = 5,
+      changeRupee = 6,
+
    };
    int sig, val;
    Signal() : sig(0) {}
@@ -198,6 +201,7 @@ struct HealthChange {
       return p;
    }
 };
+
 
 } // end pack namespace
 

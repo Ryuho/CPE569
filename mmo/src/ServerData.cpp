@@ -11,7 +11,7 @@ using namespace constants;
 // Player
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), moving(false), hp(hp)
+   : id(id), pos(pos), dir(dir), moving(false), hp(hp), rupees(0), exp(0)
 {
    
 }
@@ -31,7 +31,12 @@ void Player::takeDamage(int damage)
 
 void Player::gainExp(int exp)
 {
+   this->exp += exp;
+}
 
+void Player::gainRupees(int rupees)
+{
+   this->rupees += rupees;
 }
 
 Geometry Player::getGeom()
@@ -69,6 +74,40 @@ NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
    aiTicks(0), attackId(0), initPos(pos)
 {
 
+}
+
+int NPC::getExp()
+{
+   int exp = 0;
+   switch(type) {
+      case NPCType::Fairy:
+      case NPCType::Bird:
+      case NPCType::Squirrel: 
+      case NPCType::Chicken:
+         exp = 1;
+         break;
+      case NPCType::Bush:
+      case NPCType::Bat:
+      case NPCType::Thief:
+      case NPCType::Cactus:
+      case NPCType::Goblin:
+      case NPCType::Princess:
+      case NPCType::Vulture:
+         exp = 2;
+         break;
+      case NPCType::Cyclops:
+      case NPCType::Skeleton:
+      case NPCType::Wizard:
+         exp = 4;
+         break;
+      case NPCType::BigFairy:
+      case NPCType::Ganon:
+         exp = 10;
+         break;
+      default:
+         printf("Error NPC::getExp() - unknown NPC type %d\n", type);
+   }
+   return exp;
 }
 
 int NPC::getLoot()

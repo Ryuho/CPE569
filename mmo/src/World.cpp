@@ -207,6 +207,12 @@ void WorldData::processPacket(pack::Packet p)
             objs.removeObject(sig.val);
             printf("Object %d disconnected\n", sig.val);
          }
+      } else if (sig.sig == Signal::changeRupee) {
+         player.rupees = sig.val;
+         printf("rupees = %d\n", player.rupees);
+      } else if (sig.sig == Signal::changeExp) {
+         player.exp = sig.val;
+         printf("exp = %d\n", player.exp);
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 

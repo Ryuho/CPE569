@@ -19,11 +19,12 @@ namespace server {
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
       void gainExp(int exp);
+      void gainRupees(int rupees);
       Geometry getGeom();
       
       vec2 pos, dir;
       bool moving, alive;
-      int id, hp, exp;
+      int id, hp, exp, rupees;
    };
 
    struct Missile {
@@ -41,6 +42,7 @@ namespace server {
       void takeDamage(int damage);
       Geometry getGeom();
       int getLoot();
+      int getExp();
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
