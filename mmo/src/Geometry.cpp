@@ -22,7 +22,23 @@ bool PlanePlane(const Plane *p1, const Plane *p2)
       return true;
 }
 
+bool CirclePoint(const Circle *c, const Point *p) 
+{
+   return dist(c->pos, p->pos) < c->radius;
+}
 
+bool PointPoint(const Point *p1, const Point *p2)
+{
+   return mat::dist(p1->pos, p2->pos) == 0.0f;
+}
+
+bool PlanePoint(const Plane *plane, const Point *point)
+{
+   return abs(plane->norm.dot(point->pos) + plane->d) < plane->radius;
+}
+
+///////////// CIRCLE /////////////
+//////////////////////////////////
 bool Circle::collision(const GeometryBase *other) const
 {
    return other->collision(this);
@@ -38,6 +54,14 @@ bool Circle::collision(const Plane *other) const
    return CirclePlane(this, other);
 }
 
+bool Circle::collision(const Point *other) const
+{
+   return CirclePoint(this, other);
+}
+
+
+///////////// PLANE /////////////
+/////////////////////////////////
 bool Plane::collision(const GeometryBase *other) const
 {
    return other->collision(this);
@@ -53,6 +77,35 @@ bool Plane::collision(const Plane *other) const
    return PlanePlane(this, other);
 }
 
+bool Plane::collision(const Point *other) const
+{
+   return PlanePoint(this, other);
+}
+
+///////////// POINT /////////////
+/////////////////////////////////
+bool Point::collision(const GeometryBase *other) const
+{
+   return other->collision(this);
+}
+
+bool Point::collision(const Circle *other) const
+{
+   return CirclePoint(other, this);
+}
+
+bool Point::collision(const Plane *other) const
+{
+   return PlanePoint(other, this);
+}
+
+bool Point::collision(const Point *other) const
+{
+   return PointPoint(this, other);
+}
+
+///////////// GEOMETRYSET /////////////
+///////////////////////////////////////
 bool GeometrySet::collision(const GeometryBase *other) const
 {
    for (unsigned i = 0; i < set.size(); i++)
@@ -77,5 +130,12 @@ bool GeometrySet::collision(const Plane *other) const
    return true;
 }
 
+bool GeometrySet::collision(const Point *other) const
+{
+   for (unsigned i = 0; i < set.size(); i++)
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
+}
 
 } // end geom namespace
