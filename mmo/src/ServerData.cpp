@@ -64,8 +64,8 @@ Geometry Missile::getGeom()
 
 // NPC
 
-NPC::NPC(int id, vec2 pos, vec2 dir, int type)
-   : id(id), pos(pos), dir(dir), type(type)
+NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
+   : id(id), hp(hp), pos(pos), dir(dir), type(type)
 {
 
 }
@@ -81,6 +81,11 @@ void NPC::update()
    else {
       pos = pos + dir * getDt() * playerSpeed;
    }
+}
+
+void NPC::takeDamage(int damage)
+{
+   hp = max(0, hp-damage);
 }
 
 Geometry NPC::getGeom()
