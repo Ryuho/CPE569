@@ -156,13 +156,14 @@ void GameServer::processPacket(pack::Packet p, int id)
                   0;
                if(rupees > 0) {
                   p->gainRupees(rupees);
-                  cm.sendPacket(Signal(Signal::changeRupee, rupees), click.id);
+                  cm.sendPacket(Signal(Signal::changeRupee, p->rupees), click.id);
                }
                om.remove(item.id);
                break;
             } 
          }
-      } else
+      } 
+      else
          printf("Error invalid click Player id %d\n", click.id);
    }
    else
@@ -226,12 +227,15 @@ void GameServer::update(int ticks)
          int mowned = 0;
          for(unsigned j = 0; j < om.missiles.size() && !removeNPC; j++) {
             Missile &m = *om.missiles[j];
-            mowned = m.owned;
             if(npc.getGeom().collision(m.getGeom())) {
                npc.takeDamage(rand()%6);
                if(npc.hp == 0) {
+                  Player *p = om.getPlayer(mowned);
+                  if(p) {
+                     p->gainExp(npc.getExp());
+                     cm.sendPacket(Signal(Signal::changeExp, p->exp).makePacket(), m.owned);
+                  }
                   removeNPC = true;
-                  mowned = m.owned;
                }
                cm.broadcast(Signal(Signal::remove, m.id).makePacket());
                om.remove(m.id);
@@ -239,7 +243,6 @@ void GameServer::update(int ticks)
             }
          }
          if(removeNPC) {
-            cm.sendPacket(Signal(Signal::changeExp, npc.getExp()).makePacket(), mowned);
             int lootItem = npc.getLoot();
             if(lootItem >= 0) {
                Item item(newId(), npc.pos, lootItem);

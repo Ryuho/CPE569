@@ -41,6 +41,7 @@ namespace {
    Animation blueRupeeAnim;
    Animation explosionAnim;
    Animation stumpAnim;
+   Animation heartAnim;
 }
 
 void drawQuad(vec2 bl, vec2 tr)
@@ -146,6 +147,8 @@ void Item::initGraphics()
       case ItemType::Stump :
          anim = &stumpAnim;
          break;
+      case ItemType::Heart :
+         anim = &heartAnim;
       default:
          printf("Error: invalid Item (Type %d) to animate.\n", type);
    }
@@ -412,6 +415,10 @@ void initCharacterResources()
       stumpAnim.init(&sprites32, Animation::Forward, true);
       stumpAnim.speed = 1000;
       stumpAnim.dirs[Animation::Down].push_back(vec2i(9,2));
+
+      heartAnim.init(&sprites16, Animation::Forward, true);
+      heartAnim.speed = 1000;
+      heartAnim.dirs[Animation::Down].push_back(vec2i(24,4));
 
       initalized = true;
    }

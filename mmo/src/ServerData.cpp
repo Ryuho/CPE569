@@ -120,7 +120,7 @@ int NPC::getLoot()
       case NPCType::Squirrel: 
       case NPCType::Chicken:
          loot = roll < 30 ? ItemType::GreenRupee :
-            roll < 50 ? ItemType::Heart : 
+            roll < 55 ? ItemType::Heart : 
             -1;
          break;
       case NPCType::Bush:
@@ -130,25 +130,24 @@ int NPC::getLoot()
       case NPCType::Goblin:
       case NPCType::Princess:
       case NPCType::Vulture:
-         loot = roll < 30 ? ItemType::GreenRupee :
-            roll < 60 ? ItemType::BlueRupee :
+         loot = roll < 40 ? ItemType::GreenRupee :
+            roll < 50 ? ItemType::BlueRupee :
             roll < 80 ? ItemType::Heart : 
             -1;
          break;
       case NPCType::Cyclops:
       case NPCType::Skeleton:
       case NPCType::Wizard:
-         loot = roll < 30 ? ItemType::GreenRupee :
-            roll < 60 ? ItemType::BlueRupee :
-            roll < 70 ? ItemType::RedRupee :
+         loot = roll < 20 ? ItemType::GreenRupee :
+            roll < 30 ? ItemType::BlueRupee :
+            roll < 50 ? ItemType::RedRupee :
             roll < 90 ? ItemType::Heart :
             -1;
          break;
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         loot = roll < 10 ? ItemType::GreenRupee :
-            roll < 60 ? ItemType::BlueRupee :
-            roll < 60 ? ItemType::RedRupee :
+         loot = roll < 20 ? ItemType::BlueRupee :
+            roll < 50 ? ItemType::RedRupee :
             roll < 95 ? ItemType::Heart :
             -1;
          break;
@@ -225,7 +224,7 @@ Geometry NPC::getGeom()
       case NPCType::Cactus:
       case NPCType::Wizard:
       case NPCType::Goblin:
-         return new Circle(pos, 25*1.5f);
+         return new Circle(pos, 22*1.5f);
          break;
       case NPCType::Cyclops: //32x32
       case NPCType::Chicken:
@@ -233,7 +232,7 @@ Geometry NPC::getGeom()
       case NPCType::Bush:
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         return new Circle(pos, 30*1.5f);
+         return new Circle(pos, 23.5f*1.5f);
          break;
       default:
          printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
@@ -263,10 +262,13 @@ Geometry Item::getGeom()
          return new Circle(pos, 8*1.5f);
          break; //unreachable
       case ItemType::Explosion:
-         return new Circle(pos, 25*1.5f);
+         return new Circle(pos, 55*1.5f);
          break;
       case ItemType::Stump:
-         return new Circle(pos, 168*1.5f);
+         return new Circle(pos, 32*1.5f);
+         break;
+      case ItemType::Heart:
+         return new Circle(pos, 16*1.5f);
          break;
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);
