@@ -27,12 +27,12 @@ namespace server {
    };
 
    struct Missile {
-      Missile(int id, vec2 pos, vec2 dir, int type = MissileType::Arrow);
+      Missile(int id, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
       void update();
       Geometry getGeom();
 
       vec2 pos, dir;
-      int id, type, spawnTime;
+      int id, owned, type, spawnTime;
    };
 
    struct NPC {

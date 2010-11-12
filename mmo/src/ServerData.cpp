@@ -41,8 +41,8 @@ Geometry Player::getGeom()
 
 // Missile
 
-Missile::Missile(int id, mat::vec2 pos, mat::vec2 dir, int type)
-   : id(id), pos(pos), dir(dir), type(type)
+Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
+   : id(id), owned(owned), pos(pos), dir(dir), type(type)
 {
    spawnTime = getTicks();
    this->dir = dir;

@@ -122,7 +122,7 @@ void GameServer::processPacket(pack::Packet p, int id)
          for (int i = 0; i < constants::numArrows; i++) {
             float t = i/(float)constants::numArrows;
             int arrowID = newId();
-            Missile m(newId(), play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
+            Missile m(newId(),id, play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
             om.addMissile(m);
             Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
             cm.broadcast(init);
@@ -136,7 +136,7 @@ void GameServer::processPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::arrow) {
       Arrow ar(p);
-      Missile m(newId(), om.getPlayer(id)->pos, ar.direction);
+      Missile m(newId(),id, om.getPlayer(id)->pos, ar.direction);
       om.addMissile(m);
       Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
       cm.broadcast(init);
@@ -159,9 +159,11 @@ void GameServer::processPacket(pack::Packet p, int id)
 
 void GameServer::update(int ticks)
 {
+   //get the current delta time (time passed since it last ran update())
    dt = (float)((ticks - this->ticks)/1000.0);
    this->ticks = ticks;
 
+   //if there is a player connected, spawn up to 6 NPCs
    if(om.players.size() > 0) {
       if(rint(5) == 0 && om.npcs.size() <= 6){
          int npcid = newId();
@@ -169,7 +171,31 @@ void GameServer::update(int ticks)
       }
    }
    
-   //missles
+   //players loop, checks for hp == 0, or if it is hit with an arrow
+   for(size_t pidx = 0; pidx < om.players.size(); pidx++) {
+      //if player is colliding with any missle that is not owned by it, take dmg
+      for(size_t midx = 0; midx < om.missiles.size(); midx++){
+         if( om.players[pidx]->id != om.missiles[midx]->owned &&
+               om.players[pidx]->getGeom().collision(om.missiles[midx]->getGeom()) ){
+            om.players[pidx]->takeDamage(rand()%6 + 5);
+            cm.broadcast(HealthChange(om.players[pidx]->id, om.players[pidx]->hp));
+            cm.broadcast(Signal(Signal::remove, om.missiles[midx]->id).makePacket());
+            om.remove(om.missiles[midx]->id);
+         }
+      }
+
+      //if hp is 0, remove the player
+      if(om.players[pidx]->hp == 0){
+         cm.broadcast(Signal(Signal::remove, om.players[pidx]->id).makePacket());
+         om.remove(om.players[pidx]->id);
+         cm.removeConnection(om.players[pidx]->id);
+         pidx--;
+         continue;
+      }
+   }
+   
+
+   //missles loop, checks for missles TOF, remove if above set value, else move the position
    for(size_t i = 0; i < om.missiles.size(); i++) {
       //missle out of bound
       if(ticks - om.missiles[i]->spawnTime  >= 500){
