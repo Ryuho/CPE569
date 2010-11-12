@@ -95,8 +95,6 @@ void GameServer::newConnection(int id)
    //make a new NPC and tell everybody about it
    int npcid = newId();
    spawnNPC(npcid);
-   //NPC *npc = om.getNpc(npcid);
-   //cm.broadcast(Initialize(npcid, ObjectType::NPC, npc->type, npc->pos, npc->dir, 0).makePacket());
 }
 
 void GameServer::disconnect(int id)
@@ -151,7 +149,7 @@ void GameServer::processPacket(pack::Packet p, int id)
          if(item.getGeom().collision(new geom::Point(click.pos))) {
             om.remove(item.id);
             cm.broadcast(Signal(Signal::remove, item.id));
-            spawnItem(newId());
+            //spawnItem(newId());
             break;
          } 
       }
@@ -213,12 +211,11 @@ void GameServer::update(int ticks)
    }
 
    //NPC
-   bool removeNPC = false;
    for(size_t i = 0; i < om.npcs.size(); i++) {
       if(om.players.size() > 0) {
-         removeNPC = false;
+         bool removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
-            if( om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom()) ){
+            if(om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom())){
                cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
                removeNPC = true;
