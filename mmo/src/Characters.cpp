@@ -80,32 +80,32 @@ void NPC::update()
 
 void ObjectHolder::addPlayer(Player p)
 {
-   if (!checkObject(p.id, IdType::Player)) {
-      idToIndex[p.id] = IdType(players.size(), IdType::Player);
+   if (!checkObject(p.id, ObjectType::Player)) {
+      idToIndex[p.id] = IdType(players.size(), ObjectType::Player);
       players.push_back(p);
    }
 }
 
 void ObjectHolder::addMissile(Missile m)
 {
-   if (!checkObject(m.id, IdType::Missile)) {
-      idToIndex[m.id] = IdType(missiles.size(), IdType::Missile);   
+   if (!checkObject(m.id, ObjectType::Missile)) {
+      idToIndex[m.id] = IdType(missiles.size(), ObjectType::Missile);   
       missiles.push_back(m);
    }
 }
 
 void ObjectHolder::addItem(Item i)
 {
-   if (!checkObject(i.id, IdType::Item)) {
-      idToIndex[i.id] = IdType(items.size(), IdType::Item);
+   if (!checkObject(i.id, ObjectType::Item)) {
+      idToIndex[i.id] = IdType(items.size(), ObjectType::Item);
       items.push_back(i);
    }
 }
 
 void ObjectHolder::addNPC(NPC n)
 {
-   if (!checkObject(n.id, IdType::NPC)) {
-      idToIndex[n.id] = IdType(npcs.size(), IdType::NPC);
+   if (!checkObject(n.id, ObjectType::NPC)) {
+      idToIndex[n.id] = IdType(npcs.size(), ObjectType::NPC);
       npcs.push_back(n);
    }
 }
@@ -113,7 +113,7 @@ void ObjectHolder::addNPC(NPC n)
 
 Player *ObjectHolder::getPlayer(int id)
 {
-   if (!checkObject(id, IdType::Player)) {
+   if (!checkObject(id, ObjectType::Player)) {
       printf("Attempting to access Player that doesn't exist!\n");
       return 0;
    }
@@ -122,7 +122,7 @@ Player *ObjectHolder::getPlayer(int id)
 
 Missile *ObjectHolder::getMissile(int id)
 {
-   if (!checkObject(id, IdType::Missile)) {
+   if (!checkObject(id, ObjectType::Missile)) {
       printf("Attempting to access Missile that doesn't exist!\n");
       return 0;
    }
@@ -131,7 +131,7 @@ Missile *ObjectHolder::getMissile(int id)
 
 Item *ObjectHolder::getItem(int id)
 {
-   if (!checkObject(id, IdType::Item)) {
+   if (!checkObject(id, ObjectType::Item)) {
       printf("Attempting to access Item that doesn't exist!\n");
       return 0;
    }
@@ -140,7 +140,7 @@ Item *ObjectHolder::getItem(int id)
 
 NPC *ObjectHolder::getNPC(int id)
 {
-   if (!checkObject(id, IdType::NPC)) {
+   if (!checkObject(id, ObjectType::NPC)) {
       printf("Attempting to access NPC that doesn't exist!\n");
       return 0;
    }
@@ -172,16 +172,16 @@ void ObjectHolder::removeObject(int id)
 {
    int i = idToIndex[id].index;
 
-   if (idToIndex[id].type == IdType::Player)
+   if (idToIndex[id].type == ObjectType::Player)
       removeTempl(idToIndex, players, id);
 
-   else if (idToIndex[id].type == IdType::Missile)
+   else if (idToIndex[id].type == ObjectType::Missile)
       removeTempl(idToIndex, missiles, id);
 
-   else if (idToIndex[id].type == IdType::Item)
+   else if (idToIndex[id].type == ObjectType::Item)
       removeTempl(idToIndex, items, id);
 
-   else if (idToIndex[id].type == IdType::NPC)
+   else if (idToIndex[id].type == ObjectType::NPC)
       removeTempl(idToIndex, npcs, id);
 }
 

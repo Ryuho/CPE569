@@ -110,9 +110,12 @@ void GameServer::processPacket(pack::Packet p, int id)
 {
    if (p.type == pack::position) {
       Position pos(p);
-      om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
-      pos.id = id;
-      cm.broadcast(pos);
+      if(om.check(id, ObjectType::Player)) {
+         om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
+         pos.id = id;
+         cm.broadcast(pos);
+      } else
+         printf("Accessing unknown Player %d\n", pos.id);
    }
    else if (p.type == pack::signal) {
       Signal signal(p);
@@ -187,8 +190,8 @@ void GameServer::update(int ticks)
       //if hp is 0, remove the player
       if(om.players[pidx]->hp == 0){
          cm.broadcast(Signal(Signal::remove, om.players[pidx]->id).makePacket());
-         om.remove(om.players[pidx]->id);
          cm.removeConnection(om.players[pidx]->id);
+         om.remove(om.players[pidx]->id);
          pidx--;
          continue;
       }

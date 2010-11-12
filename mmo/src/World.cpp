@@ -156,20 +156,20 @@ void WorldData::processPacket(pack::Packet p)
       Position pos(p);
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
-      } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Player)) {
+      } else if(objs.checkObject(pos.id, ObjectType::Player)) {
          Player *p = objs.getPlayer(pos.id);
          if(p)
             p->move(pos.pos, pos.dir, pos.moving != 0);
          else
             printf("Accessing unknown Player %d\n", pos.id);
-      } else if (objs.checkObject(pos.id, ObjectHolder::IdType::NPC)) {
+      } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
          if(npc) {
             npc->pos = pos.pos;
          }
          else
             printf("Accessing unknown NPC %d\n", pos.id);
-      } else if(objs.checkObject(pos.id, ObjectHolder::IdType::Item)) {
+      } else if(objs.checkObject(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
          if(item)
             item->pos = pos.pos;

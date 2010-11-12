@@ -74,7 +74,6 @@ private:
 
 struct ObjectHolder {
    struct IdType {
-      enum { Player, Missile, Item, NPC };
       IdType() {}
       IdType(int index, int type) : index(index), type(type) {}
       int index, type;
