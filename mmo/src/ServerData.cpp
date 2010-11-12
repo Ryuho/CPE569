@@ -71,6 +71,54 @@ NPC::NPC(int id, vec2 pos, vec2 dir, int type)
 
 }
 
+int NPC::getLoot()
+{
+   int roll = rand() % 100;
+   int loot = -1;
+   switch(type) {
+      case NPCType::Fairy:
+      case NPCType::Bird:
+      case NPCType::Squirrel: 
+      case NPCType::Chicken:
+         loot = roll < 30 ? ItemType::GreenRupee :
+            roll < 50 ? ItemType::Heart : 
+            -1;
+         break;
+      case NPCType::Bush:
+      case NPCType::Bat:
+      case NPCType::Thief:
+      case NPCType::Cactus:
+      case NPCType::Goblin:
+      case NPCType::Princess:
+      case NPCType::Vulture:
+         loot = roll < 30 ? ItemType::GreenRupee :
+            roll < 60 ? ItemType::BlueRupee :
+            roll < 80 ? ItemType::Heart : 
+            -1;
+         break;
+      case NPCType::Cyclops:
+      case NPCType::Skeleton:
+      case NPCType::Wizard:
+         loot = roll < 30 ? ItemType::GreenRupee :
+            roll < 60 ? ItemType::BlueRupee :
+            roll < 70 ? ItemType::RedRupee :
+            roll < 90 ? ItemType::Heart :
+            -1;
+         break;
+      case NPCType::BigFairy:
+      case NPCType::Ganon:
+         loot = roll < 10 ? ItemType::GreenRupee :
+            roll < 60 ? ItemType::BlueRupee :
+            roll < 60 ? ItemType::RedRupee :
+            roll < 95 ? ItemType::Heart :
+            -1;
+         break;
+      default:
+         printf("Error NPC::getLoot() - unknown NPC type %d\n", type);
+   }
+   return loot;
+}
+
 void NPC::update() 
 {
    Player *p = 0;
@@ -125,7 +173,7 @@ void NPC::update()
 
 Geometry NPC::getGeom()
 {
-      switch(type) {
+   switch(type) {
       case NPCType::Fairy: //16x16
       case NPCType::Bat:
       case NPCType::Bird:

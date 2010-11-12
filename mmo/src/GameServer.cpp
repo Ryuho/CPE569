@@ -211,24 +211,31 @@ void GameServer::update(int ticks)
    }
 
    //NPC
-   for(size_t i = 0; i < om.npcs.size(); i++) {
-      if(om.players.size() > 0) {
+   if(om.players.size() > 0) {
+      for(size_t i = 0; i < om.npcs.size(); i++) {
+         NPC &npc = *om.npcs[i];
          bool removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
-            if(om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom())){
+            if(npc.getGeom().collision(om.missiles[j]->getGeom())){
                cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
                removeNPC = true;
                break;
             }
          }
-         if(removeNPC){
-            cm.broadcast(Signal(Signal::remove, om.npcs[i]->id).makePacket());
-            om.remove(om.npcs[i]->id);
+         if(removeNPC) {
+            int lootItem = npc.getLoot();
+            if(lootItem >= 0) {
+               Item item(newId(), npc.pos, lootItem);
+               om.addItem(item);
+               cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
+                  item.pos, vec2(0,1), 0));
+            }
+            cm.broadcast(Signal(Signal::remove, npc.id).makePacket());
+            om.remove(npc.id);
             i--;
          }
-         else{
-            NPC &npc = *om.npcs[i];
+         else {
             npc.update();
             cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
          }

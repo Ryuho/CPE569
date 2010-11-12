@@ -39,6 +39,7 @@ namespace server {
       NPC(int id, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       void update();
       Geometry getGeom();
+      int getLoot();
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
