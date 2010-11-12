@@ -149,6 +149,7 @@ void Item::initGraphics()
          break;
       case ItemType::Heart :
          anim = &heartAnim;
+         break;
       default:
          printf("Error: invalid Item (Type %d) to animate.\n", type);
    }
