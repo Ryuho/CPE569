@@ -24,7 +24,7 @@ vec2 randPos2(int minRadius, int maxRadius)
 
 void spawnNPC(int id)
 {
-   NPC n(id, randPos(400, 1200), vec2(0,1), (rand() % ((int)NPCType::Goblin)));
+   NPC n(id, 500, randPos(400, 1200), vec2(0,1), (rand() % ((int)NPCType::Goblin)));
    serverState->om.addNPC(n);
    printf("Spawn NPC id=%d type=%d\n", n.id, n.type);
    serverState->cm.broadcast(Initialize(n.id, ObjectType::NPC, 
@@ -213,16 +213,17 @@ void GameServer::update(int ticks)
    //NPC
    for(size_t i = 0; i < om.npcs.size(); i++) {
       if(om.players.size() > 0) {
-         bool removeNPC = false;
          for(size_t j = 0; j < om.missiles.size(); j++) {
             if(om.npcs[i]->getGeom().collision(om.missiles[j]->getGeom())){
+               om.npcs[i]->takeDamage(rand()%6);
                cm.broadcast(Signal(Signal::remove, om.missiles[j]->id).makePacket());
                om.remove(om.missiles[j]->id);
-               removeNPC = true;
+            }
+            if(om.npcs[i]->hp == 0){
                break;
             }
          }
-         if(removeNPC){
+         if(om.npcs[i]->hp == 0){
             cm.broadcast(Signal(Signal::remove, om.npcs[i]->id).makePacket());
             om.remove(om.npcs[i]->id);
             i--;

@@ -36,13 +36,14 @@ namespace server {
    };
 
    struct NPC {
-      NPC(int id, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
+      NPC(int id, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       void update();
+      void takeDamage(int damage);
       Geometry getGeom();
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
-      int id, type;
+      int id, hp, type;
    };
 
    struct Item {

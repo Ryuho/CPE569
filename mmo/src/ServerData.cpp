@@ -64,8 +64,8 @@ Geometry Missile::getGeom()
 
 // NPC
 
-NPC::NPC(int id, vec2 pos, vec2 dir, int type)
-   : id(id), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
+NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
+   : id(id), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
    aiTicks(0), attackId(0), initPos(pos)
 {
 
@@ -152,6 +152,11 @@ Geometry NPC::getGeom()
          printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
    }
    return new Circle(pos, 0.00001f);
+}
+
+void NPC::takeDamage(int damage)
+{
+   hp = max(0, hp-damage);
 }
 
 // Item
