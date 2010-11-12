@@ -199,57 +199,6 @@ void updateTempl(vector<T> &objs, ObjectHolder &o)
    }
 }
 
-//Server update code for NPCs
-//passed in a list of close players, hostile players, or whatever
-//if empty, then do not move unless its in the AI
-void NPC::updateServer(std::vector<vec2> dests)
-{
-   //find closest player
-   if(!alive) {
-      printf("Cannot update NPC %d: not alive\n", id);
-      return;
-   }
-
-   /*
-   //AI part, will eventually be changed with plugabble AI
-   vec2 dest(pos);
-   float length = 2000.0; //would use MAX_FLOAT but I'm too lazy to include
-   if(alive) {
-      for(unsigned i = 0; i < dests.size(); i++) {
-         float d = dist(pos, dests[i]);
-         if(d < length && d > 500.0) {
-            length = d;
-            dest = dests[i];
-            dir = mat::to(pos, dests[i]).normalize();
-         }
-      }
-      moving = length > 0;
-      if(moving)
-         pos = dir*npcSpeed*getDt() + pos;
-   }
-   */
-
-
-   //AI part, will eventually be changed with plugabble AI
-   if(alive) {
-      if(dir.length() < 0.5 || dir.length() > 2) {
-         dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
-      }
-      float d = mat::dist(pos, vec2(0,0));
-      if(d > 800.0 || d < -800.0) {
-         pos = vec2(0,0);
-         if(dests.size() != 0) {
-            vec2 dest(mat::to(pos, dests[rand() % dests.size()]));
-            if(dest.length() > 0.1 || dest.length() < -0.1)
-               dir = dest.normalize();
-            else
-               dir = vec2((float)(rand()%500), (float)(rand()%500)).normalize();
-         }
-      }
-      pos = dir*npcSpeed*getDt() + pos;
-   }
-}
-
 void ObjectHolder::updateAll()
 {
    updateTempl(players, *this);

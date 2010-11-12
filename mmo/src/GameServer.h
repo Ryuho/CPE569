@@ -22,5 +22,6 @@ struct GameServer {
 
 int getTicks();
 float getDt();
+ObjectManager &getOM();
 
 #endif

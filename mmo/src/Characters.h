@@ -59,7 +59,6 @@ struct NPC {
    NPC(int id, int type, vec2 pos, vec2 dir, bool moving);
 
    void resetAnimation();
-   void updateServer(std::vector<mat::vec2> dests);
    void update();
    void draw();
    

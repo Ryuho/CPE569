@@ -41,7 +41,8 @@ namespace server {
       void takeDamage(int damage);
       Geometry getGeom();
       
-      vec2 pos, dir;
+      vec2 pos, dir, initPos;
+      int aiTicks, aiType, attackId;
       int id, hp, type;
    };
 
