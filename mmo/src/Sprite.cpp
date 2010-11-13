@@ -67,7 +67,7 @@ int Animation::dirFaceLR(vec2 dir)
    return adir;
 }
 
-void Animation::init(Sprite *sprite, Type type, bool alwaysAnim)
+void Animation::init(Sprite *sprite, int type, bool alwaysAnim)
 {
    this->sprite = sprite;
    this->type = type;
@@ -78,15 +78,14 @@ void Animation::draw(vec2 dir, bool moving)
 {
    int dirIndex = 2; //down by default
    switch(this->type) {
-      case Animation::Normal :
+      case AnimType::Normal :
          dirIndex = dirFace(dir);
          break;
-      case Animation::LeftRight :
+      case AnimType::LeftRight :
          dirIndex = dirFaceLR(dir);
          break;
-      case Animation::Forward :
-         //printf("anim::draw forward todo\n");
-         dirIndex = Animation::Down;
+      case AnimType::Forward :
+         dirIndex = Direction::Down;
          break;
       default:
          printf("Error: anim::draw invalid animation type");
@@ -108,5 +107,5 @@ void Animation::draw(vec2 dir, bool moving)
 
 void Animation::draw()
 {
-   draw(vec2(0.1,-0.9), true);
+   draw(vec2(0.1,-0.9), true); //Direction::Down (and to be safe, slightly right)
 }

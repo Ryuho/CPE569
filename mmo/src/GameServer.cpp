@@ -123,7 +123,7 @@ void GameServer::processPacket(pack::Packet p, int id)
          for (int i = 0; i < constants::numArrows; i++) {
             float t = i/(float)constants::numArrows;
             int arrowID = newId();
-            Missile m(newId(),id, play->pos, vec2(cos(t*2*constants::PI), sin(t*2*constants::PI)));
+            Missile m(newId(),id, play->pos, vec2(cos(t*2*PI), sin(t*2*PI)));
             om.addMissile(m);
             Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
             cm.broadcast(init);
@@ -224,16 +224,15 @@ void GameServer::update(int ticks)
       for(unsigned i = 0; i < om.npcs.size(); i++) {
          NPC &npc = *om.npcs[i];
          bool removeNPC = false;
-         int mowned = 0;
          for(unsigned j = 0; j < om.missiles.size() && !removeNPC; j++) {
             Missile &m = *om.missiles[j];
             if(npc.getGeom().collision(m.getGeom())) {
                npc.takeDamage(rand()%6);
                if(npc.hp == 0) {
-                  Player *p = om.getPlayer(mowned);
-                  if(p) {
-                     p->gainExp(npc.getExp());
-                     cm.sendPacket(Signal(Signal::changeExp, p->exp).makePacket(), m.owned);
+                  if(om.check(m.owned, ObjectType::Player)) {
+                     Player &p = *om.getPlayer(m.owned);
+                     p.gainExp(npc.getExp());
+                     cm.sendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
                   }
                   removeNPC = true;
                }
@@ -256,7 +255,7 @@ void GameServer::update(int ticks)
          }
          else {
             npc.update();
-            cm.broadcast(pack::Position(npc.pos, npc.dir, false, npc.id));
+            cm.broadcast(pack::Position(npc.pos, npc.dir, npc.aiType != AIType::Stopped, npc.id));
          }
       }
    }

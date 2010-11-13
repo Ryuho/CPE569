@@ -15,7 +15,7 @@ namespace constants {
 
    const int playerPredictTicks = 200;
 
-	const float PI = 3.14159265359f;
+   #define PI 3.14159265359
 
    const int npcMaxHp = 120;
    const int playerMaxHp = 200;
@@ -33,6 +33,12 @@ namespace constants {
    const int blueRupeeValue = 3;
    const int redRupeeValue = 5;
 
+   namespace AnimType { enum { 
+      LeftRight=0, Forward, Normal 
+   };}
+   namespace Direction { enum {
+      Up=0, Right, Down, Left 
+   };}
 
    namespace ObjectType { enum {
       Player=0, NPC, Missile, Item,

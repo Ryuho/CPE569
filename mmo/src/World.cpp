@@ -4,6 +4,7 @@
 #include "packet.h"
 #include "Constants.h"
 #include "GLUtil.h"
+#include "Sprite.h"
 
 using namespace constants;
 
@@ -165,7 +166,12 @@ void WorldData::processPacket(pack::Packet p)
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
          if(npc) {
+            if(!npc->moving && pos.moving) {
+               npc->anim->animStart = getTicks();
+            }
             npc->pos = pos.pos;
+            npc->dir = pos.dir;
+            npc->moving = pos.moving;
          }
          else
             printf("Accessing unknown NPC %d\n", pos.id);

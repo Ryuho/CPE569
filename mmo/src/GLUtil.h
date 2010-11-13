@@ -14,7 +14,7 @@
 #include "matrix.h"
 using mat::vec3;
 
-const float PI = 3.14159265359; 
+#define PI 3.14159265359
 inline float toRad(float angle)
 {
    return angle*PI/180.0;

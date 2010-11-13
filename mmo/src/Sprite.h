@@ -4,8 +4,10 @@
 #include "Texture.h"
 #include "matrix.h"
 #include <vector>
+#include "Constants.h"
 
 using mat::vec2;
+using namespace constants;
 
 struct Sprite {
    Sprite() {}
@@ -24,17 +26,15 @@ struct vec2i {
 };
 
 struct Animation {
-   enum Type { LeftRight, Forward, Normal };
-   enum Direction { Up=0, Right, Down, Left };
    //constant means the animation does not stop when not "moving"
    bool alwaysAnim;
    int animStart, speed;
-   Type type;
+   int type;
    Sprite *sprite;
 
-   Animation() : alwaysAnim(false), sprite(0), type(Animation::Normal), 
+   Animation() : alwaysAnim(false), sprite(0), type(AnimType::Normal), 
       animStart(0), speed(100) {};
-   void init(Sprite *sprite, Type type, bool alwaysAnim);
+   void init(Sprite *sprite, int type, bool alwaysAnim);
    void draw();
    void draw(vec2 dir, bool moving);
    static int dirFace(vec2 dir); //(up=0, right=1, down=2, left=3, error)

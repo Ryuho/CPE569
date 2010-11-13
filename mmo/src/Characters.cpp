@@ -74,7 +74,7 @@ NPC::NPC(int id, int type, vec2 pos, vec2 dir, bool moving)
 
 void NPC::update()
 {
-
+   
 }
 
 

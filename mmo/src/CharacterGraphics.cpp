@@ -19,6 +19,7 @@ namespace {
 
    bool initalized = false;
 
+   Animation linkAnim;
    Animation thiefAnim;
    Animation princessAnim;
    Animation fairyAnim;
@@ -105,6 +106,7 @@ void Player::draw()
    drawHpBar((float)hp / playerMaxHp, 11, 13);
 
    glPopMatrix();
+
 }
 
 void Missile::draw()
@@ -186,6 +188,7 @@ void NPC::initGraphics()
                 type == NPCType::Wizard    ? &wizardAnim :
                 type == NPCType::Ganon     ? &ganonAnim :
                 type == NPCType::Goblin    ? &goblinAnim :
+                type == NPCType::Bush      ? &bushAnim :
                 (printf("Unknown NPC type: %d\n", type), (Animation*)0);
 }
 
@@ -220,206 +223,245 @@ void initCharacterResources()
       sprites16 = Sprite(spriteTex, 16, 16);
       sprites8 = Sprite(spriteTex, 8, 8);
 
+      linkAnim.init(&sprites32, AnimType::Normal, false);
+      linkAnim.speed = 150;
+      linkAnim.dirs[Direction::Up].push_back(vec2i(1,0));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(0,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(1,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(2,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(3,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(4,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(5,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(6,2));
+      linkAnim.dirs[Direction::Up].push_back(vec2i(7,2));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(2,0));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(1,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(2,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(3,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(4,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(5,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(6,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(7,3));
+      linkAnim.dirs[Direction::Right].push_back(vec2i(0,3));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(4,0));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(0,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(1,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(2,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(3,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(4,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(5,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(6,4));
+      linkAnim.dirs[Direction::Down].push_back(vec2i(7,4));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(0,0));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(1,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(2,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(3,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(4,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(5,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(6,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(7,1));
+      linkAnim.dirs[Direction::Left].push_back(vec2i(0,1));
+
       //////////////////////////////////////////////
       /////////////// NPC Animations ///////////////
       //////////////////////////////////////////////
-      thiefAnim.init(&sprites16x32, Animation::Normal, false);
+      thiefAnim.init(&sprites16x32, AnimType::Normal, false);
       thiefAnim.speed = 175;
-      thiefAnim.dirs[Animation::Up].push_back(vec2i(11, 6)); //up
-      thiefAnim.dirs[Animation::Up].push_back(vec2i(0,  6));
-      thiefAnim.dirs[Animation::Up].push_back(vec2i(1,  6));
-      thiefAnim.dirs[Animation::Right].push_back(vec2i(6,  6)); //right
-      thiefAnim.dirs[Animation::Right].push_back(vec2i(7,  6));
-      thiefAnim.dirs[Animation::Right].push_back(vec2i(6,  6));
-      thiefAnim.dirs[Animation::Down].push_back(vec2i(10, 6)); //down
-      thiefAnim.dirs[Animation::Down].push_back(vec2i(4,  6));
-      thiefAnim.dirs[Animation::Down].push_back(vec2i(5,  6));
-      thiefAnim.dirs[Animation::Left].push_back(vec2i(3,  6)); //left
-      thiefAnim.dirs[Animation::Left].push_back(vec2i(2,  6));
-      thiefAnim.dirs[Animation::Left].push_back(vec2i(3,  6));
+      thiefAnim.dirs[Direction::Up].push_back(vec2i(11, 6)); //up
+      thiefAnim.dirs[Direction::Up].push_back(vec2i(0,  6));
+      thiefAnim.dirs[Direction::Up].push_back(vec2i(1,  6));
+      thiefAnim.dirs[Direction::Right].push_back(vec2i(6,  6)); //right
+      thiefAnim.dirs[Direction::Right].push_back(vec2i(7,  6));
+      thiefAnim.dirs[Direction::Right].push_back(vec2i(6,  6));
+      thiefAnim.dirs[Direction::Down].push_back(vec2i(10, 6)); //down
+      thiefAnim.dirs[Direction::Down].push_back(vec2i(4,  6));
+      thiefAnim.dirs[Direction::Down].push_back(vec2i(5,  6));
+      thiefAnim.dirs[Direction::Left].push_back(vec2i(3,  6)); //left
+      thiefAnim.dirs[Direction::Left].push_back(vec2i(2,  6));
+      thiefAnim.dirs[Direction::Left].push_back(vec2i(3,  6));
 
-      princessAnim.init(&sprites16x32, Animation::Normal, false);
+      princessAnim.init(&sprites16x32, AnimType::Normal, false);
       princessAnim.speed = 200;
-      princessAnim.dirs[Animation::Up].push_back(vec2i(18, 6)); //up
-      princessAnim.dirs[Animation::Up].push_back(vec2i(19, 6));
-      princessAnim.dirs[Animation::Up].push_back(vec2i(18, 6));
-      princessAnim.dirs[Animation::Right].push_back(vec2i(16, 6)); //right
-      princessAnim.dirs[Animation::Right].push_back(vec2i(17, 6));
-      princessAnim.dirs[Animation::Right].push_back(vec2i(16, 6));
-      princessAnim.dirs[Animation::Down].push_back(vec2i(14, 6)); //down
-      princessAnim.dirs[Animation::Down].push_back(vec2i(15, 6));
-      princessAnim.dirs[Animation::Down].push_back(vec2i(14, 6)); 
-      princessAnim.dirs[Animation::Left].push_back(vec2i(20, 6)); //left
-      princessAnim.dirs[Animation::Left].push_back(vec2i(21, 6));
-      princessAnim.dirs[Animation::Left].push_back(vec2i(20, 6));
+      princessAnim.dirs[Direction::Up].push_back(vec2i(18, 6)); //up
+      princessAnim.dirs[Direction::Up].push_back(vec2i(19, 6));
+      princessAnim.dirs[Direction::Up].push_back(vec2i(18, 6));
+      princessAnim.dirs[Direction::Right].push_back(vec2i(16, 6)); //right
+      princessAnim.dirs[Direction::Right].push_back(vec2i(17, 6));
+      princessAnim.dirs[Direction::Right].push_back(vec2i(16, 6));
+      princessAnim.dirs[Direction::Down].push_back(vec2i(14, 6)); //down
+      princessAnim.dirs[Direction::Down].push_back(vec2i(15, 6));
+      princessAnim.dirs[Direction::Down].push_back(vec2i(14, 6)); 
+      princessAnim.dirs[Direction::Left].push_back(vec2i(20, 6)); //left
+      princessAnim.dirs[Direction::Left].push_back(vec2i(21, 6));
+      princessAnim.dirs[Direction::Left].push_back(vec2i(20, 6));
 
-      fairyAnim.init(&sprites16, Animation::LeftRight, true);
-      fairyAnim.dirs[Animation::Right].push_back(vec2i(22, 0)); //right
-      fairyAnim.dirs[Animation::Right].push_back(vec2i(23, 0));
-      fairyAnim.dirs[Animation::Left].push_back(vec2i(22, 1)); //left
-      fairyAnim.dirs[Animation::Left].push_back(vec2i(23, 1));
+      fairyAnim.init(&sprites16, AnimType::LeftRight, true);
+      fairyAnim.dirs[Direction::Right].push_back(vec2i(22, 0)); //right
+      fairyAnim.dirs[Direction::Right].push_back(vec2i(23, 0));
+      fairyAnim.dirs[Direction::Left].push_back(vec2i(22, 1)); //left
+      fairyAnim.dirs[Direction::Left].push_back(vec2i(23, 1));
 
-      skeletonAnim.init(&sprites16x32, Animation::Normal, false);
+      skeletonAnim.init(&sprites16x32, AnimType::Normal, false);
       skeletonAnim.speed = 200;
-      skeletonAnim.dirs[Animation::Up].push_back(vec2i(30, 0)); //up
-      skeletonAnim.dirs[Animation::Up].push_back(vec2i(31, 0));
-      skeletonAnim.dirs[Animation::Up].push_back(vec2i(30, 0));
-      skeletonAnim.dirs[Animation::Right].push_back(vec2i(24, 0)); //right
-      skeletonAnim.dirs[Animation::Right].push_back(vec2i(25, 0));
-      skeletonAnim.dirs[Animation::Right].push_back(vec2i(24, 0));
-      skeletonAnim.dirs[Animation::Down].push_back(vec2i(28, 0)); //down
-      skeletonAnim.dirs[Animation::Down].push_back(vec2i(29, 0));
-      skeletonAnim.dirs[Animation::Down].push_back(vec2i(28, 0)); 
-      skeletonAnim.dirs[Animation::Left].push_back(vec2i(27, 0)); //left
-      skeletonAnim.dirs[Animation::Left].push_back(vec2i(26, 0));
-      skeletonAnim.dirs[Animation::Left].push_back(vec2i(27, 0));
+      skeletonAnim.dirs[Direction::Up].push_back(vec2i(30, 0)); //up
+      skeletonAnim.dirs[Direction::Up].push_back(vec2i(31, 0));
+      skeletonAnim.dirs[Direction::Up].push_back(vec2i(30, 0));
+      skeletonAnim.dirs[Direction::Right].push_back(vec2i(24, 0)); //right
+      skeletonAnim.dirs[Direction::Right].push_back(vec2i(25, 0));
+      skeletonAnim.dirs[Direction::Right].push_back(vec2i(24, 0));
+      skeletonAnim.dirs[Direction::Down].push_back(vec2i(28, 0)); //down
+      skeletonAnim.dirs[Direction::Down].push_back(vec2i(29, 0));
+      skeletonAnim.dirs[Direction::Down].push_back(vec2i(28, 0)); 
+      skeletonAnim.dirs[Direction::Left].push_back(vec2i(27, 0)); //left
+      skeletonAnim.dirs[Direction::Left].push_back(vec2i(26, 0));
+      skeletonAnim.dirs[Direction::Left].push_back(vec2i(27, 0));
 
-      cyclopsAnim.init(&sprites32, Animation::Normal, false);
+      cyclopsAnim.init(&sprites32, AnimType::Normal, false);
       cyclopsAnim.speed = 200;
-      cyclopsAnim.dirs[Animation::Up].push_back(vec2i(12, 7)); //up
-      cyclopsAnim.dirs[Animation::Up].push_back(vec2i(11, 7));
-      cyclopsAnim.dirs[Animation::Up].push_back(vec2i(12, 7));
-      cyclopsAnim.dirs[Animation::Up].push_back(vec2i(13, 7));
-      cyclopsAnim.dirs[Animation::Up].push_back(vec2i(12, 7));
-      cyclopsAnim.dirs[Animation::Right].push_back(vec2i(7,  7));  //right
-      cyclopsAnim.dirs[Animation::Right].push_back(vec2i(6,  7));
-      cyclopsAnim.dirs[Animation::Right].push_back(vec2i(7,  7));
-      cyclopsAnim.dirs[Animation::Down].push_back(vec2i(4,  7)); //down
-      cyclopsAnim.dirs[Animation::Down].push_back(vec2i(8,  7));
-      cyclopsAnim.dirs[Animation::Down].push_back(vec2i(9,  7)); 
-      cyclopsAnim.dirs[Animation::Down].push_back(vec2i(10, 7));
-      cyclopsAnim.dirs[Animation::Down].push_back(vec2i(9,  7)); 
-      cyclopsAnim.dirs[Animation::Left].push_back(vec2i(12, 8)); //left
-      cyclopsAnim.dirs[Animation::Left].push_back(vec2i(13, 8));
-      cyclopsAnim.dirs[Animation::Left].push_back(vec2i(12, 8));
+      cyclopsAnim.dirs[Direction::Up].push_back(vec2i(12, 7)); //up
+      cyclopsAnim.dirs[Direction::Up].push_back(vec2i(11, 7));
+      cyclopsAnim.dirs[Direction::Up].push_back(vec2i(12, 7));
+      cyclopsAnim.dirs[Direction::Up].push_back(vec2i(13, 7));
+      cyclopsAnim.dirs[Direction::Up].push_back(vec2i(12, 7));
+      cyclopsAnim.dirs[Direction::Right].push_back(vec2i(7,  7));  //right
+      cyclopsAnim.dirs[Direction::Right].push_back(vec2i(6,  7));
+      cyclopsAnim.dirs[Direction::Right].push_back(vec2i(7,  7));
+      cyclopsAnim.dirs[Direction::Down].push_back(vec2i(4,  7)); //down
+      cyclopsAnim.dirs[Direction::Down].push_back(vec2i(8,  7));
+      cyclopsAnim.dirs[Direction::Down].push_back(vec2i(9,  7)); 
+      cyclopsAnim.dirs[Direction::Down].push_back(vec2i(10, 7));
+      cyclopsAnim.dirs[Direction::Down].push_back(vec2i(9,  7)); 
+      cyclopsAnim.dirs[Direction::Left].push_back(vec2i(12, 8)); //left
+      cyclopsAnim.dirs[Direction::Left].push_back(vec2i(13, 8));
+      cyclopsAnim.dirs[Direction::Left].push_back(vec2i(12, 8));
 
-      batAnim.init(&sprites16, Animation::Forward, true);
+      batAnim.init(&sprites16, AnimType::Forward, true);
       batAnim.speed = 175;
-      batAnim.dirs[Animation::Down].push_back(vec2i(24, 18)); //down
-      batAnim.dirs[Animation::Down].push_back(vec2i(24, 19));
+      batAnim.dirs[Direction::Down].push_back(vec2i(24, 18)); //down
+      batAnim.dirs[Direction::Down].push_back(vec2i(24, 19));
 
-      birdAnim.init(&sprites16, Animation::LeftRight, true);
+      birdAnim.init(&sprites16, AnimType::LeftRight, true);
       birdAnim.speed = 150;
-      birdAnim.dirs[Animation::Right].push_back(vec2i(0, 10)); //right
-      birdAnim.dirs[Animation::Right].push_back(vec2i(1, 10));
-      birdAnim.dirs[Animation::Left].push_back(vec2i(0, 11)); //left
-      birdAnim.dirs[Animation::Left].push_back(vec2i(1, 11));
+      birdAnim.dirs[Direction::Right].push_back(vec2i(0, 10)); //right
+      birdAnim.dirs[Direction::Right].push_back(vec2i(1, 10));
+      birdAnim.dirs[Direction::Left].push_back(vec2i(0, 11)); //left
+      birdAnim.dirs[Direction::Left].push_back(vec2i(1, 11));
 
-      squirrelAnim.init(&sprites16x32, Animation::LeftRight, false);
+      squirrelAnim.init(&sprites16x32, AnimType::LeftRight, false);
       squirrelAnim.speed = 150;
-      squirrelAnim.dirs[Animation::Right].push_back(vec2i(2, 5)); //right
-      squirrelAnim.dirs[Animation::Right].push_back(vec2i(3, 5));
-      squirrelAnim.dirs[Animation::Right].push_back(vec2i(2, 5));
-      squirrelAnim.dirs[Animation::Left].push_back(vec2i(4, 5)); //left
-      squirrelAnim.dirs[Animation::Left].push_back(vec2i(5, 5));
-      squirrelAnim.dirs[Animation::Left].push_back(vec2i(4, 5));
+      squirrelAnim.dirs[Direction::Right].push_back(vec2i(2, 5)); //right
+      squirrelAnim.dirs[Direction::Right].push_back(vec2i(3, 5));
+      squirrelAnim.dirs[Direction::Right].push_back(vec2i(2, 5));
+      squirrelAnim.dirs[Direction::Left].push_back(vec2i(4, 5)); //left
+      squirrelAnim.dirs[Direction::Left].push_back(vec2i(5, 5));
+      squirrelAnim.dirs[Direction::Left].push_back(vec2i(4, 5));
 
-      chickenAnim.init(&sprites32, Animation::LeftRight, false);
+      chickenAnim.init(&sprites32, AnimType::LeftRight, false);
       chickenAnim.speed = 175;
-      chickenAnim.dirs[Animation::Right].push_back(vec2i(3, 5)); //right
-      chickenAnim.dirs[Animation::Right].push_back(vec2i(4, 5));
-      chickenAnim.dirs[Animation::Right].push_back(vec2i(5, 5));
-      chickenAnim.dirs[Animation::Right].push_back(vec2i(3, 5));
-      chickenAnim.dirs[Animation::Left].push_back(vec2i(6, 5)); //left
-      chickenAnim.dirs[Animation::Left].push_back(vec2i(7, 5));
-      chickenAnim.dirs[Animation::Left].push_back(vec2i(8, 5));
-      chickenAnim.dirs[Animation::Left].push_back(vec2i(6, 5));
+      chickenAnim.dirs[Direction::Right].push_back(vec2i(3, 5)); //right
+      chickenAnim.dirs[Direction::Right].push_back(vec2i(4, 5));
+      chickenAnim.dirs[Direction::Right].push_back(vec2i(5, 5));
+      chickenAnim.dirs[Direction::Right].push_back(vec2i(3, 5));
+      chickenAnim.dirs[Direction::Left].push_back(vec2i(6, 5)); //left
+      chickenAnim.dirs[Direction::Left].push_back(vec2i(7, 5));
+      chickenAnim.dirs[Direction::Left].push_back(vec2i(8, 5));
+      chickenAnim.dirs[Direction::Left].push_back(vec2i(6, 5));
 
-      vultureAnim.init(&sprites32, Animation::Forward, true);
-      vultureAnim.dirs[Animation::Down].push_back(vec2i(9, 5)); //down
-      vultureAnim.dirs[Animation::Down].push_back(vec2i(10, 5));
-      vultureAnim.dirs[Animation::Down].push_back(vec2i(11, 5));
-      vultureAnim.dirs[Animation::Down].push_back(vec2i(10, 5));
+      vultureAnim.init(&sprites32, AnimType::Forward, true);
+      vultureAnim.dirs[Direction::Down].push_back(vec2i(9, 5)); //down
+      vultureAnim.dirs[Direction::Down].push_back(vec2i(10, 5));
+      vultureAnim.dirs[Direction::Down].push_back(vec2i(11, 5));
+      vultureAnim.dirs[Direction::Down].push_back(vec2i(10, 5));
 
-      bushAnim.init(&sprites32, Animation::Forward, false);
+      bushAnim.init(&sprites32, AnimType::Forward, false);
       bushAnim.speed = 300;
-      bushAnim.dirs[Animation::Down].push_back(vec2i(12, 3)); //down
-      bushAnim.dirs[Animation::Down].push_back(vec2i(11, 3));
-      bushAnim.dirs[Animation::Down].push_back(vec2i(12, 3));
-      bushAnim.dirs[Animation::Down].push_back(vec2i(13, 3));
-      bushAnim.dirs[Animation::Down].push_back(vec2i(12, 3));
+      bushAnim.dirs[Direction::Down].push_back(vec2i(12, 3)); //down
+      bushAnim.dirs[Direction::Down].push_back(vec2i(11, 3));
+      bushAnim.dirs[Direction::Down].push_back(vec2i(12, 3));
+      bushAnim.dirs[Direction::Down].push_back(vec2i(13, 3));
+      bushAnim.dirs[Direction::Down].push_back(vec2i(12, 3));
 
-      cactusAnim.init(&sprites16x32, Animation::Forward, false);
+      cactusAnim.init(&sprites16x32, AnimType::Forward, false);
       cactusAnim.speed = 300;
-      cactusAnim.dirs[Animation::Down].push_back(vec2i(20, 0)); //down
-      cactusAnim.dirs[Animation::Down].push_back(vec2i(19, 0));
-      cactusAnim.dirs[Animation::Down].push_back(vec2i(20, 0));
-      cactusAnim.dirs[Animation::Down].push_back(vec2i(21, 0));
-      cactusAnim.dirs[Animation::Down].push_back(vec2i(20, 0));
+      cactusAnim.dirs[Direction::Down].push_back(vec2i(20, 0)); //down
+      cactusAnim.dirs[Direction::Down].push_back(vec2i(19, 0));
+      cactusAnim.dirs[Direction::Down].push_back(vec2i(20, 0));
+      cactusAnim.dirs[Direction::Down].push_back(vec2i(21, 0));
+      cactusAnim.dirs[Direction::Down].push_back(vec2i(20, 0));
 
-      bigFairyAnim.init(&sprites32, Animation::Forward, true);
+      bigFairyAnim.init(&sprites32, AnimType::Forward, true);
       bigFairyAnim.speed = 200;
-      bigFairyAnim.dirs[Animation::Down].push_back(vec2i(11, 4)); //down
-      bigFairyAnim.dirs[Animation::Down].push_back(vec2i(12, 4));
-      bigFairyAnim.dirs[Animation::Down].push_back(vec2i(13, 4));
-      bigFairyAnim.dirs[Animation::Down].push_back(vec2i(12, 4));
+      bigFairyAnim.dirs[Direction::Down].push_back(vec2i(11, 4)); //down
+      bigFairyAnim.dirs[Direction::Down].push_back(vec2i(12, 4));
+      bigFairyAnim.dirs[Direction::Down].push_back(vec2i(13, 4));
+      bigFairyAnim.dirs[Direction::Down].push_back(vec2i(12, 4));
 
-      wizardAnim.init(&sprites16x32, Animation::Forward, false);
+      wizardAnim.init(&sprites16x32, AnimType::Forward, false);
       wizardAnim.speed = 400;
-      wizardAnim.dirs[Animation::Down].push_back(vec2i(12, 6)); //down
-      wizardAnim.dirs[Animation::Down].push_back(vec2i(13, 6));
-      wizardAnim.dirs[Animation::Down].push_back(vec2i(12, 6));
+      wizardAnim.dirs[Direction::Down].push_back(vec2i(12, 6)); //down
+      wizardAnim.dirs[Direction::Down].push_back(vec2i(13, 6));
+      wizardAnim.dirs[Direction::Down].push_back(vec2i(12, 6));
 
-      ganonAnim.init(&sprites32, Animation::Forward, true);
+      ganonAnim.init(&sprites32, AnimType::Forward, true);
       ganonAnim.speed = 350;
-      ganonAnim.dirs[Animation::Down].push_back(vec2i(9, 4)); //down
-      ganonAnim.dirs[Animation::Down].push_back(vec2i(10, 4));
+      ganonAnim.dirs[Direction::Down].push_back(vec2i(9, 4)); //down
+      ganonAnim.dirs[Direction::Down].push_back(vec2i(10, 4));
 
-      goblinAnim.init(&sprites32, Animation::LeftRight, false);
+      goblinAnim.init(&sprites32, AnimType::LeftRight, false);
       goblinAnim.speed = 250;
-      goblinAnim.dirs[Animation::Right].push_back(vec2i(2, 7)); //right
-      goblinAnim.dirs[Animation::Right].push_back(vec2i(3, 7));
-      goblinAnim.dirs[Animation::Right].push_back(vec2i(2, 7));
-      goblinAnim.dirs[Animation::Left].push_back(vec2i(1, 7)); //left
-      goblinAnim.dirs[Animation::Left].push_back(vec2i(0, 7));
-      goblinAnim.dirs[Animation::Left].push_back(vec2i(1, 7));
+      goblinAnim.dirs[Direction::Right].push_back(vec2i(2, 7)); //right
+      goblinAnim.dirs[Direction::Right].push_back(vec2i(3, 7));
+      goblinAnim.dirs[Direction::Right].push_back(vec2i(2, 7));
+      goblinAnim.dirs[Direction::Left].push_back(vec2i(1, 7)); //left
+      goblinAnim.dirs[Direction::Left].push_back(vec2i(0, 7));
+      goblinAnim.dirs[Direction::Left].push_back(vec2i(1, 7));
 
       ///////////////////////////////////////////////
       /////////////// Item Animations ///////////////
       ///////////////////////////////////////////////
-      greenRupeeAnim.init(&sprites16, Animation::Forward, true);
+      greenRupeeAnim.init(&sprites16, AnimType::Forward, true);
       greenRupeeAnim.speed = 400;
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(13,0));
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(13,0));
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(13,0));
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(13,0));
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(14,0));
-      greenRupeeAnim.dirs[Animation::Down].push_back(vec2i(15,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(13,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(13,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(13,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(13,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(14,0));
+      greenRupeeAnim.dirs[Direction::Down].push_back(vec2i(15,0));
 
-      redRupeeAnim.init(&sprites16, Animation::Forward, true);
+      redRupeeAnim.init(&sprites16, AnimType::Forward, true);
       redRupeeAnim.speed = 400;
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,0));
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,0));
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,0));
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,0));
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(17,0));
-      redRupeeAnim.dirs[Animation::Down].push_back(vec2i(18,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(17,0));
+      redRupeeAnim.dirs[Direction::Down].push_back(vec2i(18,0));
 
-      blueRupeeAnim.init(&sprites16, Animation::Forward, true);
+      blueRupeeAnim.init(&sprites16, AnimType::Forward, true);
       blueRupeeAnim.speed = 400;
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,1));
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,1));
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,1));
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(16,1));
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(17,1));
-      blueRupeeAnim.dirs[Animation::Down].push_back(vec2i(18,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(16,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(17,1));
+      blueRupeeAnim.dirs[Direction::Down].push_back(vec2i(18,1));
 
-      explosionAnim.init(&sprites64, Animation::Forward, true);
+      explosionAnim.init(&sprites64, AnimType::Forward, true);
       explosionAnim.speed = 150;
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,2));
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,3));
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,4));
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,5));
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,6));
-      explosionAnim.dirs[Animation::Down].push_back(vec2i(7,7));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,2));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,3));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,4));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,5));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,6));
+      explosionAnim.dirs[Direction::Down].push_back(vec2i(7,7));
 
-      stumpAnim.init(&sprites32, Animation::Forward, true);
+      stumpAnim.init(&sprites32, AnimType::Forward, true);
       stumpAnim.speed = 1000;
-      stumpAnim.dirs[Animation::Down].push_back(vec2i(9,2));
+      stumpAnim.dirs[Direction::Down].push_back(vec2i(9,2));
 
-      heartAnim.init(&sprites16, Animation::Forward, true);
+      heartAnim.init(&sprites16, AnimType::Forward, true);
       heartAnim.speed = 1000;
-      heartAnim.dirs[Animation::Down].push_back(vec2i(24,4));
+      heartAnim.dirs[Direction::Down].push_back(vec2i(24,4));
 
       initalized = true;
    }
