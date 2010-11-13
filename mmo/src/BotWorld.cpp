@@ -109,7 +109,7 @@ void BotWorldData::update(int ticks, float dt)
    }
 
    //ensure the bot doesn't go off of map
-   if (player.moving) {
+   if(player.moving) {
       player.move(player.pos + player.dir * dt * playerSpeed, player.dir);
 		if (player.pos.x > worldWidth) {
 			player.pos.x = worldWidth;
@@ -123,6 +123,7 @@ void BotWorldData::update(int ticks, float dt)
       else if (player.pos.y < -worldHeight) {
 			player.pos.y = -worldHeight;
 		}
+      //pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
    }
 
    //update objects (needed?)
@@ -205,6 +206,8 @@ void BotWorldData::update(int ticks, float dt)
    if(looting) {
       for(unsigned i = 0; i < objs.items.size(); i++) {
          if(mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab) {
+            player.moving = false;
+            pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
             sleepms(lootDelay);
             rightClick(objs.items[i].pos);
             printf("looting item %d\n", objs.items[i].id);

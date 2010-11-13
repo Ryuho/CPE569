@@ -175,8 +175,8 @@ void NPC::update()
       }
    }
    if(aiType == AIType::Attacking) {
-      p = getOM().getPlayer(attackId);
-      if(!p || mat::dist(p->pos, pos) >= npcAggroRange) {
+      if(!getOM().check(attackId, ObjectType::Player) 
+            || mat::dist(getOM().getPlayer(attackId)->pos, pos) >= npcAggroRange) {
          attackId = 0;
          aiType = AIType::Stopped;
          return;

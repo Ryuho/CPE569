@@ -119,20 +119,28 @@ void GameServer::processPacket(pack::Packet p, int id)
       Signal signal(p);
 
       if (signal.sig == Signal::special) {
-         Player* play = om.getPlayer(id);
-         for (int i = 0; i < constants::numArrows; i++) {
-            float t = i/(float)constants::numArrows;
-            int arrowID = newId();
-            Missile m(newId(),id, play->pos, vec2(cos(t*2*PI), sin(t*2*PI)));
-            om.addMissile(m);
-            Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
-            cm.broadcast(init);
+         if(om.check(id, ObjectType::Player)) {
+            Player &play = *om.getPlayer(id);
+            for (int i = 0; i < constants::numArrows; i++) {
+               float t = i/(float)constants::numArrows;
+               int arrowID = newId();
+               Missile m(newId(),id, play.pos, vec2(cos(t*2*PI), sin(t*2*PI)));
+               om.addMissile(m);
+               Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
+               cm.broadcast(init);
+            }
          }
+         else
+            printf("Error: Packet Unknown Player id %d\n", id);
       }
       else if (signal.sig == Signal::hurtme) {
-         Player *p = om.getPlayer(id);
-         p->takeDamage(rand()%6 + 5);
-         cm.broadcast(HealthChange(id, p->hp));
+         if(om.check(id, ObjectType::Player)) {
+            Player *p = om.getPlayer(id);
+            p->takeDamage(rand()%6 + 5);
+            cm.broadcast(HealthChange(id, p->hp));
+         }
+         else
+            printf("Error: Packet Unknown Player id %d\n", id);
       }
    }
    else if (p.type == pack::arrow) {
@@ -144,8 +152,8 @@ void GameServer::processPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::click) {
       Click click(p);
-      Player *p = om.getPlayer(click.id);
-      if(p) {
+      if(om.check(id, ObjectType::Player)) {
+         Player &p = *om.getPlayer(click.id);
          for(unsigned i = 0; i < om.items.size(); i++) {
             Item &item = *om.items[i];
             if(item.getGeom().collision(new geom::Point(click.pos))) {
@@ -155,10 +163,10 @@ void GameServer::processPacket(pack::Packet p, int id)
                   item.type == ItemType::RedRupee ? redRupeeValue :
                   0;
                if(rupees > 0) {
-                  p->gainRupees(rupees);
-                  cm.sendPacket(Signal(Signal::changeRupee, p->rupees), click.id);
+                  p.gainRupees(rupees);
+                  cm.sendPacket(Signal(Signal::changeRupee, p.rupees), click.id);
                }
-               om.remove(item.id);
+               om.remove(item.id); //only remove one item per click max
                break;
             } 
          }

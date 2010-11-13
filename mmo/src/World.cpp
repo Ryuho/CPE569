@@ -171,7 +171,7 @@ void WorldData::processPacket(pack::Packet p)
             }
             npc->pos = pos.pos;
             npc->dir = pos.dir;
-            npc->moving = pos.moving;
+            npc->moving = pos.moving != 0;
          }
          else
             printf("Accessing unknown NPC %d\n", pos.id);
