@@ -1,6 +1,6 @@
 #include "BotApp.h"
 #include <ctime>
-using namespace mat;
+using namespace mat; 
 
 void BotApp::init(const char *host, int port)
 {
