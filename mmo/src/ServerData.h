@@ -14,45 +14,65 @@ namespace server {
    using namespace constants;
    using namespace geom;
 
-   struct Player {
+   struct Object {
+      Object() {}
+      virtual int getObjectType() const = 0;
+      //void lock() const;
+      //void unlock() const;
+      virtual pack::Packet serialize() const = 0;
+      virtual Geometry getGeom() const = 0;
+   };
+
+   struct Player : Object {
       Player(int id, vec2 pos, vec2 dir, int hp);
+      Player(pack::Packet &serialized);
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
       void gainExp(int exp);
       void gainRupees(int rupees);
-      Geometry getGeom();
-      //Packet serialize();
+      Geometry getGeom() const;
+      int getObjectType() const;
+      pack::Packet serialize() const;
       
       vec2 pos, dir;
       bool moving, alive;
       int id, hp, exp, rupees;
    };
 
-   struct Missile {
+   struct Missile : Object {
       Missile(int id, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
+      Missile(pack::Packet &serialized);
       void update();
-      Geometry getGeom();
+      Geometry getGeom() const;
+      int getObjectType() const;
+      pack::Packet serialize() const;
 
       vec2 pos, dir;
       int id, owned, type, spawnTime;
    };
 
-   struct NPC {
+   struct NPC : Object {
       NPC(int id, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
+      NPC(pack::Packet &serialized);
       void update();
       void takeDamage(int damage);
-      Geometry getGeom();
+      Geometry getGeom() const;
       int getLoot();
       int getExp();
+      int getObjectType() const;
+      pack::Packet serialize() const;
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
       int id, hp, type;
    };
 
-   struct Item {
+   struct Item : Object {
       Item(int id, vec2 pos, int type = ItemType::GreenRupee);
-      Geometry getGeom();
+      Item(pack::Packet &serialized);
+      Geometry getGeom() const;
+      int getObjectType() const;
+      pack::Packet serialize() const;
 
       vec2 pos;
       int id, type;

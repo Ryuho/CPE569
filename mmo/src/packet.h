@@ -19,6 +19,10 @@ enum PacketType {
    initialize = 6,
    healthChange = 7,
    click = 8,
+   serialPlayer = 9,
+   serialItem = 10,
+   serialNPC = 11,
+   serialMissile = 12,
 };
 
 // Simple structure for reading/writing using sockets.

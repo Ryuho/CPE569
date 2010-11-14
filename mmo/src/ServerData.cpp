@@ -16,7 +16,6 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
    
 }
 
-
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
    this->pos = pos;
@@ -39,9 +38,34 @@ void Player::gainRupees(int rupees)
    this->rupees += rupees;
 }
 
-Geometry Player::getGeom()
+Geometry Player::getGeom() const
 {
    return new Circle(pos, (float)playerRadius);
+}
+
+int Player::getObjectType() const
+{
+   return ObjectType::Player;
+}
+
+Player::Player(pack::Packet &serialized)
+{
+   if(serialized.type == pack::serialPlayer) {
+      serialized.data.readInt(id).readInt(hp).readInt(exp).readInt(rupees)
+         .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
+         .readBit(moving).readBit(alive).reset();
+   } 
+   else
+      printf("Error: Initializing Player with incorrect packet.\n");
+}
+
+pack::Packet Player::serialize() const
+{
+   pack::Packet p(pack::serialPlayer);
+   p.data.writeInt(id).writeInt(hp).writeInt(exp).writeInt(rupees)
+      .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
+      .writeBit(moving).writeBit(alive);
+   return p;
 }
 
 
@@ -62,9 +86,33 @@ void Missile::update()
    pos = pos + dir * projectileSpeed * getDt();
 }
 
-Geometry Missile::getGeom()
+Geometry Missile::getGeom() const
 {
    return new Circle(pos, arrowRadius);
+}
+
+int Missile::getObjectType() const
+{
+   return ObjectType::Missile;
+}
+
+Missile::Missile(pack::Packet &serialized)
+{
+   if(serialized.type == pack::serialMissile) {
+      serialized.data.readInt(id).readInt(owned).readInt(type).readInt(spawnTime)
+         .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
+         .reset();
+   } 
+   else
+      printf("Error: Initializing Missile with incorrect packet.\n");
+}
+
+pack::Packet Missile::serialize() const
+{
+   pack::Packet p(pack::serialMissile);
+   p.data.writeInt(id).writeInt(owned).writeInt(type).writeInt(spawnTime)
+      .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
+   return p;
 }
 
 // NPC
@@ -209,7 +257,7 @@ void NPC::update()
    }
 }
 
-Geometry NPC::getGeom()
+Geometry NPC::getGeom() const
 {
    switch(type) {
       case NPCType::Fairy: //16x16
@@ -245,6 +293,33 @@ void NPC::takeDamage(int damage)
    hp = max(0, hp-damage);
 }
 
+int NPC::getObjectType() const
+{
+   return ObjectType::NPC;
+}
+
+NPC::NPC(pack::Packet &serialized)
+{
+   if(serialized.type == pack::serialNPC) {
+      serialized.data.readInt(id).readInt(hp).readInt(type)
+         .readInt(aiTicks).readInt(aiType).readInt(attackId)
+         .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
+         .readFloat(initPos.x).readFloat(initPos.y).reset();
+   } 
+   else
+      printf("Error: Initializing NPC with incorrect packet.\n");
+}
+
+pack::Packet NPC::serialize() const
+{
+   pack::Packet p(pack::serialNPC);
+   p.data.writeInt(id).writeInt(hp).writeInt(type)
+      .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
+      .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
+      .writeFloat(initPos.x).writeFloat(initPos.y);
+   return p;
+}
+
 // Item
 
 Item::Item(int id, vec2 pos, int type)
@@ -253,7 +328,7 @@ Item::Item(int id, vec2 pos, int type)
 
 }
 
-Geometry Item::getGeom()
+Geometry Item::getGeom() const
 {
    switch (type) {
       case ItemType::GreenRupee:
@@ -273,7 +348,31 @@ Geometry Item::getGeom()
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);
    }
-   return new Circle(pos, 0.00001f);
+   return new Circle(pos, 0.0f);
+}
+
+int Item::getObjectType() const
+{
+   return ObjectType::Item;
+}
+
+Item::Item(pack::Packet &serialized)
+{
+   if(serialized.type == pack::serialItem) {
+      serialized.data.readInt(id).readInt(type)
+         .readFloat(pos.x).readFloat(pos.y)
+         .reset();
+   } 
+   else
+      printf("Error: Initializing Item with incorrect packet.\n");
+}
+
+pack::Packet Item::serialize() const
+{
+   pack::Packet p(pack::serialItem);
+   p.data.writeInt(id).writeInt(type)
+      .writeFloat(pos.x).writeFloat(pos.y);
+   return p;
 }
 
 // Object Manager
