@@ -45,14 +45,14 @@ int Animation::dirFace(vec2 dir)
    int adir = 0;
    if (fabs(dir.x) >= fabs(dir.y)) {
       if(dir.x > 0)
-         adir = 1; //right
+         adir = Direction::Right;
       else
-         adir = 3; //left
+         adir = Direction::Left;
    } else {
       if(dir.y > 0)
-         adir = 0; // up
+         adir = Direction::Up;
       else
-         adir = 2; //down
+         adir = Direction::Down;
    }
    return adir;
 }
@@ -61,9 +61,9 @@ int Animation::dirFaceLR(vec2 dir)
 {
    int adir = 0;
    if(dir.x > 0)
-      adir = 1; //right
+      adir = Direction::Right;
    else
-      adir = 3; //left
+      adir = Direction::Left;
    return adir;
 }
 
@@ -76,7 +76,7 @@ void Animation::init(Sprite *sprite, int type, bool alwaysAnim)
 
 void Animation::draw(vec2 dir, bool moving)
 {
-   int dirIndex = 2; //down by default
+   int dirIndex = Direction::Down; //down by default
    switch(this->type) {
       case AnimType::Normal :
          dirIndex = dirFace(dir);

@@ -19,6 +19,7 @@ namespace {
 
    bool initalized = false;
 
+   //NPCs (animated)
    Animation linkAnim;
    Animation thiefAnim;
    Animation princessAnim;
@@ -37,12 +38,67 @@ namespace {
    Animation ganonAnim;
    Animation goblinAnim;
 
+   //Items (animated)
    Animation greenRupeeAnim;
    Animation redRupeeAnim;
    Animation blueRupeeAnim;
    Animation explosionAnim;
+   //Items (non-animated)
    Animation stumpAnim;
    Animation heartAnim;
+   Animation heartSolidAnim;
+
+   /*
+   //TODO (animated)
+   Animation teleporterAnim;
+   Animation boomerangSpinAnim;
+   Animation waterBallsAnim;
+   Animation torchAnim;
+
+   //TODO (non-animated)
+   //ordered by size descending
+   Animation bottledFairyAnim;
+   Animation bottleAnim;
+   Animation magicBallAnim;
+   Animation blueAmuletAnim;
+   Animation greenAmuletAnim;
+   Animation blueFloorAnim;
+   Animation floorButtonAnim;
+   Animation boomerangAnim;
+   Animation keyAnim;
+   Animation bombAnim;
+   Animation forkAnim;
+   Animation treasureAnim;
+   Animation openTreasureAnim;
+   Animation greenPlantAnim;
+   Animation cutPlantAnim;
+   Animation skullAnim;
+   Animation skeletonHeadAnim;
+   Animation potAnim;
+   Animation appleAnim;
+   Animation keyAnim;
+
+   Animation greyStatueAnim;
+   Animation brownPillarAnim;
+   Animation eyeStatueAnim;
+   Animation swordInStoneAnim;
+   Animation linkDeadAnim;
+   Animation princessDeadAnim;
+   Animation troughAnim;
+
+   Animation fairyFountainAnim;
+   Animation spikeBlockAnim;
+   Animation rockAnim;
+   Animation gravestoneAnim;
+   Animation urnAnim;
+   Animation pillarAnim;
+
+   Animation fireBallsAnim;
+   Animation spearAnim;
+
+   Animation treeAnim;
+   Animation treeHouseAnim;
+   */
 }
 
 void drawQuad(vec2 bl, vec2 tr)

@@ -175,7 +175,7 @@ void GameServer::processPacket(pack::Packet p, int id)
          printf("Error invalid click Player id %d\n", click.id);
    }
    else
-      printf("Unknown packet type=%d size=%d\n", p.type, p.size);
+      printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
 }
 
 void GameServer::update(int ticks)

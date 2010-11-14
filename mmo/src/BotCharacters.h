@@ -11,7 +11,7 @@ using mat::vec2;
 struct Player {
    Player() : id(0), moving(false), alive(true) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
-   void move(vec2 pos, vec2 dir);
+   void move(vec2 pos, vec2 dir, bool moving);
 
    void update();
 

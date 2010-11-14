@@ -110,7 +110,7 @@ void BotWorldData::update(int ticks, float dt)
 
    //ensure the bot doesn't go off of map
    if(player.moving) {
-      player.move(player.pos + player.dir * dt * playerSpeed, player.dir);
+      player.move(player.pos + player.dir * dt * playerSpeed, player.dir, player.moving);
 		if (player.pos.x > worldWidth) {
 			player.pos.x = worldWidth;
 		}
@@ -230,7 +230,7 @@ void BotWorldData::processPacket(pack::Packet p)
       Position pos(p);
       if(pos.id == player.id) {
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
-         objs.getPlayer(pos.id)->move(pos.pos, pos.dir);
+         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
          npc->pos = pos.pos;
@@ -288,7 +288,7 @@ void BotWorldData::processPacket(pack::Packet p)
       }
    }
    else
-      printf("Unknown packet type=%d size=%d\n", p.type, p.size);
+      printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
 }
 
 void BotWorldData::shootArrow(mat::vec2 dir)

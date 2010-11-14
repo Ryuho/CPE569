@@ -21,6 +21,7 @@ namespace server {
       void gainExp(int exp);
       void gainRupees(int rupees);
       Geometry getGeom();
+      //Packet serialize();
       
       vec2 pos, dir;
       bool moving, alive;

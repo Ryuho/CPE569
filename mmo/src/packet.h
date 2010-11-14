@@ -23,13 +23,13 @@ enum PacketType {
 
 // Simple structure for reading/writing using sockets.
 struct Packet {
-   Packet(int size, int type) : size(size), type(type) {}
+   Packet(int type) : type(type) {}
    sock::Packet data;
-   int size, type;
+   int type;
    
    bool sendTo(sock::Connection conn) {
       sock::Packet header;
-      header.writeInt(size).writeInt(type);
+      header.writeInt(data.size()).writeInt(type);
       return conn.send(header) && conn.send(data);
    }
 };
@@ -41,12 +41,12 @@ inline Packet readPacket(sock::Connection conn) {
    
    if (conn.recv(header, 8)) {
       header.readInt(size).readInt(type);
-      Packet ret(size, type);
-      if (conn.recv(ret.data, ret.size))
+      Packet ret(type);
+      if (conn.recv(ret.data, size))
          return ret;
    }
    
-   return Packet(0,0);
+   return Packet(0);
 }
 
 // Actual packets
@@ -67,7 +67,7 @@ struct Position {
          .reset();
    }
    Packet makePacket() {
-      Packet p(24, position);
+      Packet p(position);
       p.data.writeInt(id).writeInt(moving)
          .writeFloat(pos.x).writeFloat(pos.y)
          .writeFloat(dir.x).writeFloat(dir.y);
@@ -84,7 +84,7 @@ struct Click {
          .readFloat(pos.y).reset();
    }
    Packet makePacket() {
-      Packet p(12, click);
+      Packet p(click);
       p.data.writeInt(id).writeFloat(pos.x)
          .writeFloat(pos.y);
       return p;
@@ -103,9 +103,8 @@ struct Message {
       p.data.readStdStr(str).reset();
    }
    Packet makePacket() {
-      Packet p(0, message);
+      Packet p(message);
       p.data.writeStdStr(str);
-      p.size = p.data.size();
       return p;
    }
 };
@@ -122,7 +121,7 @@ struct Connect {
       p.data.readInt(id).readInt(worldHeight).readInt(worldWidth).reset();
    }
    Packet makePacket() {
-      Packet p(12, connect);
+      Packet p(connect);
       p.data.writeInt(id).writeInt(worldHeight).writeInt(worldWidth);
       return p;
    }
@@ -147,7 +146,7 @@ struct Signal {
       p.data.readInt(sig).readInt(val).reset();
    }
    Packet makePacket() {
-      Packet p(8, signal);
+      Packet p(signal);
       p.data.writeInt(sig).writeInt(val);
       return p;
    }
@@ -166,7 +165,7 @@ struct Arrow {
       p.data.readInt(id).readFloat(orig.x).readFloat(orig.y).readFloat(direction.x).readFloat(direction.y).reset();
    }
    Packet makePacket() {
-      Packet p(20, arrow);
+      Packet p(arrow);
       p.data.writeInt(id).writeFloat(orig.x).writeFloat(orig.y).writeFloat(direction.x).writeFloat(direction.y);
       return p;
    }
@@ -183,7 +182,7 @@ struct Initialize {
       p.data.readInt(id).readInt(type).readInt(subType).readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y).readInt(hp).reset();
    }
    Packet makePacket() {
-      Packet p(32, initialize);
+      Packet p(initialize);
       p.data.writeInt(id).writeInt(type).writeInt(subType).writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y).writeInt(hp);
       return p;
    }
@@ -196,7 +195,7 @@ struct HealthChange {
       p.data.readInt(id).readInt(hp).reset();
    }
    Packet makePacket() {
-      Packet p(8, healthChange);
+      Packet p(healthChange);
       p.data.writeInt(id).writeInt(hp);
       return p;
    }

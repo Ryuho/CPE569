@@ -13,10 +13,11 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
 
 }
 
-void Player::move(vec2 pos, vec2 dir)
+void Player::move(vec2 pos, vec2 dir, bool moving)
 {
    this->pos = pos;
    this->dir = dir;
+   this->moving = moving;
 }
 
 void Player::update()

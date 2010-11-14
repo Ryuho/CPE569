@@ -236,7 +236,7 @@ void WorldData::processPacket(pack::Packet p)
       }
    }
    else
-      printf("Unknown packet type=%d size=%d\n", p.type, p.size);
+      printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
 }
 
 void WorldData::draw()
