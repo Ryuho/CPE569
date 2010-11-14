@@ -33,6 +33,7 @@ struct LMData {
    map<int, Lock*> locks;
    Connection self;
    int ownId;
+   LockData *lockData;
 
 private: // Thread private storage
    map<int, Host> hosts;
@@ -42,7 +43,7 @@ private: // Thread private storage
    SelectSet ss;
 };
 
-void LockManager::startThread(int port, int id)
+void LockManager::startThread(int port, int id, LockData *lockData)
 {
    setupSockets();
    Server serv(port);
@@ -52,6 +53,7 @@ void LockManager::startThread(int port, int id)
    data->m.lock();
    data->ownId = id;
    data->self = Connection("localhost", serv.port());
+   data->lockData = lockData;
    data->t = thread(ref(*data));
    data->m.unlock();
 }
@@ -114,6 +116,9 @@ void LMData::handlePacket(Connection c)
             //printf("%d locked and sending success to %d\n", ownId, hosts[c.getSocket()].id);
             m.unlock_shared();
             c.send(p.reset().writeInt(ops::success).writeInt(id));
+            if (lockData) {
+               lockData->sendLockData(id, c);
+            }
             //printf("acquired %d\n", id);
          } else {
             //printf("%d waitlisted\n", ownId);
@@ -136,7 +141,12 @@ void LMData::handlePacket(Connection c)
       if (c.getSocket() == toSelf.getSocket() && locks[id]->owner != -1) {
          //printf("%d sent release to remote host %d\n", ownId, locks[id]->owner);
          hosts[idToSocket[locks[id]->owner]].c.send(p);
+         if (lockData) {
+            lockData->sendLockData(id, hosts[idToSocket[locks[id]->owner]].c);
+         }
+         m.unlock_shared();
       } else if (locks[id]->owner == -1) {
+         lockData->recvLockData(id, c);
          if (locks[id]->waitList.size() > 0) {
             //printf("%d pulling off waitlist\n", ownId);
             int notify = locks[id]->waitList.front();
@@ -144,6 +154,9 @@ void LMData::handlePacket(Connection c)
             m.unlock_shared();
             Connection n = hosts[notify].c;
             n.send(p.reset().writeInt(ops::success).writeInt(id));
+            if (lockData) {
+               lockData->sendLockData(id, n);
+            }
             //printf("1pulled %d off wait list\n", notify);
          } else {
             //printf("%d unlocking, no waitlist\n", ownId);
@@ -152,10 +165,12 @@ void LMData::handlePacket(Connection c)
          }
       } else {
          printf("Got release for lock %d from server %d. owned by %d\n", id, hosts[c.getSocket()].id, locks[id]->owner);
+         m.unlock_shared();
       }
       //printf("released %d\n", id);
    } else if (op == ops::success) {
       //printf("%d forwarding success to self\n", ownId);
+      lockData->recvLockData(id, c);
       toSelf.send(p);
    } else if (op == ops::available) {
       //printf("%d packet Available\n", ownId);
@@ -168,6 +183,9 @@ void LMData::handlePacket(Connection c)
          m.unlock_shared();
          Connection n = hosts[notify].c;
          n.send(p.reset().writeInt(ops::success).writeInt(id));
+         if (lockData) {
+            lockData->sendLockData(id, n);
+         }
          //printf("2pulled %d off wait list\n", notify);
       } else 
          m.unlock_shared();
