@@ -7,6 +7,27 @@
 
 using namespace sock;
 
+
+struct DataTest : public LockData {
+   DataTest() {
+      vals[0] = 0;
+      vals[1] = 0;
+      vals[2] = 0;
+   }
+
+   virtual void sendLockData(int id, sock::Connection c) {
+      c.send(Packet().writeInt(vals[id-5]));
+   }
+
+   virtual void recvLockData(int id, sock::Connection c) {
+      Packet p;
+      c.recv(p, 4);
+      p.readInt(vals[id-5]);
+   }
+
+   int vals[3];
+};
+
 void sleep(int ms)
 {
    Sleep(ms);//usleep(ms*1000);
@@ -15,24 +36,41 @@ void sleep(int ms)
 void otherThread(int t)
 {
    LockManager lm;
+   DataTest *dt = new DataTest;
 
-   lm.startThread(27030 + t, t);
+   lm.startThread(27030 + t, t, dt);
    lm.addHost("localhost", 27030, 0);
 
-   lm.addLocalLock(5+t);
    lm.addRemoteLock(5, 0);
+   if (t == 1) {
+      lm.addLocalLock(6);
+      lm.addHost("localhost", 27032, 2);
+      lm.addRemoteLock(7, 2);
+      dt->vals[1] = 20000;
+   } else {
+      lm.addLocalLock(7);
+      lm.addHost("localhost", 27031, 1);
+      lm.addRemoteLock(6, 1);
+      dt->vals[2] = 30000;
+   }
 
-   for(int i = 0; i < 15; i++) {
-      //printf("ta%d\n", t);
-      lm.acquire(5);
-      printf("t%d a\n", t);
-      sleep(1000);
-      printf("t%d r\n", t);
-      lm.release(5);
-      sleep(1000 + rand()%500);
+   for(int i = 0; i < 500; i++) {
+      int id = 5 + rand()%3;
+      lm.acquire(id);
+      //printf("t%d a\n", t);
+      dt->vals[id-5]++;
+      //printf("t%d r\n", t);
+      lm.release(id); 
    }
 
    printf("tdone\n");
+   lm.acquire(5);
+   lm.acquire(6);
+   lm.acquire(7);
+   lm.release(7);
+   lm.release(6);
+   lm.release(5);
+   printf("0: %d, 1: %d, 2: %d\n", dt->vals[0], dt->vals[1], dt->vals[2]);
 
    /*Connection c("localhost", 27030);
    
@@ -57,11 +95,15 @@ void otherThread(int t)
 int main()
 {
    LockManager lm;
+   DataTest dt;
 
-   lm.startThread(27030, 0);
+   dt.vals[0] = 10000;
+
+   lm.startThread(27030, 0, &dt);
 
    lm.addLocalLock(5);
    lm.addRemoteLock(6, 1);
+   lm.addRemoteLock(7, 2);
 
    //lm.addHost("stuff", 6969, 28);
    
@@ -82,19 +124,30 @@ int main()
    sleep(50);
 
    for(int i = 0; i < 500; i++) {
-      //printf("ma\n");
-      lm.acquire(5);
-      printf("m%d a\n", i);
-      sleep(5);
-      printf("m%d r\n", i);
-      lm.release(5);
+      int id = 5 + rand()%3;
+      lm.acquire(id);
+      //printf("m%d a\n", i);
+      dt.vals[id-5]++;
+      //printf("m%d r\n", i);
+      lm.release(id);
    }
    
    //sleep(1000);
    printf("mdone\n");
+   printf("0: %d, 1: %d, 2: %d\n", dt.vals[0], dt.vals[1], dt.vals[2]);
+
+   lm.acquire(5);
+   lm.acquire(6);
+   lm.acquire(7);
+   lm.release(7);
+   lm.release(6);
+   lm.release(5);
 
    t.join();
    t2.join();
+   
+   printf("0: %d, 1: %d, 2: %d\n", dt.vals[0], dt.vals[1], dt.vals[2]);
+   printf("total: %d\n", dt.vals[0] + dt.vals[1] + dt.vals[2] - 60000);
 
    return 0;
 }
