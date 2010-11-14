@@ -260,6 +260,8 @@ void NPC::draw()
       glTranslatef(pos.x, pos.y, 0.0);
       glScalef(spriteZoom, spriteZoom, 1.0);
       anim->draw(dir, moving);
+      glTranslatef(-1,0,0);
+      drawHpBar((float)hp / npcMaxHp, 11, 13);
       glPopMatrix();
    }
 }

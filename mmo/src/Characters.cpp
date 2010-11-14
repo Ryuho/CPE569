@@ -65,8 +65,8 @@ void Item::update()
 
 }
 
-NPC::NPC(int id, int type, vec2 pos, vec2 dir, bool moving)
-   : id(id), type(type), pos(pos), dir(dir), moving(moving)
+NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
+   : id(id), type(type), pos(pos), dir(dir), moving(moving), hp(hp)
 {
    alive = true;
    initGraphics();

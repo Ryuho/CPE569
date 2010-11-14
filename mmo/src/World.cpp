@@ -196,8 +196,8 @@ void WorldData::processPacket(pack::Packet p)
          objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
       } 
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(NPC(i.id, i.subType, i.pos, i.dir, false));
-         printf("Added NPC %d \n", i.id);
+         objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         printf("Added NPC %d %d\n", i.id, i.hp);
       }
       else if (i.type == ObjectType::Item) {
          objs.addItem(Item(i.id, i.subType, i.pos));
@@ -231,9 +231,15 @@ void WorldData::processPacket(pack::Packet p)
       if (hc.id == player.id) {
          player.hp = hc.hp;
          shadow.hp = hc.hp;
-      } else {
+      } 
+      else if (objs.checkObject(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
+      } 
+      else if(objs.checkObject(hc.id, ObjectType::NPC)) {
+         objs.getNPC(hc.id)->hp = hc.hp;
       }
+      else
+         printf("Error: Health change on id %d\n", hc.id);
    }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());

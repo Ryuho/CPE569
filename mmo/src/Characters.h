@@ -56,7 +56,7 @@ private:
 };
 
 struct NPC {
-   NPC(int id, int type, vec2 pos, vec2 dir, bool moving);
+   NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
 
    void resetAnimation();
    void update();
@@ -66,7 +66,7 @@ struct NPC {
    vec2 pos, dir;
    bool alive, moving;
    Animation *anim;
-   int id;
+   int id, hp;
 private:
    void initGraphics();
 };
