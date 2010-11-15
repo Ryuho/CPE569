@@ -16,7 +16,8 @@ int main(int argc, char *argv[])
 
    if(argc != 3){
       printf("Usage: client <server address> <port number>\n");
-      exit(0);
+      address = "localhost";
+      port = 27027;
    }
    else{
       address = argv[1];
