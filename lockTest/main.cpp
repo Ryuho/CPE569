@@ -19,10 +19,12 @@ struct DataTest : public LockData {
       c.send(Packet().writeInt(vals[id-5]));
    }
 
-   virtual void recvLockData(int id, sock::Connection c) {
+   virtual bool recvLockData(int id, sock::Connection c) {
       Packet p;
-      c.recv(p, 4);
+      if (!c.recv(p, 4))
+         return false;
       p.readInt(vals[id-5]);
+      return true;
    }
 
    int vals[3];
