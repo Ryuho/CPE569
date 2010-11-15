@@ -16,12 +16,14 @@ namespace ops {
       available,
       newHost,
       connect,
+      failure,
+      shutdown,
    };
 }
 
 struct LockData {
    virtual void sendLockData(int id, sock::Connection c) =0;
-   virtual void recvLockData(int id, sock::Connection c) =0;
+   virtual bool recvLockData(int id, sock::Connection c) =0;
 };
 
 struct LockManager {
@@ -33,10 +35,11 @@ struct LockManager {
    void addLocalLock(int id);
    void addRemoteLock(int id, int host);
 
-   void acquire(int id);
+   bool acquire(int id);
    void release(int id);
 
    void deleteLock(int id);
+   void shutDown();
 
    LMData *data;
 };

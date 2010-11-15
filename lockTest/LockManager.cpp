@@ -17,16 +17,16 @@ struct Lock {
 };
 
 struct Host {
-   Host() {}
+   Host() : id(-2) {}
    Host(Connection c, int id) : c(c), id(id) {}
    Connection c;
    int id;
 };
 
 struct LMData {
-   LMData(Server serv) : serv(serv) {}
+   LMData(Server serv) : serv(serv), exitNow(false), localWaitingOn(-1) {}
    void operator()();
-   void handlePacket(Connection c);
+   bool lockExists(int id);
 
    thread t;
    shared_mutex m; // mutex for modifying data structures
@@ -36,11 +36,15 @@ struct LMData {
    LockData *lockData;
 
 private: // Thread private storage
+   bool hostExists(int socket);
+   void handlePacket(Connection c);
    map<int, Host> hosts;
    map<int, int> idToSocket;
    Server serv;
    Connection toSelf;
    SelectSet ss;
+   bool exitNow;
+   int localWaitingOn;
 };
 
 void LockManager::startThread(int port, int id, LockData *lockData)
@@ -85,12 +89,20 @@ void LMData::operator()()
             printf("%d Got a new lock connection %d\n", ownId, c.getSocket());
          } else {
             Connection c = hosts[readySds[i]].c;
-            while (c && c.select())
+            while (c && c.select()) {
                handlePacket(c);
+               if (exitNow)
+                  return;
+            }
             if (!c) {
+               if (c.getSocket() == localWaitingOn) {
+                  toSelf.send(Packet().writeInt(ops::failure).writeInt(0));
+               }
                ss.remove(c.getSocket());
+               idToSocket.erase(idToSocket.find(hosts[c.getSocket()].id));
                hosts.erase(hosts.find(c.getSocket()));
                printf("%d remote host %d disconnected\n", ownId, c.getSocket());
+
             }
          }
       }
@@ -107,8 +119,18 @@ void LMData::handlePacket(Connection c)
       return;
    p.readInt(op).readInt(id);
 
+   /*if (!lockExists(id)) {
+      printf("Got request for a lock that does not exist: op: %d, id: %d\n", op, id);
+      c.send(Packet().writeInt(ops::failure).writeInt(id));
+   }*/
+
    if (op == ops::acquire) {
       //printf("%d packet Acquire\n", ownId);
+      if (!lockExists(id)) {
+         printf("Acquire for lock that doesn't exist: %d\n", id);
+         c.send(Packet().writeInt(ops::failure).writeInt(id));
+         return;
+      }
       m.lock_shared();
       //printf("%d Acquire packet locked\n", ownId);
       if (locks[id]->owner == -1) {
@@ -131,12 +153,18 @@ void LMData::handlePacket(Connection c)
          //printf("%d forwarding acquire to %d\n", ownId, locks[id]->owner);
          m.unlock_shared();
          hosts[idToSocket[locks[id]->owner]].c.send(p);
+         localWaitingOn = hosts[idToSocket[locks[id]->owner]].c.getSocket();
       } else {
          m.unlock_shared();
          printf("Got request for lock %d from server %d. Owned by %d\n", id, hosts[c.getSocket()].id, locks[id]->owner);
       }
    } else if (op == ops::release) { // send release from self to remote host!
       //printf("%d packet Release\n", ownId);
+      if (!lockExists(id)) {
+         printf("Release for lock that doesn't exist: %d\n", id);
+         c.send(Packet().writeInt(ops::failure).writeInt(id));
+         return;
+      }
       m.lock_shared();
       if (c.getSocket() == toSelf.getSocket() && locks[id]->owner != -1) {
          //printf("%d sent release to remote host %d\n", ownId, locks[id]->owner);
@@ -146,17 +174,26 @@ void LMData::handlePacket(Connection c)
          }
          m.unlock_shared();
       } else if (locks[id]->owner == -1) {
-         lockData->recvLockData(id, c);
+         if (lockData && !lockData->recvLockData(id, c)) {
+            printf("Failed receiving lock data on release\n");
+            m.unlock_shared();
+         }
          if (locks[id]->waitList.size() > 0) {
             //printf("%d pulling off waitlist\n", ownId);
-            int notify = locks[id]->waitList.front();
-            locks[id]->waitList.pop();
+            int notify = -2;
+            while (locks[id]->waitList.size() > 0 && !hostExists(notify)) {
+               notify = locks[id]->waitList.front();
+               locks[id]->waitList.pop();
+            }
             m.unlock_shared();
+            if (!hostExists(notify)) {
+               printf("no hosts available on wait list\n");
+               return;
+            }
             Connection n = hosts[notify].c;
             n.send(p.reset().writeInt(ops::success).writeInt(id));
-            if (lockData) {
+            if (lockData)
                lockData->sendLockData(id, n);
-            }
             //printf("1pulled %d off wait list\n", notify);
          } else {
             //printf("%d unlocking, no waitlist\n", ownId);
@@ -170,7 +207,13 @@ void LMData::handlePacket(Connection c)
       //printf("released %d\n", id);
    } else if (op == ops::success) {
       //printf("%d forwarding success to self\n", ownId);
-      lockData->recvLockData(id, c);
+      if (lockData && !lockData->recvLockData(id, c)) {
+         printf("Failed receiving lock data on release\n");
+         m.unlock_shared();
+         toSelf.send(Packet().writeInt(ops::failure).writeInt(id));
+         return;
+      }
+      localWaitingOn = -1;
       toSelf.send(p);
    } else if (op == ops::available) {
       //printf("%d packet Available\n", ownId);
@@ -178,9 +221,16 @@ void LMData::handlePacket(Connection c)
       //printf("asd\n");
       if (locks[id]->waitList.size() > 0 && locks[id]->m.try_lock()) {
          //printf("in here\n");
-         int notify = locks[id]->waitList.front();
-         locks[id]->waitList.pop();
+         int notify = -2;
+         while (locks[id]->waitList.size() > 0 && !hostExists(notify)) {
+            notify = locks[id]->waitList.front();
+            locks[id]->waitList.pop();
+         }
          m.unlock_shared();
+         if (!hostExists(notify)) {
+            printf("no hosts available on wait list\n");
+            return;
+         }
          Connection n = hosts[notify].c;
          n.send(p.reset().writeInt(ops::success).writeInt(id));
          if (lockData) {
@@ -192,7 +242,10 @@ void LMData::handlePacket(Connection c)
    } else if (op == ops::newHost) {
       //printf("%d Got new host packet.\n", ownId);
       Packet p2;
-      c.recv(p2, id); // id is the size of the remaining payload
+      if (!c.recv(p2, id)) { // id is the size of the remaining payload
+         printf("Failed to recv all of newHost packet\n");
+         return;
+      }
       string host;
       int port;
       p2.readStdStr(host).readInt(port).readInt(id); // now id is the remote id
@@ -212,10 +265,36 @@ void LMData::handlePacket(Connection c)
       idToSocket[id] = c.getSocket();
       ss.add(c.getSocket());
       printf("%d Lockmanager %d now identified\n", ownId, id);
+   } else if (op == ops::failure) {
+      printf("got a failure for id %d\n", id);
+      localWaitingOn = -1;
+      toSelf.send(p);
+   } else if (op == ops::shutdown) {
+      for (map<int, Host>::iterator itr = hosts.begin(); itr != hosts.end(); ++itr)
+         itr->second.c.close();
+      exitNow = true;
    } else {
       printf("Packet that was not identified!\n");
    }
    //printf("left\n");
+}
+
+bool LMData::lockExists(int id)
+{
+   //m.lock_shared();
+   map<int, Lock*>::iterator itr = locks.find(id);
+   bool ret = itr != locks.end();
+   //m.unlock_shared();
+   return ret;
+}
+
+bool LMData::hostExists(int socket)
+{
+   //m.lock_shared();
+   map<int, Host>::iterator itr = hosts.find(socket);
+   bool ret = itr != hosts.end() && itr->second.id != -2;
+   //m.unlock_shared();
+   return ret;
 }
 
 void LockManager::addLocalLock(int id)
@@ -232,10 +311,14 @@ void LockManager::addRemoteLock(int id, int host)
    data->m.unlock();
 }
 
-void LockManager::acquire(int id)
+bool LockManager::acquire(int id)
 {
    //printf("%dc in acquire\n", data->ownId);
    data->m.lock_shared();
+
+   if (!data->lockExists(id))
+      return false;
+
    Lock *l = data->locks[id];
 
    if (l->owner == -1) {
@@ -250,20 +333,33 @@ void LockManager::acquire(int id)
       Packet p;
       data->self.send(p.writeInt(ops::acquire).writeInt(id));
       //printf("%dc waiting on success\n", data->ownId);
-      data->self.recv(p, 8);
+      if (!data->self.recv(p, 8)) {
+         printf("recv failed waiting on lock success for %d\n", id);
+         return false;
+      }
       //printf("%dc got it!\n", data->ownId);
       int i, sid;
       p.readInt(i).readInt(sid);
-      if (i != ops::success)
+      if (i == ops::failure) {
+         return false;
+      } if (i != ops::success) {
          printf("Not a success packet on acquire\n");
-      else if (sid != id)
+         return false;
+      } else if (sid != id) {
          printf("Not the id requested. Asked for %d, got %d\n", id, sid);
+         return false;
+      }
    }
+   return true;
 }
 
 void LockManager::release(int id)
 {
    data->m.lock_shared();
+   
+   if (!data->lockExists(id))
+      return;
+
    Lock *l = data->locks[id];
    if (l->owner == -1) {
       l->m.unlock();
@@ -292,4 +388,10 @@ void LockManager::addHost(const char *hostname, int port, int id)
    Packet p;
    // 0 is so that it takes the same space a
    data->self.send(p.writeInt(ops::newHost).writeInt(strlen(hostname)+9).writeCStr(hostname).writeInt(port).writeInt(id));
+}
+
+void LockManager::shutDown()
+{
+   data->self.send(Packet().writeInt(ops::shutdown).writeInt(0));
+   data->t.join();
 }
