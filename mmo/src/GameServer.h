@@ -3,6 +3,7 @@
 
 #include "ServerUtil.h"
 #include "ServerData.h"
+#include "ServerObjManager.h"
 
 using namespace server;
 

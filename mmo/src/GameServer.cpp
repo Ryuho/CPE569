@@ -192,7 +192,7 @@ void GameServer::update(int ticks)
          spawnNPC(newId());
       }
    }
-   
+
    //players loop, checks for hp == 0, or if it is hit with an arrow
    for(unsigned pidx = 0; pidx < om.players.size(); pidx++) {
       Player &p = *om.players[pidx];
@@ -219,6 +219,11 @@ void GameServer::update(int ticks)
          cm.broadcast(HealthChange(p.id, p.hp));
       }
    }
+
+   // for every missile
+      // get its geometry
+      // use object manager regions to get a list of colliding players
+      // hurt the first player that collided.
 
    //missles loop, checks for missles TOF, remove if above set value, else move the position
    for(unsigned i = 0; i < om.missiles.size(); i++) {

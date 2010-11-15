@@ -1,6 +1,7 @@
 #include "ServerData.h"
 #include "GameServer.h"
 #include "Geometry.h"
+#include "Util.h"
 #include <cstdio>
 
 namespace server {
@@ -17,7 +18,7 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   this->pos = pos;
+   getOM().move(this, pos);
    this->dir = dir;
    this->moving = moving;
 }
@@ -87,7 +88,7 @@ Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
 
 void Missile::update()
 {
-   pos = pos + dir * projectileSpeed * getDt();
+   getOM().move(this, pos + dir * projectileSpeed * getDt());
 }
 
 Geometry Missile::getGeom() const
@@ -122,6 +123,13 @@ pack::Packet Missile::serialize() const
    p.data.writeInt(id).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
    return p;
+}
+
+void Missile::move(vec2 pos, vec2 dir)
+{
+   getOM().move(this, pos);
+   this->pos = pos;
+   this->dir = dir;
 }
 
 // NPC
@@ -257,12 +265,12 @@ void NPC::update()
          dir = newDir;
          vec2 newPos = pos + dir * getDt() * npcAttackSpeed;
          if(mat::dist(newPos, p->pos) > attackRange) {
-            pos = newPos;
+            move(newPos, newDir);
          }
       }
    }
    else if(aiType == AIType::Walking) {
-      pos = pos + dir * getDt() * npcWalkSpeed;
+      move(pos + dir * getDt() * npcWalkSpeed, dir);
    }
 }
 
@@ -300,6 +308,13 @@ Geometry NPC::getGeom() const
 void NPC::takeDamage(int damage)
 {
    hp = max(0, hp-damage);
+}
+
+void NPC::move(vec2 pos, vec2 dir)
+{
+   getOM().move(this, pos);
+   this->pos = pos;
+   this->dir = dir;
 }
 
 int NPC::getObjectType() const
@@ -341,6 +356,12 @@ Item::Item(int id, vec2 pos, int type)
    : id(id), pos(pos), type(type)
 {
 
+}
+
+void Item::move(vec2 pos)
+{
+   getOM().move(this, pos);
+   this->pos = pos;
 }
 
 Geometry Item::getGeom() const
@@ -394,243 +415,5 @@ pack::Packet Item::serialize() const
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
 }
-
-// Object Manager
-
-void ObjectManager::addPlayer(Player p)
-{
-   idToIndex[p.id] = Index(players.size(), ObjectType::Player);
-   players.push_back(new Player(p));
-}
-
-void ObjectManager::addMissile(Missile m)
-{
-   idToIndex[m.id] = Index(missiles.size(), ObjectType::Missile);
-   missiles.push_back(new Missile(m));
-}
-
-void ObjectManager::addNPC(NPC n)
-{
-   idToIndex[n.id] = Index(npcs.size(), ObjectType::NPC);
-   npcs.push_back(new NPC(n));
-}
-
-void ObjectManager::addItem(Item i)
-{
-   idToIndex[i.id] = Index(items.size(), ObjectType::Item);
-   items.push_back(new Item(i));
-}
-
-Player *ObjectManager::getPlayer(int id)
-{
-   return players[idToIndex[id].index];
-}
-
-Missile *ObjectManager::getMissile(int id)
-{
-   return missiles[idToIndex[id].index];
-}
-
-NPC *ObjectManager::getNpc(int id)
-{
-   return npcs[idToIndex[id].index];
-}
-
-Item *ObjectManager::getItem(int id)
-{
-   return items[idToIndex[id].index];
-}
-
-template<typename T>
-void removeTempl(map<int, ObjectManager::Index> &idToIndex, vector<T*> &objs, int id)
-{
-   int i = idToIndex[id].index;
-
-   delete objs[i];
-   idToIndex.erase(id);
-   if (objs.size() > 1) {
-      objs[i] = objs.back();
-      idToIndex[objs[i]->id].index = i;
-   }
-   objs.pop_back();
-}
-
-void ObjectManager::remove(int id)
-{   int i = idToIndex[id].index;
-
-   if (idToIndex[id].type == ObjectType::Player)
-      removeTempl(idToIndex, players, id);
-
-   else if (idToIndex[id].type == ObjectType::Missile)
-      removeTempl(idToIndex, missiles, id);
-
-   else if (idToIndex[id].type == ObjectType::NPC)
-      removeTempl(idToIndex, npcs, id);
-
-   else if (idToIndex[id].type == ObjectType::Item)
-      removeTempl(idToIndex, items, id);
-}
-
-
-bool ObjectManager::check(int id, int type)
-{
-   map<int, Index>::iterator itr = idToIndex.find(id);
-
-   return itr != idToIndex.end() && itr->second.type == type;
-}
-
-void ObjectManager::init(float width, float height, float regionSize)
-{
-   this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
-   this->regionSize = regionSize;
-   unsigned xBuckets = ((int)(width / regionSize));
-   unsigned yBuckets = ((int)(height / regionSize));
-   if(xBuckets * regionSize != width)
-      xBuckets++;
-   if(yBuckets * regionSize != height)
-      yBuckets++;
-
-   if(regions.size() > 0) {
-      printf("Error: Reinitializing Object Manager\n");
-      regions.clear();
-   }
-   for(unsigned x = 0; x < xBuckets; x++) {
-      regions.push_back(vector<Region>());
-      for(unsigned y = 0; y < yBuckets; y++) {
-         regions[x].push_back(Region());
-      }
-   }
-   printf("Initialized ObjectManager <%d by %d> total=%d\n", xBuckets, yBuckets, xBuckets*yBuckets);
-}
-
-
-
-void ObjectManager::getRegion(vec2 pos, int &x, int &y)
-{
-   x = (int) ((pos.x - worldBotLeft.x) / regionSize);
-   y = (int) ((pos.y - worldBotLeft.y) / regionSize);
-   if(x < 0 || y < 0 || x >= (int)regions.size() || y >= (int)regions[x].size()) {
-      printf("Error ObjectManager::getRegion(): invalid Region <%d,%d>"
-         "from pos=<%0.1f,%0.1f>\n", x, y, pos.x, pos.y);
-      x = y = 1; //ensures the server doesn't break
-   }
-}
-
-Geometry ObjectManager::getRegionGeom(int x, int y)
-{
-   return new Rectangle(
-      vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
-      regionSize, regionSize);
-}
-
-void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs)
-{
-   int x, y;
-   getRegion(pos, x, y);
-   unsigned minX, maxX, minY, maxY;
-   minX = max(0, x-1);
-   maxX = min((int)regions.size()-1, x+1);
-   minY = max(0, y-1);
-   maxY = min((int)regions[x].size()-1, y+1);
-   regs.clear();
-   for(unsigned i = minX; i <= maxX; i++) {
-      for(unsigned j = minY; j <= maxY; j++) {
-         if(getRegionGeom(i,j).collision(g))
-            regs.push_back(&regions[x][y]);
-      }
-   }
-}
-
-void ObjectManager::move(Player *p, vec2 newPos)
-{
-   std::vector<Region *> regsOld, regsNew;
-   getRegions(p->pos, p->getGeom(), regsOld);
-   p->pos = newPos;
-   getRegions(p->pos, p->getGeom(), regsNew);
-   bool same = true;
-   if(regsOld.size() == regsNew.size()) {
-      for(unsigned i = 0; i < regsOld.size(); i++) {
-         if(regsOld[i] != regsNew[i]) {
-            same = false;
-            break;
-         }
-      }
-   }
-   else
-      same = false;
-
-   if(!same) {
-      //remove old regions
-      for(unsigned i = 0; i < regsOld.size(); i++) {
-         regsOld[i]->remove(p);
-      }
-      //add new regions
-      for(unsigned i = 0; i < regsNew.size(); i++) {
-         regsNew[i]->players.push_back(p);
-      }
-   }
-}
-
-void ObjectManager::move(Item *i, vec2 newPos)
-{
-   
-}
-
-void ObjectManager::move(Missile *m, vec2 newPos)
-{
-   
-}
-
-void ObjectManager::move(NPC *n, vec2 newPos)
-{
-   
-}
-
-// Region
-
-void Region::remove(Player *p)
-{
-   for(unsigned i = 0; i < players.size(); i++) {
-      if(players[i] == p) {
-         players[i] = players.back();
-         players.pop_back();
-         return;
-      }
-   }
-}
-
-void Region::remove(Missile *m)
-{
-   for(unsigned i = 0; i < missiles.size(); i++) {
-      if(missiles[i] == m) {
-         missiles[i] = missiles.back();
-         missiles.pop_back();
-         return;
-      }
-   }
-}
-
-void Region::remove(NPC *n)
-{
-   for(unsigned i = 0; i < npcs.size(); i++) {
-      if(npcs[i] == n) {
-         npcs[i] = npcs.back();
-         npcs.pop_back();
-         return;
-      }
-   }
-}
-
-void Region::remove(Item *item)
-{
-   for(unsigned i = 0; i < items.size(); i++) {
-      if(items[i] == item) {
-         items[i] = items.back();
-         items.pop_back();
-         return;
-      }
-   }
-}
-
 
 } // end server namespace

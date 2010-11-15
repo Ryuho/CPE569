@@ -15,7 +15,7 @@ namespace constants {
 
    const int playerPredictTicks = 200;
 
-   const int regionSize = 25;
+   const int regionSize = 1000;
 
    #define PI 3.14159265359
 
