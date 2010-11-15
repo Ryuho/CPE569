@@ -86,12 +86,16 @@ namespace server {
 
 
 struct Region {
-     vector<Player *> players;
-     vector<Missile *> missiles;
-     vector<NPC *> npcs;
-     vector<Item *> items;
-  };
- 
+   vector<Player *> players;
+   vector<Missile *> missiles;
+   vector<NPC *> npcs;
+   vector<Item *> items;
+
+   void remove(Player *p);
+   void remove(Missile *m);
+   void remove(NPC *n);
+   void remove(Item *i);
+};
 
 struct ObjectManager {
      struct Index {
@@ -100,12 +104,20 @@ struct ObjectManager {
         int index, type;
      };
      
-     void init(float width, float length, float regionWidth);
+     void init(float width, float height, float regionWidth);
 
      void addPlayer(Player p);
      void addMissile(Missile m);
      void addNPC(NPC n);
      void addItem(Item i);
+
+     void getRegion(vec2 pos, int &x, int &y);
+     void getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs);
+     void move(Player *p, vec2 newPos);
+     void move(Item *i, vec2 newPos);
+     void move(Missile *m, vec2 newPos);
+     void move(NPC *n, vec2 newPos);
+     Geometry getRegionGeom(int x, int y);
 
      Player *getPlayer(int id);
      Missile *getMissile(int id);
@@ -116,7 +128,6 @@ struct ObjectManager {
      vector<Missile *> collidingMissiles(Geometry g, vec3 center);
      vector<NPC *> collidingNPCs(Geometry g, vec3 center);
      vector<Item *> collidingItems(Geometry g, vec3 center);
-     void updateRegions();
 
      void remove(int id);
      bool check(int id, int type);
@@ -127,7 +138,10 @@ struct ObjectManager {
      vector<NPC *> npcs;
      vector<Item *> items;
      
-     vector<vector<Region> > regions;
+     vector<vector<Region> > regions; //starts botLeft and increases in <X,Y> 
+   private:
+     vec2 worldBotLeft;
+     float regionSize;
   };
 
 

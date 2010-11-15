@@ -37,6 +37,42 @@ bool PlanePoint(const Plane *plane, const Point *point)
    return abs(plane->norm.dot(point->pos) + plane->d) < plane->radius;
 }
 
+bool RectangleCircle(const Rectangle *rec, const Circle *c)
+{
+   vec2 test = c->pos; 
+
+   if(test.x < rec->botLeft.x)
+      test.x = rec->botLeft.x;
+   else if(test.x > rec->botLeft.x + rec->w)
+      test.x = rec->botLeft.x + rec->w;
+   if(test.y < rec->botLeft.y)
+      test.y = rec->botLeft.y;
+   else if(test.y > rec->botLeft.y + rec->h)
+      test.y = rec->botLeft.y + rec->h;
+
+   return (test.x == c->pos.x && test.y == c->pos.y) 
+      || mat::dist(test, c->pos) < c->radius;
+}
+
+bool RectanglePlane(const Rectangle *rec, const Plane *pl)
+{
+   printf("RectanglePlane unimplemented\n");
+   return false;
+}
+
+bool RectanglePoint(const Rectangle *rec, const Point *p)
+{
+   printf("RectanglePoint unimplemented\n");
+   return false;
+}
+
+bool RectangleRectangle(const Rectangle *rec, const Rectangle *rec2)
+{
+   printf("RectangleRectangle unimplemented\n");
+   return false;
+}
+
+
 ///////////// CIRCLE /////////////
 //////////////////////////////////
 bool Circle::collision(const GeometryBase *other) const
@@ -59,6 +95,10 @@ bool Circle::collision(const Point *other) const
    return CirclePoint(this, other);
 }
 
+bool Circle::collision(const Rectangle *other) const
+{
+   return RectangleCircle(other, this);
+}
 
 ///////////// PLANE /////////////
 /////////////////////////////////
@@ -82,6 +122,11 @@ bool Plane::collision(const Point *other) const
    return PlanePoint(this, other);
 }
 
+bool Plane::collision(const Rectangle *other) const
+{
+   return RectanglePlane(other, this);
+}
+
 ///////////// POINT /////////////
 /////////////////////////////////
 bool Point::collision(const GeometryBase *other) const
@@ -102,6 +147,38 @@ bool Point::collision(const Plane *other) const
 bool Point::collision(const Point *other) const
 {
    return PointPoint(this, other);
+}
+
+bool Point::collision(const Rectangle *other) const
+{
+   return RectanglePoint(other, this);
+}
+
+///////////// RECTANGLE /////////////
+/////////////////////////////////////
+bool Rectangle::collision(const GeometryBase *other) const
+{
+   return other->collision(this);
+}
+
+bool Rectangle::collision(const Circle *other) const
+{
+   return RectangleCircle(this, other);
+}
+
+bool Rectangle::collision(const Plane *other) const
+{
+   return RectanglePlane(this, other);
+}
+
+bool Rectangle::collision(const Point *other) const
+{
+   return RectanglePoint(this, other);
+}
+
+bool Rectangle::collision(const Rectangle *other) const
+{
+   return RectangleRectangle(this, other);
 }
 
 ///////////// GEOMETRYSET /////////////
@@ -131,6 +208,14 @@ bool GeometrySet::collision(const Plane *other) const
 }
 
 bool GeometrySet::collision(const Point *other) const
+{
+   for (unsigned i = 0; i < set.size(); i++)
+      if (!set[i].ptr->collision(other))
+         return false;
+   return true;
+}
+
+bool GeometrySet::collision(const Rectangle *other) const
 {
    for (unsigned i = 0; i < set.size(); i++)
       if (!set[i].ptr->collision(other))

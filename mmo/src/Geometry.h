@@ -12,12 +12,14 @@ namespace geom {
    struct Circle;
    struct Plane;
    struct Point;
+   struct Rectangle;
 
    //May want to know where they collided?
    struct GeometryBase {
       virtual bool collision(const GeometryBase *other) const =0;
       virtual bool collision(const Circle *other) const = 0;
       virtual bool collision(const Plane *other) const = 0;
+      virtual bool collision(const Rectangle *other) const = 0;
       virtual bool collision(const Point *other) const = 0;
       virtual GeometryBase *clone() const = 0;
    };
@@ -28,11 +30,26 @@ namespace geom {
       bool collision(const Circle *other) const;
       bool collision(const Plane *other) const;
       bool collision(const Point *other) const;
+      bool collision(const Rectangle *other) const;
       virtual GeometryBase *clone() const 
          { return new Circle(*this); }
 
       vec2 pos;
       float radius;
+   };
+
+   struct Rectangle : public GeometryBase {
+      Rectangle(vec2 botLeft, float w, float h) : botLeft(botLeft), w(w), h(h) {}
+      bool collision(const GeometryBase *other) const;
+      bool collision(const Circle *other) const;
+      bool collision(const Plane *other) const;
+      bool collision(const Point *other) const;
+      bool collision(const Rectangle *other) const;
+      virtual GeometryBase *clone() const 
+         { return new Rectangle(*this); }
+
+      vec2 botLeft; 
+      float w, h;
    };
 
    struct Plane : GeometryBase {
@@ -45,6 +62,7 @@ namespace geom {
       bool collision(const Circle *other) const;
       bool collision(const Plane *other) const;
       bool collision(const Point *other) const;
+      bool collision(const Rectangle *other) const;
       virtual GeometryBase *clone() const
          { return new Plane(*this); }
 
@@ -58,6 +76,7 @@ namespace geom {
       bool collision(const Circle *other) const;
       bool collision(const Plane *other) const;
       bool collision(const Point *other) const;
+      bool collision(const Rectangle *other) const;
       virtual GeometryBase *clone() const
          { return new Point(*this); }
       vec2 pos;
@@ -77,6 +96,7 @@ namespace geom {
       bool collision(const Circle *other) const;
       bool collision(const Plane *other) const;
       bool collision(const Point *other) const;
+      bool collision(const Rectangle *other) const;
       virtual GeometryBase *clone() const 
          { return new GeometrySet(*this); }
       vector<Geometry> set;

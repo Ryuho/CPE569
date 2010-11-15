@@ -72,9 +72,7 @@ int main()
       myfile.close();
    }
    else
-   {
-      cout << "serverrc file missing!";
-   }
+      cout << "serverrc file missing!" << std::endl;
   
    setupSockets();
    Server serv(portNumber);
