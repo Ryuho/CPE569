@@ -258,7 +258,7 @@ void LMData::handlePacket(Connection c)
    } else if (op == ops::connect) {
       hosts[c.getSocket()].id = id;
       idToSocket[id] = c.getSocket();
-      ss.add(c.getSocket());
+      //ss.add(c.getSocket());
       printf("%d Lockmanager %d now identified\n", ownId, id);
    } else if (op == ops::failure) {
       printf("got a failure for id %d\n", id);

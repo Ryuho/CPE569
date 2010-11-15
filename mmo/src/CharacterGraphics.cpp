@@ -47,6 +47,7 @@ namespace {
    Animation stumpAnim;
    Animation heartAnim;
    Animation heartSolidAnim;
+   Animation teleportorAnim;
 
    /*
    //TODO (animated)
@@ -208,7 +209,10 @@ void Item::initGraphics()
       case ItemType::Heart :
          anim = &heartAnim;
          break;
-      default:
+	  case ItemType::Teleportor :
+		  anim = &teleportorAnim;
+		  break;
+	  default:
          printf("Error: invalid Item (Type %d) to animate.\n", type);
    }
 }
@@ -520,6 +524,14 @@ void initCharacterResources()
       heartAnim.init(&sprites16, AnimType::Forward, true);
       heartAnim.speed = 1000;
       heartAnim.dirs[Direction::Down].push_back(vec2i(24,4));
+
+	  teleportorAnim.init(&sprites16, AnimType::Forward, true);
+      teleportorAnim.speed = 100;
+      teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,2));
+      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,3));
+      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,2));
+      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,3));
+
 
       initalized = true;
    }

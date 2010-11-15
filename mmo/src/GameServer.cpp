@@ -208,7 +208,7 @@ void GameServer::update(int ticks)
       //if hp is 0, remove the player
       if(p.hp == 0) {
          cm.broadcast(Signal(Signal::remove, p.id).makePacket());
-         cm.removeConnection(p.id);
+         cm.removeClientConnection(p.id);
          om.remove(p.id);
          pidx--;
          continue;

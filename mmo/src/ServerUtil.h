@@ -27,11 +27,22 @@ struct ConnectionManager {
       broadcast(t.makePacket());
    }
 
-   void addConnection(sock::Connection conn, int id);
-   void removeConnection(int id);
-   void removeAt(int index);
-   std::map<int, int> idToIndex;
-   std::vector<ConnectionInfo> connections;
+
+   
+   void addClientConnection(sock::Connection conn, int id);
+   void removeClientConnection(int id);
+   void removeClientAt(int index);
+
+   void addServerConnection(sock::Connection conn, int id);
+   void removeServerConnection(int id);  
+   void removeServerAt(int index);
+
+
+   std::map<int, int> idToClientIndex; 
+   std::vector<ConnectionInfo> clientConnections;
+
+   std::map<int, int> idToServerIndex;
+   std::vector<ConnectionInfo> serverConnections;
 };
 
 #endif
