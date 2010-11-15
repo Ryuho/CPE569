@@ -13,26 +13,29 @@ namespace server {
    using namespace mat;
    using namespace constants;
    using namespace geom;
+   using pack::Packet;
 
    struct Object {
       Object() {}
       virtual int getObjectType() const = 0;
       //void lock() const;
       //void unlock() const;
-      virtual pack::Packet serialize() const = 0;
+      virtual Packet serialize() const = 0;
       virtual Geometry getGeom() const = 0;
+      virtual void deserialize(Packet &serialized) = 0;
    };
 
    struct Player : Object {
       Player(int id, vec2 pos, vec2 dir, int hp);
-      Player(pack::Packet &serialized);
+      Player(Packet &serialized);
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
       void gainExp(int exp);
       void gainRupees(int rupees);
       Geometry getGeom() const;
       int getObjectType() const;
-      pack::Packet serialize() const;
+      Packet serialize() const;
+      void deserialize(Packet &serialized);
       
       vec2 pos, dir;
       bool moving, alive;
@@ -41,11 +44,12 @@ namespace server {
 
    struct Missile : Object {
       Missile(int id, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
-      Missile(pack::Packet &serialized);
+      Missile(Packet &serialized);
       void update();
       Geometry getGeom() const;
       int getObjectType() const;
-      pack::Packet serialize() const;
+      Packet serialize() const;
+      void deserialize(Packet &serialized);
 
       vec2 pos, dir;
       int id, owned, type, spawnTime;
@@ -53,14 +57,15 @@ namespace server {
 
    struct NPC : Object {
       NPC(int id, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
-      NPC(pack::Packet &serialized);
+      NPC(Packet &serialized);
       void update();
       void takeDamage(int damage);
       Geometry getGeom() const;
       int getLoot();
       int getExp();
       int getObjectType() const;
-      pack::Packet serialize() const;
+      Packet serialize() const;
+      void deserialize(Packet &serialized);
       
       vec2 pos, dir, initPos;
       int aiTicks, aiType, attackId;
@@ -69,10 +74,11 @@ namespace server {
 
    struct Item : Object {
       Item(int id, vec2 pos, int type = ItemType::GreenRupee);
-      Item(pack::Packet &serialized);
+      Item(Packet &serialized);
       Geometry getGeom() const;
       int getObjectType() const;
-      pack::Packet serialize() const;
+      Packet serialize() const;
+      void deserialize(Packet &serialized);
 
       vec2 pos;
       int id, type;

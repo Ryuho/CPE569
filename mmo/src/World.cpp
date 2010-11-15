@@ -197,7 +197,7 @@ void WorldData::processPacket(pack::Packet p)
       } 
       else if (i.type == ObjectType::NPC) {
          objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
-         printf("Added NPC %d %d\n", i.id, i.hp);
+         printf("Added NPC %d hp=%d\n", i.id, i.hp);
       }
       else if (i.type == ObjectType::Item) {
          objs.addItem(Item(i.id, i.subType, i.pos));

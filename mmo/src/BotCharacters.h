@@ -44,13 +44,13 @@ struct Item {
 };
 
 struct NPC {
-   NPC(int id, int type, vec2 pos, vec2 dir, bool moving);
+   NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
    void update();
    
    bool moving, alive;
    int type;
    vec2 pos, dir;
-   int id;
+   int id, hp;
 };
 
 struct ObjectHolder {

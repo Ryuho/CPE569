@@ -49,8 +49,8 @@ void Item::update()
 
 }
 
-NPC::NPC(int id, int type, vec2 pos, vec2 dir, bool moving)
-   : id(id), type(type), pos(pos), dir(dir), moving(moving), alive(true)
+NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
+   : id(id), type(type), hp(hp), pos(pos), dir(dir), moving(moving), alive(true)
 {
 
 }

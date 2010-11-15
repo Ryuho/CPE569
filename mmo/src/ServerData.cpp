@@ -50,13 +50,18 @@ int Player::getObjectType() const
 
 Player::Player(pack::Packet &serialized)
 {
+   deserialize(serialized);
+}
+
+void Player::deserialize(pack::Packet &serialized)
+{
    if(serialized.type == pack::serialPlayer) {
       serialized.data.readInt(id).readInt(hp).readInt(exp).readInt(rupees)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .readBit(moving).readBit(alive).reset();
    } 
    else
-      printf("Error: Initializing Player with incorrect packet.\n");
+      printf("Error: Deserializing Player with incorrect packet.\n");
 }
 
 pack::Packet Player::serialize() const
@@ -98,13 +103,18 @@ int Missile::getObjectType() const
 
 Missile::Missile(pack::Packet &serialized)
 {
+   deserialize(serialized);
+}
+
+void Missile::deserialize(pack::Packet &serialized)
+{
    if(serialized.type == pack::serialMissile) {
       serialized.data.readInt(id).readInt(owned).readInt(type).readInt(spawnTime)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .reset();
    } 
    else
-      printf("Error: Initializing Missile with incorrect packet.\n");
+      printf("Error: Deserializing Missile with incorrect packet.\n");
 }
 
 pack::Packet Missile::serialize() const
@@ -300,6 +310,12 @@ int NPC::getObjectType() const
 
 NPC::NPC(pack::Packet &serialized)
 {
+   deserialize(serialized);
+}
+
+
+void NPC::deserialize(pack::Packet &serialized)
+{
    if(serialized.type == pack::serialNPC) {
       serialized.data.readInt(id).readInt(hp).readInt(type)
          .readInt(aiTicks).readInt(aiType).readInt(attackId)
@@ -307,7 +323,7 @@ NPC::NPC(pack::Packet &serialized)
          .readFloat(initPos.x).readFloat(initPos.y).reset();
    } 
    else
-      printf("Error: Initializing NPC with incorrect packet.\n");
+      printf("Error: Deserializing NPC with incorrect packet.\n");
 }
 
 pack::Packet NPC::serialize() const
@@ -358,13 +374,18 @@ int Item::getObjectType() const
 
 Item::Item(pack::Packet &serialized)
 {
+   deserialize(serialized);
+}
+
+void Item::deserialize(pack::Packet &serialized)
+{
    if(serialized.type == pack::serialItem) {
       serialized.data.readInt(id).readInt(type)
          .readFloat(pos.x).readFloat(pos.y)
          .reset();
    } 
    else
-      printf("Error: Initializing Item with incorrect packet.\n");
+      printf("Error: Deserializing Item with incorrect packet.\n");
 }
 
 pack::Packet Item::serialize() const
