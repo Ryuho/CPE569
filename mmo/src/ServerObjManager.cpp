@@ -52,9 +52,50 @@ Item *ObjectManager::getItem(int id)
 }
 
 template<typename T>
-void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex, vector<T*> &objs, int id)
+void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex, 
+   vector<T*> &objs, int id, ObjectManager &om)
 {
    int i = idToIndex[id].index;
+
+   std::vector<Region *> regs;
+   om.getRegions(objs[i]->pos, objs[i]->getGeom(), regs);
+   for(unsigned j = 0; j < regs.size(); j++) {
+      regs[j]->remove(objs[i]);
+   }
+
+
+   /*
+   //HUGE AMOUNT OF DEBUG CODE!!
+   int c = 0;
+   for(unsigned x = 0; x < om.regions.size(); x++) {
+      for(unsigned y = 0; y < om.regions[x].size(); y++) {
+         int isize = om.regions[x][y].items.size();
+         int msize = om.regions[x][y].missiles.size();
+         int psize = om.regions[x][y].players.size();
+         int nsize = om.regions[x][y].npcs.size();
+         if(om.regions[x][y].contains(objs[i])) {
+            om.regions[x][y].remove(objs[i]);
+            if(om.regions[x][y].items.size() 
+               + om.regions[x][y].missiles.size() 
+               + om.regions[x][y].players.size()
+               + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
+               printf("error 1\n");
+            om.regions[x][y].remove(objs[i]);
+            if(om.regions[x][y].items.size() 
+               + om.regions[x][y].missiles.size() 
+               + om.regions[x][y].players.size()
+               + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
+               printf("error 2\n");
+            c++;
+            //printf("%d=<%d,%d> ", c, x, y);
+         }
+      }
+   }
+   if(c != 0) {
+      printf("Error: remove %d failed %d times\n", objs[i]->id, c);
+      exit(1);
+   }
+   */
 
    delete objs[i];
    idToIndex.erase(id);
@@ -69,13 +110,13 @@ void ObjectManager::remove(int id)
 {   int i = idToIndex[id].index;
 
    if (idToIndex[id].type == ObjectType::Player)
-      omRemoveTempl(idToIndex, players, id);
+      omRemoveTempl(idToIndex, players, id, *this);
    else if (idToIndex[id].type == ObjectType::Missile)
-      omRemoveTempl(idToIndex, missiles, id);
+      omRemoveTempl(idToIndex, missiles, id, *this);
    else if (idToIndex[id].type == ObjectType::NPC)
-      omRemoveTempl(idToIndex, npcs, id);
+      omRemoveTempl(idToIndex, npcs, id, *this);
    else if (idToIndex[id].type == ObjectType::Item)
-      omRemoveTempl(idToIndex, items, id);
+      omRemoveTempl(idToIndex, items, id, *this);
 }
 
 
@@ -114,8 +155,8 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
    //clamp
-   x = min(max(x, 0), (int)regions.size()-1);
-   y = min(max(y, 0), (int)regions[0].size()-1);
+   util::clamp(x, 0, (int)regions.size()-1);
+   util::clamp(y, 0, (int)regions[0].size()-1);
 }
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
@@ -143,6 +184,9 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
    }
    if(regs.size() == 0) {
       regs.push_back(&regions[x][y]);
+   } 
+   else if (regs.size() > 4) {
+      printf("Error: regs.size = %d (4 should be max?)\n", regs.size());
    }
 }
 
@@ -155,7 +199,6 @@ void moveTemplate(T *p, vec2 newPos, ObjectManager &om)
    om.getRegions(p->pos, p->getGeom(), regsNew);
    bool same = regsOld.size() == regsNew.size() &&
       std::equal(regsOld.begin(), regsOld.end(), regsNew.begin());
-
    if(!same) {
       //remove old regions
       for(unsigned i = 0; i < regsOld.size(); i++) {
@@ -165,9 +208,10 @@ void moveTemplate(T *p, vec2 newPos, ObjectManager &om)
       for(unsigned i = 0; i < regsNew.size(); i++) {
          regsNew[i]->add(p);
       }
-      int x, y;
-      om.getRegion(newPos, x, y);
-      //printf("Moved %d to region <%d %d> (total regions=%d)\n", p->id x, y, regsNew.size());
+      //int x, y;
+      //om.getRegion(newPos, x, y);
+      //printf("Moved %d to region <%d %d> (removed %d)(added %d)\n", 
+      //   p->id, x, y, regsOld.size(), regsNew.size());
    }
 }
 
@@ -291,6 +335,22 @@ void Region::remove(NPC *n) {
 
 void Region::remove(Item *i) {
    util::remove(i, items);
+}
+
+bool Region::contains(Player *p) {
+   return util::contains(p, players);
+}
+
+bool Region::contains(NPC *n) {
+   return util::contains(n, npcs);
+}
+
+bool Region::contains(Missile *m) {
+   return util::contains(m, missiles);
+}
+
+bool Region::contains(Item *i) {
+   return util::contains(i, items);
 }
 
 } //end namespace server

@@ -10,7 +10,7 @@ namespace constants {
    const int arrowCooldown = 150; // Number of ms between arrow shots
    const int specialCooldown = 2000; // ms between special attacks
 
-   const float maxProjectileDist = 500;
+   const float maxProjectileTicks = 500;
    const float projectileSpeed = 800;
 
    const int playerPredictTicks = 200;

@@ -95,8 +95,8 @@ void GameServer::newClientConnection(int id)
       cm.sendPacket(Initialize(npc.id, ObjectType::NPC, npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
    //make a new NPC and tell everybody about it
-   int npcid = newId();
-   spawnNPC(npcid);
+   //int npcid = newId();
+   //spawnNPC(npcid);
 }
 
 void GameServer::newServerConnection(int id)
@@ -213,10 +213,24 @@ void GameServer::update(int ticks)
    this->ticks = ticks;
 
    //if there is a player connected, spawn up to 6 NPCs
+
    if(om.players.size() > 0) {
       if(rint(5) == 0 && om.npcs.size() <= 6){
          spawnNPC(newId());
       }
+   }
+
+   //missles loop, checks for missles TOF, remove if above set value, else move the position
+   for(unsigned i = 0; i < om.missiles.size(); i++) {
+      //missile out of bound
+      Missile &m = *om.missiles[i];
+      if(ticks - m.spawnTime >= maxProjectileTicks){
+         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+         om.remove(m.id);
+         i--;
+      }
+      else
+         m.update();
    }
 
    //players loop, checks for hp == 0, or if it is hit with an arrow
@@ -245,25 +259,7 @@ void GameServer::update(int ticks)
          cm.broadcast(HealthChange(p.id, p.hp));
       }
    }
-
-   // for every missile
-      // get its geometry
-      // use object manager regions to get a list of colliding players
-      // hurt the first player that collided.
-
-   //missles loop, checks for missles TOF, remove if above set value, else move the position
-   for(unsigned i = 0; i < om.missiles.size(); i++) {
-      //missle out of bound
-      Missile &m = *om.missiles[i];
-      if(ticks - m.spawnTime >= 500){
-         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
-         om.remove(m.id);
-         i--;
-      }
-      else
-         m.update();
-   }
-
+   
    //NPC update - collision detection with missiles, death, exp/loot distribution
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];
@@ -307,7 +303,81 @@ void GameServer::update(int ticks)
          cm.broadcast(pack::Position(npc.pos, npc.dir, npc.aiType != AIType::Stopped, npc.id));
       }
    }
-   
+
+   /*
+   //Region version of above - not working properly
+   //Projectiles go through enemies a lot 
+   //Bucketing or Rectangle collison may be incorrect
+   //However, everything is getting removed properly
+   //and are always in at least one region
+
+   for(unsigned pdx = 0; pdx < om.players.size(); pdx++) {
+      Player &p = *om.players[pdx];
+      //if player is colliding with any missle that is not owned by it, they take dmg
+      std::vector<Missile *> collided = om.collidingMissiles(p.getGeom(), p.pos);
+      bool damaged = false;
+      for(unsigned mdx = 0; mdx < collided.size(); mdx++) {
+         Missile &m = *collided[mdx];
+         if(collided[mdx]->owned != p.id) {
+            p.takeDamage(rand()%6 + 5);
+            cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+            om.remove(m.id);
+            damaged = true;
+         }
+      }
+      if(p.hp == 0) {
+         //death
+         cm.broadcast(Signal(Signal::remove, p.id).makePacket());
+         cm.removeClientConnection(p.id);
+         om.remove(p.id);
+         pdx--;
+         continue;
+      } else if(damaged) {
+         cm.broadcast(HealthChange(p.id, p.hp));
+      }
+   }
+
+
+   //NPC update - collision detection with missiles, death, exp/loot distribution
+   for(unsigned i = 0; i < om.npcs.size(); i++) {
+      NPC &npc = *om.npcs[i];
+      bool removeNPC = false;
+      bool npcHit = false;
+      std::vector<Missile *> ms = om.collidingMissiles(npc.getGeom(), npc.pos);
+      for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
+         Missile &m = *ms[j];
+         npcHit = true;
+         npc.takeDamage(rand()%6);
+         if(npc.hp == 0) {
+            if(om.check(m.owned, ObjectType::Player)) {
+               Player &p = *om.getPlayer(m.owned);
+               p.gainExp(npc.getExp());
+               cm.sendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
+            }
+            removeNPC = true;
+         }
+         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+         om.remove(m.id);
+      }
+      if(removeNPC) {
+         int lootItem = npc.getLoot();
+         if(lootItem >= 0) {
+            Item item(newId(), npc.pos, lootItem);
+            om.addItem(item);
+            cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
+               item.pos, vec2(0,1), 0));
+         }
+         cm.broadcast(Signal(Signal::remove, npc.id).makePacket());
+         om.remove(npc.id);
+         i--;
+      } else {
+         npc.update();
+         cm.broadcast(pack::Position(npc.pos, npc.dir, npc.aiType != AIType::Stopped, npc.id));
+         if(npcHit)
+            cm.broadcast(HealthChange(npc.id, npc.hp));
+      }
+   }
+   */
 }
 
 int getTicks()

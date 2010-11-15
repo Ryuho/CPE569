@@ -88,7 +88,7 @@ Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
 
 void Missile::update()
 {
-   getOM().move(this, pos + dir * projectileSpeed * getDt());
+   move(pos + dir * projectileSpeed * getDt(), dir);
 }
 
 Geometry Missile::getGeom() const

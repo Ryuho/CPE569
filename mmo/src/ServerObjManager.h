@@ -30,6 +30,11 @@ namespace server {
      void remove(NPC *n);
      void remove(Missile *m);
      void remove(Item *i);
+
+     bool contains(Player *p);
+     bool contains(NPC *p);
+     bool contains(Missile *p);
+     bool contains(Item *p);
   };
 
   struct ObjectManager {
