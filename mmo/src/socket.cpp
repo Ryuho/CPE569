@@ -58,7 +58,11 @@ namespace {
    void sockError()
    {
 #ifdef WIN32
-      sockError(errors[WSAGetLastError()]);
+      int e = WSAGetLastError();
+      if (e == WSANOTINITIALISED)
+         sockError("WSAStartup not yet called");
+      else
+         sockError(errors[e]);
 #else
       perror("Socket");
 #endif
@@ -226,7 +230,7 @@ bool Connection::recv(Packet &p, int size)
       select();
       size = available();
       if (size == 0) {
-         cerr << "-- Socket closed: select->avail->0" << endl;
+         cerr << "remote end hung up while waiting for recv" << endl;
          info->active = false;
          return false;
       }
@@ -302,6 +306,15 @@ bool Connection::check()
 }
 
 
+unsigned long Connection::getAddr()
+{
+   return info->addr;
+}
+
+int Connection::getPort()
+{
+   return info->port;
+}
 
 
 /************* Server class *************/
@@ -319,7 +332,7 @@ Server::Server(int port, const char *addr)
 
    info->active = false;
    info->addr = getAddress(addr);
-   info->port = htons(port);
+   info->port = htons((short)port);
 
    if (info->addr == INADDR_NONE) {
       sockError((string("Bad interface: ") + string(addr)).c_str());
@@ -482,6 +495,20 @@ Packet &Packet::writeInt(int i)
    return *this;
 }
 
+Packet &Packet::writeLong(unsigned long l)
+{
+   u_long in = htonl(l);
+   u_char *p = (u_char*)&in;
+
+   checkSpace(4);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+   at(cursor++) = *(p++);
+
+   return *this;
+}
+
 Packet &Packet::writeFloat(float f)
 {
    u_char *p = (u_char*)&f;
@@ -569,6 +596,20 @@ Packet &Packet::readInt(int &i)
    return *this;
 }
 
+Packet &Packet::readLong(unsigned long &l)
+{
+   u_char *p = (u_char*)&l;
+   
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   l = ntohl(l);
+
+   bitCursor = 0;
+   return *this;
+}
+
 Packet &Packet::readFloat(float &f)
 {
    u_char *p = (u_char*)&f;
@@ -630,9 +671,66 @@ Packet &Packet::setCursor(int pos)
 
 
 
-/************* Packet class *************/
+/************* SelectSet class *************/
 
 struct SelectInfo {
+   vector<int> sds;
+};
+
+SelectSet::SelectSet()
+   : info(new SelectInfo)
+{
+
+}
+
+void SelectSet::add(int sd)
+{
+   info->sds.push_back(sd);
+}
+
+void SelectSet::remove(int sd)
+{
+   vector<int>::iterator itr = find(info->sds.begin(), info->sds.end(), sd);
+   if (itr != info->sds.end()) {
+      info->sds.erase(itr);
+   }
+}
+
+vector<int> SelectSet::select(int ms)
+{
+   timeval timeout;
+   int selectVal;
+   fd_set reads;
+   u_long largest = 0;
+   vector<int> ret;
+
+   FD_ZERO(&reads);
+   for (size_t i = 0; i < info->sds.size(); i++) {
+      FD_SET(info->sds[i], &reads);
+      if ((u_long)info->sds[i] > largest)
+         largest = info->sds[i];
+   }
+
+   if (ms >= 0) {
+      timeout.tv_sec = ms / 1000;
+      timeout.tv_usec = (ms % 1000) * 1000;
+      selectVal = sockSelect(largest+1, &reads, 0, 0, &timeout);
+   } else {
+      selectVal = sockSelect(largest+1, &reads, 0, 0, 0);
+   }
+
+   if (selectVal == SOCKET_ERROR)
+      sockError();
+
+   for (size_t i = 0; i < info->sds.size(); i++) {
+      if (FD_ISSET(info->sds[i], &reads))
+         ret.push_back(info->sds[i]);
+   }
+
+   return ret;
+}
+
+/*struct SelectInfo {
    vector<Connection> conns;
    u_long largest;
 };
@@ -691,7 +789,8 @@ vector<Connection> SelectSet::select(int ms)
       if (FD_ISSET(info->conns[i].getSocket(), &reads))
          ret.push_back(info->conns[i]);
    }
-   return ret;
+
+   return vector<Connection>();
 }
 
 vector<Connection> SelectSet::nbRead(int ms)
@@ -702,7 +801,7 @@ vector<Connection> SelectSet::nbRead(int ms)
 void SelectSet::removeDisconnects()
 {
    
-}
+}*/
 
 
 } // End sock namespace

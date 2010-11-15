@@ -65,9 +65,9 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
    spawnStump(newId());
 }
 
-void GameServer::newConnection(int id)
+void GameServer::newClientConnection(int id)
 {
-   printf("New connection: %d\n", id);
+   printf("New client connection: %d\n", id);
    
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
@@ -99,14 +99,28 @@ void GameServer::newConnection(int id)
    spawnNPC(npcid);
 }
 
-void GameServer::disconnect(int id)
+void GameServer::newServerConnection(int id)
+{
+   printf("New server connection: %d\n", id);
+
+   std::vector<unsigned long> ulong();
+}
+
+void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
    cm.broadcast(Signal(Signal::remove, id).makePacket());
    om.remove(id);
 }
 
-void GameServer::processPacket(pack::Packet p, int id)
+void GameServer::serverDisconnect(int id)
+{
+   printf("Server %d disconnected\n", id);
+   //cm.broadcast(Signal(Signal::remove, id).makePacket());
+   //om.remove(id);
+}
+
+void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if (p.type == pack::position) {
       Position pos(p);
@@ -177,7 +191,18 @@ void GameServer::processPacket(pack::Packet p, int id)
          printf("Error invalid click Player id %d\n", click.id);
    }
    else
-      printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
+      printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
+}
+
+void GameServer::processServerPacket(pack::Packet p, int id)
+{
+   if (p.type == pack::serverList) {
+      ServerList servList(p);
+      printf("Got a server list packet!\n");
+   }
+   else{
+      printf("Unknown server packet type=%d size=%d\n", p.type, p.data.size());
+   }
 }
 
 void GameServer::update(int ticks)
