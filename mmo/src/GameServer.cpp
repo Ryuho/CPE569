@@ -59,6 +59,8 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
    ticks = 0;
    dt = 0;
 
+   om.init(worldWidth, worldHeight, regionSize);
+
    //spawnItem(newId());
    spawnStump(newId());
 }

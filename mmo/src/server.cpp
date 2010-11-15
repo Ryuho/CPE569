@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
 
    if(argc == 1){
       printf("Usage: server <port number> <alternate server address> <alternate server port>\n");
-      exit(0);
+      portNumber = 27027;
    }
    else if(argc >= 2){
       printf("port=|%s|\n",argv[1]);

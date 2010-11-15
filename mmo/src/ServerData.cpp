@@ -7,7 +7,6 @@ namespace server {
 using namespace mat;
 using namespace constants;
 
-
 // Player
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
@@ -478,6 +477,159 @@ bool ObjectManager::check(int id, int type)
    map<int, Index>::iterator itr = idToIndex.find(id);
 
    return itr != idToIndex.end() && itr->second.type == type;
+}
+
+void ObjectManager::init(float width, float height, float regionSize)
+{
+   this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
+   this->regionSize = regionSize;
+   unsigned xBuckets = ((int)(width / regionSize));
+   unsigned yBuckets = ((int)(height / regionSize));
+   if(xBuckets * regionSize != width)
+      xBuckets++;
+   if(yBuckets * regionSize != height)
+      yBuckets++;
+
+   if(regions.size() > 0) {
+      printf("Error: Reinitializing Object Manager\n");
+      regions.clear();
+   }
+   for(unsigned x = 0; x < xBuckets; x++) {
+      regions.push_back(vector<Region>());
+      for(unsigned y = 0; y < yBuckets; y++) {
+         regions[x].push_back(Region());
+      }
+   }
+   printf("Initialized ObjectManager <%d by %d> total=%d\n", xBuckets, yBuckets, xBuckets*yBuckets);
+}
+
+
+
+void ObjectManager::getRegion(vec2 pos, int &x, int &y)
+{
+   x = (int) ((pos.x - worldBotLeft.x) / regionSize);
+   y = (int) ((pos.y - worldBotLeft.y) / regionSize);
+   if(x < 0 || y < 0 || x >= (int)regions.size() || y >= (int)regions[x].size()) {
+      printf("Error ObjectManager::getRegion(): invalid Region <%d,%d>"
+         "from pos=<%0.1f,%0.1f>\n", x, y, pos.x, pos.y);
+      x = y = 1; //ensures the server doesn't break
+   }
+}
+
+Geometry ObjectManager::getRegionGeom(int x, int y)
+{
+   return new Rectangle(
+      vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
+      regionSize, regionSize);
+}
+
+void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs)
+{
+   int x, y;
+   getRegion(pos, x, y);
+   unsigned minX, maxX, minY, maxY;
+   minX = max(0, x-1);
+   maxX = min((int)regions.size()-1, x+1);
+   minY = max(0, y-1);
+   maxY = min((int)regions[x].size()-1, y+1);
+   regs.clear();
+   for(unsigned i = minX; i <= maxX; i++) {
+      for(unsigned j = minY; j <= maxY; j++) {
+         if(getRegionGeom(i,j).collision(g))
+            regs.push_back(&regions[x][y]);
+      }
+   }
+}
+
+void ObjectManager::move(Player *p, vec2 newPos)
+{
+   std::vector<Region *> regsOld, regsNew;
+   getRegions(p->pos, p->getGeom(), regsOld);
+   p->pos = newPos;
+   getRegions(p->pos, p->getGeom(), regsNew);
+   bool same = true;
+   if(regsOld.size() == regsNew.size()) {
+      for(unsigned i = 0; i < regsOld.size(); i++) {
+         if(regsOld[i] != regsNew[i]) {
+            same = false;
+            break;
+         }
+      }
+   }
+   else
+      same = false;
+
+   if(!same) {
+      //remove old regions
+      for(unsigned i = 0; i < regsOld.size(); i++) {
+         regsOld[i]->remove(p);
+      }
+      //add new regions
+      for(unsigned i = 0; i < regsNew.size(); i++) {
+         regsNew[i]->players.push_back(p);
+      }
+   }
+}
+
+void ObjectManager::move(Item *i, vec2 newPos)
+{
+   
+}
+
+void ObjectManager::move(Missile *m, vec2 newPos)
+{
+   
+}
+
+void ObjectManager::move(NPC *n, vec2 newPos)
+{
+   
+}
+
+// Region
+
+void Region::remove(Player *p)
+{
+   for(unsigned i = 0; i < players.size(); i++) {
+      if(players[i] == p) {
+         players[i] = players.back();
+         players.pop_back();
+         return;
+      }
+   }
+}
+
+void Region::remove(Missile *m)
+{
+   for(unsigned i = 0; i < missiles.size(); i++) {
+      if(missiles[i] == m) {
+         missiles[i] = missiles.back();
+         missiles.pop_back();
+         return;
+      }
+   }
+}
+
+void Region::remove(NPC *n)
+{
+   for(unsigned i = 0; i < npcs.size(); i++) {
+      if(npcs[i] == n) {
+         npcs[i] = npcs.back();
+         npcs.pop_back();
+         return;
+      }
+   }
+}
+
+void Region::remove(Item *item)
+{
+   for(unsigned i = 0; i < items.size(); i++) {
+      if(items[i] == item) {
+         items[i] = items.back();
+         items.pop_back();
+         return;
+      }
+   }
 }
 
 
