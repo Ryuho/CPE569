@@ -7,11 +7,6 @@ namespace server {
 using namespace mat;
 using namespace constants;
 
-//const int ObjectManager::xBuckets = ((int)(worldWidth / constants::regionSize)) + 1;
-//const int ObjectManager::yBuckets = ((int)(worldHeight / constants::regionSize)) + 1;
-//const vec2 ObjectManager::worldBotLeft = vec2(-worldWidth/2.0f, -worldHeight/2.0f);
-
-
 // Player
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)

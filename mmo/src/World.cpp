@@ -46,6 +46,23 @@ void World::update(int ticks, float dt) {
 }
 void World::draw() { data->draw(); }
 
+void setUpBoarder()
+{
+	for(int i = 0, j = 0; i < wHeight+40; i = i + 40, j++)
+	{
+		clientState->objs.addItem(Item(j, ItemType::Teleportor, vec2(wWidth, i)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(wWidth, -i)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-wWidth, i)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-wWidth, -i)));
+	}
+	for(int i = 0, j = wWidth / 10 + 1; i < wWidth+40; i = i + 40, j++)
+	{
+		clientState->objs.addItem(Item(j, ItemType::Teleportor, vec2(i, wHeight)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-i, wHeight)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(i, -wHeight)));
+		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-i, -wHeight)));
+	}
+}
 void WorldData::init(const char *host, int port)
 {
    clientState = this;
@@ -96,6 +113,7 @@ void WorldData::init(const char *host, int port)
    }
 	
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
+   setUpBoarder();
    shadow = player;
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);

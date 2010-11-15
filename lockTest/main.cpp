@@ -19,10 +19,12 @@ struct DataTest : public LockData {
       c.send(Packet().writeInt(vals[id-5]));
    }
 
-   virtual void recvLockData(int id, sock::Connection c) {
+   virtual bool recvLockData(int id, sock::Connection c) {
       Packet p;
-      c.recv(p, 4);
+      if (!c.recv(p, 4))
+         return false;
       p.readInt(vals[id-5]);
+      return true;
    }
 
    int vals[3];
@@ -63,7 +65,7 @@ void otherThread(int t)
       lm.release(id); 
    }
 
-   printf("tdone\n");
+   printf("tdone-%d\n",t);
    lm.acquire(5);
    lm.acquire(6);
    lm.acquire(7);
@@ -136,15 +138,15 @@ int main()
    printf("mdone\n");
    printf("0: %d, 1: %d, 2: %d\n", dt.vals[0], dt.vals[1], dt.vals[2]);
 
+   t.join();
+   t2.join();
+
    lm.acquire(5);
    lm.acquire(6);
    lm.acquire(7);
    lm.release(7);
    lm.release(6);
    lm.release(5);
-
-   t.join();
-   t2.join();
    
    printf("0: %d, 1: %d, 2: %d\n", dt.vals[0], dt.vals[1], dt.vals[2]);
    printf("total: %d\n", dt.vals[0] + dt.vals[1] + dt.vals[2] - 60000);
