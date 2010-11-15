@@ -17,8 +17,8 @@ void SDLApp::init(const char *host, int port)
    glUtilInit(settings);
 
    glewInit();
-   if ( ! glewIsSupported("GL_VERSION_2_1") )
-      settings.err("openGL version 2.1 not supported.");
+   //if ( ! glewIsSupported("GL_VERSION_2_1") )
+   //   settings.err("openGL version 2.1 not supported.");
 
    // set gouraud shading
    glShadeModel(GL_SMOOTH);
