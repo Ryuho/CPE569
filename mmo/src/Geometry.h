@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <stdio.h>
 
 namespace geom {
    using namespace mat;
