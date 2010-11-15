@@ -59,7 +59,7 @@ GameServer::GameServer(ConnectionManager &cm) : cm(cm)
    ticks = 0;
    dt = 0;
 
-   om.init(worldWidth, worldHeight, regionSize);
+   om.init((float)worldWidth, (float)worldHeight, (float)regionSize);
 
    //spawnItem(newId());
    spawnStump(newId());
@@ -103,7 +103,7 @@ void GameServer::newServerConnection(int id)
 {
    printf("New server connection: %d\n", id);
 
-   std::vector<unsigned long> ulong();
+   //std::vector<unsigned long> ulong();
 }
 
 void GameServer::clientDisconnect(int id)
@@ -140,7 +140,8 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
                int arrowID = newId();
-               Missile m(newId(),id, play.pos, vec2(cos(t*2*PI), sin(t*2*PI)));
+               Missile m(newId(),id, play.pos, 
+                  vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
                om.addMissile(m);
                Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
                cm.broadcast(init);

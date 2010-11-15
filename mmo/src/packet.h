@@ -223,7 +223,7 @@ struct ServerList {
    Packet makePacket() {
       Packet p(serverList);
       p.data.writeInt(uLongList.size());
-      for(int i = 0; i < uLongList.size(); i++){
+      for(unsigned i = 0; i < uLongList.size(); i++){
          p.data.writeLong(uLongList.at(i));
       }
       return p;

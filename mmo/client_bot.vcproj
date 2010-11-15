@@ -199,10 +199,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\src\GameUtil.h"
-			>
-		</File>
-		<File
 			RelativePath=".\src\Geometry.cpp"
 			>
 		</File>
@@ -228,6 +224,10 @@
 		</File>
 		<File
 			RelativePath=".\src\socket.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Util.h"
 			>
 		</File>
 	</Files>
