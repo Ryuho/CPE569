@@ -3,6 +3,7 @@
 
 #include "packet.h"
 #include "BotCharacters.h"
+#include <cstdio>
 
 struct BotWorldData {
    BotWorldData() {};

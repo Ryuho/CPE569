@@ -1,11 +1,14 @@
 
-all: client server
+all: client server client_bot
 
 server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o
 	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU
+
+client_bot: src/botmain.o obj/BotApp.o obj/BotWorld.o obj/BotCharacters.o obj/socket.o
+	g++ -o client_bot $^ libGLEW.a -lglut -lSDL -lGLU
 
 obj/ServerData.o: src/ServerData.h src/ServerData.cpp
 	g++ -c -o obj/ServerData.o src/ServerData.cpp
@@ -49,8 +52,20 @@ obj/Texture.o: src/Texture.cpp
 obj/World.o: src/World.cpp src/packet.h src/socket.h
 	g++ -c -o obj/World.o src/World.cpp -I/home/whess/glew-1.5.6/include
 
+obj/botmain.o: src/botmain.cpp
+	g++ -c -o obj/botmain.o src/BotApp.cpp -I/home/whess/glew-1.5.6/include
+
+obj/BotApp.o: src/BotApp.cpp src/BotApp.h src/BotWorld.h src/BotWorld.cpp src/BotCharacters.cpp src/BotCharacters.h
+	g++ -c -o obj/BotApp.o src/BotApp.cpp
+
+obj/BotCharacters.o: src/BotCharacters.cpp src/BotCharacters.h
+	g++ -c -o obj/BotCharacters.o src/BotCharacters.cpp -I/home/whess/glew-1.5.6/include
+
+obj/BotWorld.o: src/BotWorld.cpp src/BotWorld.h src/BotCharacters.cpp src/BotCharacters.h
+	g++ -c -o obj/BotWorld.o src/BotWorld.cpp -I/home/whess/glew-1.5.6/include
+
 obj/Geometry.o: src/Geometry.cpp src/Geometry.h
 	g++ -c -o obj/Geometry.o src/Geometry.cpp
 
 clean:
-	rm obj/*.o client server
+	rm obj/*.o client client_bot server
