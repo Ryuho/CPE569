@@ -11,31 +11,22 @@ int main(int argc, char *argv[])
 {
    BotApp app;
 
-   //look at clientrc and see what port to use
-   int port = 27027;
-   string *host = new string("localhost");
-   std::ifstream myfile("clientrc");
-   if (myfile.is_open())
-   {
-      string data;
-      //read in a comment
-      std::getline(myfile,data);
-      //read in the port number
-      std::getline(myfile,data);
-      cout << "server=" << data << endl;
-      host = new string(data);
-      std::getline (myfile,data);
-      port = atoi(data.c_str());
-      //myfile << "This is another line.\n";
-      myfile.close();
+   int port;
+   const char* address;
+
+   if(argc != 3){
+      printf("Usage: client <server address> <port number>\n");
+      exit(0);
    }
-   else
-   {
-      cout << "clientrc file missing!" << endl;
+   else{
+      address = argv[1];
+      port = atoi(argv[2]);
    }
 
+   app.init(address,port);
+
    srand((unsigned)time(0));
-   app.init(host->c_str(), port);
+   app.init(address,port);
 
    while (1) {
       app.update();
