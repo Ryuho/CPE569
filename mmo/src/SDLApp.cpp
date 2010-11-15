@@ -57,7 +57,7 @@ void SDLApp::update()
    if (inputMgr.keyPressed(SDLK_f)) {
       world.doSpecial();
    }
-   if(inputMgr.keyPressed(IPM_RIGHT_MOUSE)) {
+   if(inputMgr.keyChanged(IPM_RIGHT_MOUSE)) {
       world.rightClick(vec2(inputMgr.x(), settings.height-inputMgr.y()));
    }
 

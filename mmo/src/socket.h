@@ -35,6 +35,7 @@ namespace sock {
       Packet &writeByte(unsigned char b);
       Packet &writeShort(unsigned short s);
       Packet &writeInt(int i);
+      Packet &writeLong(unsigned long l);
       Packet &writeFloat(float f);
       Packet &writeCStr(const char *str);
       Packet &writeStdStr(const std::string &str);
@@ -44,6 +45,7 @@ namespace sock {
       Packet &readByte(unsigned char &b);
       Packet &readShort(unsigned short &s);
       Packet &readInt(int &i);
+      Packet &readLong(unsigned long &l);
       Packet &readFloat(float &f);
       Packet &readCStr(char *str);
       Packet &readStdStr(std::string &str);
@@ -69,6 +71,8 @@ namespace sock {
       unsigned long available();
       virtual unsigned long getSocket() const;
       virtual bool check();
+      unsigned long getAddr();
+      int getPort();
    protected:
       virtual void setError();
       boost::shared_ptr<ConnectionInfo> info;
@@ -89,7 +93,7 @@ namespace sock {
       boost::shared_ptr<ServerInfo> info;
    };
 
-   class SelectSet {
+   /*class SelectSet {
    public:
       SelectSet();
       void add(Connection c);
@@ -98,6 +102,15 @@ namespace sock {
       std::vector<Connection> nbRead(int ms = 0);
       void removeDisconnects();
    private:
+      boost::shared_ptr<SelectInfo> info;
+   };*/
+
+   struct SelectSet {
+      SelectSet();
+      void add(int sd);
+      void remove(int id);
+      std::vector<int> select(int ms = 0);
+
       boost::shared_ptr<SelectInfo> info;
    };
 }
