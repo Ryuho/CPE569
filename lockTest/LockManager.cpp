@@ -119,11 +119,6 @@ void LMData::handlePacket(Connection c)
       return;
    p.readInt(op).readInt(id);
 
-   /*if (!lockExists(id)) {
-      printf("Got request for a lock that does not exist: op: %d, id: %d\n", op, id);
-      c.send(Packet().writeInt(ops::failure).writeInt(id));
-   }*/
-
    if (op == ops::acquire) {
       //printf("%d packet Acquire\n", ownId);
       if (!lockExists(id)) {
