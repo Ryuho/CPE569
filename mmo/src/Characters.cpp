@@ -220,5 +220,8 @@ void ObjectHolder::drawAll()
 
    for (unsigned i = 0; i < players.size(); i++)
       players[i].draw();
+
+   for (unsigned i = 0; i < border.size(); i++)
+      border[i].draw();
 }
 

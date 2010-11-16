@@ -30,7 +30,7 @@ void SDLApp::init(const char *host, int port)
    glEnable(GL_DEPTH_TEST);
 
    // background color
-   glClearColor( 0.45, 0.60, 0.92, 0 );
+   glClearColor(0.45, 0.60, 0.92, 0);
    glViewport(0, 0, settings.width, settings.height);
 
    // initalize components

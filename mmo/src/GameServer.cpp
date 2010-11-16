@@ -24,33 +24,32 @@ vec2 randPos2(int minRadius, int maxRadius)
 
 void spawnNPC(int id)
 {
-   NPC n(id, npcMaxHp, randPos(400, 1200), vec2(0,1), (rand() % ((int)NPCType::Goblin)));
-   serverState->om.addNPC(n);
-   printf("Spawn NPC id=%d type=%d\n", n.id, n.type);
-   serverState->cm.broadcast(Initialize(n.id, ObjectType::NPC, 
-      n.type, n.pos, n.dir, n.hp).makePacket());
+   NPC *n = new NPC(id, npcMaxHp, randPos(400, 1200), 
+      vec2(0,1), (rand() % ((int)NPCType::Goblin+1)));
+   getOM().add(n);
+   printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
+   serverState->cm.broadcast(Initialize(n->id, ObjectType::NPC, 
+      n->type, n->pos, n->dir, n->hp).makePacket());
 }
 
 void spawnItem(int id)
 {
    vec2 pos = randPos2(200, 350);
-   //vec2 pos = vec2(500, 500);
-   Item item(id, pos, rand() % (ItemType::Explosion));
-   serverState->om.addItem(item);
-   printf("Spawn Item id=%d type=%d\n", item.id, item.type);
-   serverState->cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
-         item.pos, vec2(), 0));
+   Item *item = new Item(id, pos, rand() % (ItemType::Explosion+1));
+   getOM().add(item);
+   printf("Spawn Item id=%d type=%d\n", item->id, item->type);
+   serverState->cm.broadcast(Initialize(item->id, ObjectType::Item, item->type,
+         item->pos, vec2(), 0));
 }
 
 void spawnStump(int id)
 {
    vec2 pos = randPos2(200, 350);
-   //vec2 pos = vec2(500, 500);
-   Item item(id, pos, ItemType::Stump);
-   serverState->om.addItem(item);
-   printf("Spawn Stump id=%d type=%d\n", item.id, item.type);
-   serverState->cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
-         item.pos, vec2(), 0));
+   Item *stump = new Item(id, pos, ItemType::Stump);
+   getOM().add(stump);
+   printf("Spawn Stump id=%d type=%d\n", stump->id, stump->type);
+   serverState->cm.broadcast(Initialize(stump->id, ObjectType::Item, stump->type,
+         stump->pos, vec2(), 0));
 }
 
 GameServer::GameServer(ConnectionManager &cm) : cm(cm)
@@ -71,11 +70,11 @@ void GameServer::newClientConnection(int id)
    
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
-   Player newPlayer(id, pos, vec2(0,1), playerMaxHp);
-   om.addPlayer(newPlayer);
+   Player *newPlayer = new Player(id, pos, vec2(0,1), playerMaxHp);
+   om.add(newPlayer);
 
 	cm.sendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
-	cm.broadcast(Initialize(newPlayer.id, ObjectType::Player, 0, newPlayer.pos, newPlayer.dir, newPlayer.hp));
+	cm.broadcast(Initialize(newPlayer->id, ObjectType::Player, 0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
 
    //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
@@ -140,10 +139,10 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
                int arrowID = newId();
-               Missile m(newId(),id, play.pos, 
+               Missile *m = new Missile(newId(),id, play.pos, 
                   vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
-               om.addMissile(m);
-               Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
+               om.add(m);
+               Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
                cm.broadcast(init);
             }
          }
@@ -162,31 +161,54 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::arrow) {
       Arrow ar(p);
-      Missile m(newId(),id, om.getPlayer(id)->pos, ar.direction);
-      om.addMissile(m);
-      Initialize init(m.id, ObjectType::Missile, m.type, m.pos, m.dir, 0);
+      Missile *m = new Missile(newId(),id, om.getPlayer(id)->pos, ar.direction);
+      om.add(m);
+      Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
       cm.broadcast(init);
    }
    else if (p.type == pack::click) {
       Click click(p);
+      printf("Player %d clicked <%0.1f, %0.1f>\n", click.id, click.pos.x, click.pos.y);
       if(om.check(id, ObjectType::Player)) {
-         Player &p = *om.getPlayer(click.id);
+
+         /*
+         std::vector<Item *> items = om.collidingItems(
+            new geom::Point(click.pos), click.pos);
+         if(items.size() > 0) {
+            Player &pl = *om.getPlayer(click.id);
+            Item &item = *om.items[0];
+            cm.broadcast(Signal(Signal::remove, item.id));
+            int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+               item.type == ItemType::BlueRupee ? blueRupeeValue :
+               item.type == ItemType::RedRupee ? redRupeeValue :
+               0;
+            if(rupees > 0) {
+               pl.gainRupees(rupees);
+               cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
+            }
+            cm.broadcast(Signal(Signal::remove, item.id));
+            om.remove(item.id); //only remove one item per click max
+         }
+         */
+
          for(unsigned i = 0; i < om.items.size(); i++) {
-            Item &item = *om.items[i];
+            Item &item = *om.items[i];        
             if(item.getGeom().collision(new geom::Point(click.pos))) {
-               cm.broadcast(Signal(Signal::remove, item.id));
+               Player &pl = *om.getPlayer(click.id);
                int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
                   item.type == ItemType::BlueRupee ? blueRupeeValue :
                   item.type == ItemType::RedRupee ? redRupeeValue :
                   0;
                if(rupees > 0) {
-                  p.gainRupees(rupees);
-                  cm.sendPacket(Signal(Signal::changeRupee, p.rupees), click.id);
+                  pl.gainRupees(rupees);
+                  cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
                }
+               cm.broadcast(Signal(Signal::remove, item.id));
                om.remove(item.id); //only remove one item per click max
                break;
             } 
          }
+
       } 
       else
          printf("Error invalid click Player id %d\n", click.id);
@@ -286,10 +308,12 @@ void GameServer::update(int ticks)
       if(removeNPC) {
          int lootItem = npc.getLoot();
          if(lootItem >= 0) {
-            Item item(newId(), npc.pos, lootItem);
-            om.addItem(item);
-            cm.broadcast(Initialize(item.id, ObjectType::Item, item.type,
-               item.pos, vec2(0,1), 0));
+            Item *item = new Item(newId(), npc.pos, lootItem);
+            om.add(item);
+            cm.broadcast(Initialize(item->id, ObjectType::Item, item->type,
+               item->pos, vec2(), 0));
+            printf("Spawned Item %d type=%d <%0.1f, %0.1f>\n", 
+               item->id, item->type, item->pos.x, item->pos.y);
          }
          cm.broadcast(Signal(Signal::remove, npc.id).makePacket());
          om.remove(npc.id);
@@ -300,7 +324,8 @@ void GameServer::update(int ticks)
       }
       else {
          npc.update();
-         cm.broadcast(pack::Position(npc.pos, npc.dir, npc.aiType != AIType::Stopped, npc.id));
+         cm.broadcast(pack::Position(npc.pos, npc.dir,
+            npc.aiType != AIType::Stopped, npc.id));
       }
    }
 

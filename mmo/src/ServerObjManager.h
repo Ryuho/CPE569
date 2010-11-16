@@ -46,11 +46,6 @@ namespace server {
      
      void init(float width, float height, float regionWidth);
 
-     void addPlayer(Player &p);
-     void addMissile(Missile &m);
-     void addNPC(NPC &n);
-     void addItem(Item &i);
-     
      Player *getPlayer(int id);
      Missile *getMissile(int id);
      NPC *getNpc(int id);
@@ -61,10 +56,15 @@ namespace server {
      vector<NPC *> collidingNPCs(Geometry g, vec2 center);
      vector<Item *> collidingItems(Geometry g, vec2 center);
 
-     void move(Player *p, vec2 newPos);
-     void move(Item *i, vec2 newPos);
-     void move(Missile *m, vec2 newPos);
-     void move(NPC *n, vec2 newPos);
+     void add(Player *p);
+     void add(Missile *m);
+     void add(NPC *n);
+     void add(Item *i);
+
+     void move(Player *p, const vec2 &newPos);
+     void move(Item *i, const vec2 &newPos);
+     void move(Missile *m, const vec2 &newPos);
+     void move(NPC *n, const vec2 &newPos);
 
      void getRegion(vec2 pos, int &x, int &y);
      void getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs);

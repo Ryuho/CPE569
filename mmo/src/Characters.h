@@ -83,6 +83,7 @@ struct ObjectHolder {
    std::vector<Item> items;
    std::vector<NPC> npcs;
    std::map<int, IdType> idToIndex;
+   std::vector<Item> border;
 
    void addPlayer(Player p);
    void addMissile(Missile m);
