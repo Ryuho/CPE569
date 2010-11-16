@@ -23,6 +23,7 @@ enum PacketType {
    serialItem = 10,
    serialNPC = 11,
    serialMissile = 12,
+   serverList = 13,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -201,6 +202,30 @@ struct HealthChange {
    Packet makePacket() {
       Packet p(healthChange);
       p.data.writeInt(id).writeInt(hp);
+      return p;
+   }
+};
+
+//server to server packet
+struct ServerList {
+   std::vector<unsigned long> uLongList;
+   ServerList(std::vector<unsigned long> uList) : uLongList(uList) {}
+   ServerList(Packet &p) {
+      int size;
+      p.data.readInt(size);
+      for(int i = 0; i < size; i++){
+         unsigned long temp;
+         p.data.readLong(temp);
+         uLongList.push_back(temp);
+      }
+      p.data.reset();
+   }
+   Packet makePacket() {
+      Packet p(serverList);
+      p.data.writeInt(uLongList.size());
+      for(unsigned i = 0; i < uLongList.size(); i++){
+         p.data.writeLong(uLongList.at(i));
+      }
       return p;
    }
 };

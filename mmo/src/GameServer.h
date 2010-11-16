@@ -3,14 +3,21 @@
 
 #include "ServerUtil.h"
 #include "ServerData.h"
+#include "ServerObjManager.h"
 
 using namespace server;
 
 struct GameServer {
    GameServer(ConnectionManager &cm);
-   void newConnection(int id);
-   void disconnect(int id);
-   void processPacket(pack::Packet p, int fromid);
+   void newClientConnection(int id);
+   void newServerConnection(int id);
+
+   void clientDisconnect(int id);
+   void serverDisconnect(int id);
+
+   void processClientPacket(pack::Packet p, int fromid);
+   void processServerPacket(pack::Packet p, int fromid);
+
    void update(int ticks);
 
    ConnectionManager &cm;

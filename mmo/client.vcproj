@@ -275,6 +275,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\src\Util.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\World.cpp"
 			>
 		</File>

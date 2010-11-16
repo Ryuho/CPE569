@@ -171,11 +171,11 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\src\GameServer.cpp"
+			RelativePath=".\src\Constants.h"
 			>
 		</File>
 		<File
-			RelativePath=".\src\GameUtil.h"
+			RelativePath=".\src\GameServer.cpp"
 			>
 		</File>
 		<File
@@ -211,6 +211,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\src\ServerObjManager.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\ServerObjManager.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\ServerUtil.h"
 			>
 		</File>
@@ -220,6 +228,10 @@
 		</File>
 		<File
 			RelativePath=".\src\socket.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\Util.h"
 			>
 		</File>
 	</Files>

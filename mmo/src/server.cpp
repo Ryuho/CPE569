@@ -62,8 +62,9 @@ int main(int argc, const char* argv[])
    int altPort;
 
    if(argc == 1){
-      printf("Usage: server <port number> <alternate server address> <alternate server port>\n");
+      printf("Usage: server <client port number> <alternate server address> <alternate server port>\n");
       portNumber = 27027;
+      altPort = 27028;
    }
    else if(argc >= 2){
       printf("port=|%s|\n",argv[1]);
@@ -71,40 +72,65 @@ int main(int argc, const char* argv[])
    }
   
    setupSockets();
-   Server serv(portNumber);
-   serv.listen(5);
+   Server clientServ(portNumber);
+   clientServ.listen(5);
 
    ConnectionManager cm;
 
    if(argc == 4){
       altAddress = argv[2];
       altPort = atoi(argv[3]);
+      Connection servConn(altAddress,altPort);
+      cm.addServerConnection(servConn,newId());
    }
+
+   Server serverServ(altPort);
+   serverServ.listen(5);
 
    GameServer gs(cm);
 
-   printf("Accepting clientConnections on port %d\n", serv.port());
+   printf("Accepting client Connections on port %d\n", clientServ.port());
    
-   while (serv) {
-      while (serv.select()) {
+   while (true) {
+      while (clientServ.select()) {
          int id = newId();
-         cm.addClientConnection(serv.accept(), id);
-         gs.newConnection(id);
+         cm.addClientConnection(clientServ.accept(), id);
+         gs.newClientConnection(id);
+      }
+
+      while (serverServ.select()) {
+         int id = newId();
+         cm.addServerConnection(serverServ.accept(), id);
+         gs.newServerConnection(id);
       }
    
       for (unsigned i = 0; i < cm.clientConnections.size(); i++) {
          Connection conn = cm.clientConnections[i].conn;
          while (conn.select()) {
             if (conn) {
-               gs.processPacket(pack::readPacket(conn), cm.clientConnections[i].id);
+               gs.processClientPacket(pack::readPacket(conn), cm.clientConnections[i].id);
             } else {
                int id = cm.clientConnections[i].id;
                cm.removeClientAt(i--);
-               gs.disconnect(id);
+               gs.clientDisconnect(id);
                break;
             }
          }
       }
+
+      /*for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
+         Connection conn = cm.serverConnections[i].conn;
+         while (conn.select()) {
+            if (conn) {
+               gs.processServerPacket(pack::readPacket(conn), cm.serverConnections[i].id);
+            } else {
+               int id = cm.serverConnections[i].id;
+               cm.removeServerAt(i--);
+               gs.serverDisconnect(id);
+               break;
+            }
+         }
+      }*/
 
       gs.update(currentTicks());
       
@@ -115,7 +141,7 @@ int main(int argc, const char* argv[])
       cm.clientConnections[i].conn.close();
    }
 
-   serv.close();
+   clientServ.close();
    
    return 0;
 }
@@ -174,8 +200,8 @@ void ConnectionManager::addServerConnection(Connection conn, int id)
       exit(-1);
    }
 
-   idToClientIndex[id] = clientConnections.size();
-   clientConnections.push_back(ConnectionInfo(id, conn));
+   idToServerIndex[id] = serverConnections.size();
+   serverConnections.push_back(ConnectionInfo(id, conn));
 }
 
 void ConnectionManager::removeServerConnection(int id)
