@@ -1,26 +1,54 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
-//Do not use a CPP file for this
+//Do not use a CPP file for this.
+//All non-templates must be inline or it will not compile.
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
 
 #include <algorithm>
 #include <vector>
+#include <string>
+#include <ostream>
+#include <istream>
+#include <iostream>
+#include <sstream>
 
 namespace util {
 
+   /////////////////// RANDOM ///////////////////
+   //////////////////////////////////////////////
+   // Returns a random float between 0.0 and 0.9999~
+   inline float frand() { 
+      return rand() / (float)(RAND_MAX+1);
+   }
+
+   // Returns a random float between min and max inclusive
+   inline float frand(float min, float max) { 
+      return min + (rand() / (float)RAND_MAX)*(max-min); 
+   }
+
+   // Returns a random int between min and max inclusive
+   inline int irand(int min, int max) { 
+      return min == max ? min :
+         min + (rand() % (max-min));
+   }
+
+   /////////////////// VECTORS ///////////////////
+   ///////////////////////////////////////////////
    template <typename T>
    void removeDuplicates(std::vector<T> &v)
    {
       std::sort(v.begin(), v.end());
       std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
-      int newSize = newEnd - v.begin();
-      v.resize(newSize);
+      v.resize(newEnd - v.begin());
    }
 
-   //Different than algorithm remove()
-   //this only removes the first one, and replaces with the vectors last element
-   //algorithm's remove percolates all removed values upward
+   //This only removes the first, different than std::remove()
    template <typename T>
-   void remove(T *t, std::vector<T *> &v) {
+   void remove(T t, std::vector<T> &v) {
       for(unsigned i = 0; i < v.size(); i++) {
          if(v[i] == t) {
             v[i] = v.back();
@@ -31,20 +59,103 @@ namespace util {
    }
 
    template <typename T>
-   bool contains(T *t, std::vector<T *> &v) {
+   bool contains(T t, std::vector<T> &v) {
       return std::find(v.begin(), v.end(), t) != v.end();
    }
 
+   /////////////////// MATH ///////////////////
+   ////////////////////////////////////////////
    template <typename T>
    const T& clamp(T &v, const T &left, const T &right) {
       v = std::min(std::max(v, left), right);
       return v;
    }
+
+   /////////////////// STRING ///////////////////
+   //////////////////////////////////////////////
+   inline std::vector<std::string> splitString(const std::string &input, 
+      const std::string &delim = " ")
+   {
+	   std::vector<std::string> ret;
+
+	   size_t pos, lastPos = 0;
+	   while( ( pos = input.find( delim, lastPos ) ) != std::string::npos ) {
+         if (pos != lastPos)
+		      ret.push_back( input.substr( lastPos, pos - lastPos ) );
+		   lastPos = pos+delim.size();
+	   }
+	   if( lastPos < input.size() ) 
+		   ret.push_back( input.substr( lastPos ) ); 
+	   return ret; 
+   }
+
+   /////////////////// PRINTING ///////////////////
+   ////////////////////////////////////////////////
+   template<typename T>
+   void vec_print_ptrs(std::ostream& os, std::vector<T*>& v, char* separator="\n")
+   {
+      std::vector<T*>::iterator iter;
+      for (iter = v.begin(); iter != (v.end() - 1); iter++ ) {
+         os << (**iter) << separator;
+      }
+      if(v.size() != 0)
+         os << (**(v.end() - 1));
+   }
+
+   template<typename T>
+   void vec_pprint_ptrs(std::ostream& os, std::vector<T*>& v, char* separator="\n")
+   {
+      os << "[";
+      vec_print_ptrs(os, v, separator);
+      os << "]";
+   }
+
+   template<typename T>
+   void vec_print(std::ostream& os, std::vector<T>& v, char* separator="\n")
+   {
+      std::vector<T>::iterator iter;
+      for (iter = v.begin(); iter != v.end() - 1; iter++ ) {
+         os << *iter << separator;
+      }
+      if(v.size() != 0)
+         os << *(v.end() - 1);
+	}
+
+	template<typename T>
+	void vec_pprint(std::ostream& os, std::vector<T>& v, char* separator="\n")
+	{
+		os << "[";
+		vec_print(os, v, separator);
+		os << "]";
+	}
 }
+
+/////////////////// ASSERT ///////////////////
+//////////////////////////////////////////////
+#define ASSERT(x,y) \
+	if(x != y) { \
+		std::stringstream ss; \
+		ss << __FILE__ << std::endl \
+			<< __FUNCTION__ << " (" << __LINE__ << ")" << std::endl \
+			<< "Got '" << x << "'. Expecting '" << y << "'."; \
+		std::cerr << ss.str().c_str(); \
+		throw ss.str().c_str(); \
+	}
+
+#define STRASSERT(x,y) \
+	if(x.compare(y) != 0) { \
+		std::stringstream ss; \
+		ss << __FILE__ << std::endl \
+			<< __FUNCTION__ << " (" << __LINE__ << ")" << std::endl \
+			<< "Got '" << x << "'. Expecting '" << y << "'."; \
+		std::cerr << ss.str().c_str(); \
+		throw ss.str().c_str(); \
+	}
 
 #endif //_UTIL_H_
 
 /*
+//Tests
 #include <assert.h>
 
 void removeDuplicatesTest() {
