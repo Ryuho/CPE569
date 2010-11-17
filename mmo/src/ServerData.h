@@ -48,6 +48,7 @@ namespace server {
       Missile(Packet &serialized);
       void move(vec2 pos, vec2 dir);
       void update();
+      int getDamage() const;
       Geometry getGeom() const;
       int getObjectType() const;
       Packet serialize() const;

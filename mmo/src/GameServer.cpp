@@ -74,7 +74,8 @@ void GameServer::newClientConnection(int id)
    om.add(newPlayer);
 
 	cm.sendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
-	cm.broadcast(Initialize(newPlayer->id, ObjectType::Player, 0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
+	cm.broadcast(Initialize(newPlayer->id, 
+      ObjectType::Player, 0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
 
    //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
@@ -91,7 +92,8 @@ void GameServer::newClientConnection(int id)
    //tell new player about previous NPCs
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];
-      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
+      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, 
+         npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
    //make a new NPC and tell everybody about it
    //int npcid = newId();
@@ -142,7 +144,8 @@ void GameServer::processClientPacket(pack::Packet p, int id)
                Missile *m = new Missile(newId(),id, play.pos, 
                   vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
                om.add(m);
-               Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
+               Initialize init(m->id, ObjectType::Missile, 
+                  m->type, m->pos, m->dir, 0);
                cm.broadcast(init);
             }
          }
@@ -152,7 +155,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       else if (signal.sig == Signal::hurtme) {
          if(om.check(id, ObjectType::Player)) {
             Player *p = om.getPlayer(id);
-            p->takeDamage(rand()%6 + 5);
+            p->takeDamage(1);
             cm.broadcast(HealthChange(id, p->hp));
          }
          else
@@ -237,7 +240,7 @@ void GameServer::updateNPCs(int ticks, float dt)
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
          Missile &m = *ms[j];
          npcHit = true;
-         npc.takeDamage(rand()%6);
+         npc.takeDamage(m.getDamage());
          if(npc.hp == 0) {
             if(om.check(m.owned, ObjectType::Player)) {
                Player &p = *om.getPlayer(m.owned);
@@ -271,7 +274,8 @@ void GameServer::updateNPCs(int ticks, float dt)
 
 void GameServer::updateMissiles(int ticks, float dt)
 {
-   //missles loop, checks for missles TOF, remove if above set value, else move the position
+   //missles loop, checks for missles TOF, 
+   //remove if above set value, else move the position
    for(unsigned i = 0; i < om.missiles.size(); i++) {
       //missile out of bound
       Missile &m = *om.missiles[i];
@@ -295,7 +299,7 @@ void GameServer::updatePlayers(int ticks, float dt)
       for(unsigned mdx = 0; mdx < collided.size(); mdx++) {
          Missile &m = *collided[mdx];
          if(collided[mdx]->owned != p.id) {
-            p.takeDamage(rand()%6 + 5);
+            p.takeDamage(m.getDamage());
             cm.broadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);
             damaged = true;

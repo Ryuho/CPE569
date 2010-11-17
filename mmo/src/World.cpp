@@ -181,18 +181,10 @@ void WorldData::processPacket(pack::Packet p)
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("Accessing unknown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
-         NPC *npc = objs.getNPC(pos.id);
-         npc->move(pos.pos, pos.dir, pos.moving != 0);
-         if(!npc->moving && pos.moving) {
-            npc->anim->animStart = getTicks();
-         }
-         npc->pos = pos.pos;
-         npc->dir = pos.dir;
-         npc->moving = pos.moving != 0;
+         objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("Accessing unknown NPC %d\n", pos.id);
       } else if(objs.checkObject(pos.id, ObjectType::Item)) {
-         Item *item = objs.getItem(pos.id);
-         item->pos = pos.pos;
+         objs.getItem(pos.id)->move(pos.pos);
          //printf("Accessing unknown Item %d\n", pos.id);
       }
       else
@@ -215,6 +207,8 @@ void WorldData::processPacket(pack::Packet p)
          objs.addItem(Item(i.id, i.subType, i.pos));
          printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
+      else
+         printf("Error: Unknown initialize type %d\n", i.type);
    } 
    else if (p.type == signal) {
       Signal sig(p);
@@ -252,7 +246,7 @@ void WorldData::processPacket(pack::Packet p)
          player.hp = hc.hp;
          shadow.hp = hc.hp;
       } 
-      else if (objs.checkObject(hc.id, ObjectType::Player)) {
+      else if(objs.checkObject(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
       else if(objs.checkObject(hc.id, ObjectType::NPC)) {
@@ -287,8 +281,6 @@ void WorldData::draw()
    glTexCoord2f(xoffset,1+yoffset);
    glVertex2f(0, height);
    glEnd();
-
-	
    
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 	
