@@ -24,7 +24,7 @@ vec2 randPos2(int minRadius, int maxRadius)
 
 void spawnNPC(int id)
 {
-   NPC *n = new NPC(id, npcMaxHp, randPos(400, 1200), 
+   NPC *n = new NPC(id, npcMaxHp, randPos(-400, 400), 
       vec2(0,1), (rand() % ((int)NPCType::Goblin+1)));
    getOM().add(n);
    printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
@@ -262,7 +262,7 @@ void GameServer::updateNPCs(int ticks, float dt)
          i--;
       } else {
          npc.update();
-         cm.broadcast(pack::Position(npc.pos, npc.dir, npc.aiType != AIType::Stopped, npc.id));
+         cm.broadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
          if(npcHit)
             cm.broadcast(HealthChange(npc.id, npc.hp));
       }

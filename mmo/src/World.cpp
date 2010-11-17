@@ -44,7 +44,9 @@ void World::update(int ticks, float dt) {
    data->dt = dt;
    data->update();
 }
-void World::draw() { data->draw(); }
+void World::draw() { 
+   data->draw(); 
+}
 
 void setUpBoarder()
 {
@@ -160,7 +162,7 @@ void WorldData::update()
 			player.pos.y = -worldHeight;
 		}
    } else
-      player.stop();
+      player.moving = false;
 
    pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
 
@@ -176,29 +178,22 @@ void WorldData::processPacket(pack::Packet p)
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
-         Player *p = objs.getPlayer(pos.id);
-         if(p)
-            p->move(pos.pos, pos.dir, pos.moving != 0);
-         else
-            printf("Accessing unknown Player %d\n", pos.id);
+         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         //printf("Accessing unknown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
          NPC *npc = objs.getNPC(pos.id);
-         if(npc) {
-            if(!npc->moving && pos.moving) {
-               npc->anim->animStart = getTicks();
-            }
-            npc->pos = pos.pos;
-            npc->dir = pos.dir;
-            npc->moving = pos.moving != 0;
+         npc->move(pos.pos, pos.dir, pos.moving != 0);
+         if(!npc->moving && pos.moving) {
+            npc->anim->animStart = getTicks();
          }
-         else
-            printf("Accessing unknown NPC %d\n", pos.id);
+         npc->pos = pos.pos;
+         npc->dir = pos.dir;
+         npc->moving = pos.moving != 0;
+         //printf("Accessing unknown NPC %d\n", pos.id);
       } else if(objs.checkObject(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
-         if(item)
-            item->pos = pos.pos;
-         else
-            printf("Accessing unknown Item %d\n", pos.id);
+         item->pos = pos.pos;
+         //printf("Accessing unknown Item %d\n", pos.id);
       }
       else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);

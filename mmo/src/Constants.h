@@ -13,9 +13,10 @@ namespace constants {
    const float maxProjectileTicks = 500;
    const float projectileSpeed = 800;
 
-   const int playerPredictTicks = 200;
+   const int predictTicks = 200;
 
-   const int regionSize = 1000;
+   const int regionSize = 500;
+   const int noDrawTicks = 1000;
 
    #define PI 3.14159265359
 

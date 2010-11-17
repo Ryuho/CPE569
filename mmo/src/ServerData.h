@@ -65,12 +65,13 @@ namespace server {
       Geometry getGeom() const;
       int getLoot();
       int getExp();
-      void move(vec2 pos, vec2 dir);
+      void move(vec2 pos, vec2 dir, bool moving);
       int getObjectType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
       
       vec2 pos, dir, initPos;
+      bool moving;
       int aiTicks, aiType, attackId;
       int id, hp, type;
    };

@@ -93,7 +93,7 @@ int fightingId = 0; //npc we are fighting
 int delay = 30;
 static const int printDelay = 50;
 bool homing = true;
-bool looting = true;
+bool looting = false;
 static const int lootDelay = 400;
 
 void BotWorldData::update(int ticks, float dt)

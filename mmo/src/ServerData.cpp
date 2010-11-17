@@ -136,7 +136,7 @@ void Missile::move(vec2 pos, vec2 dir)
 
 NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
    : id(id), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
-   aiTicks(0), attackId(0), initPos(pos)
+   aiTicks(0), attackId(0), initPos(pos), moving(false)
 {
 
 }
@@ -225,6 +225,7 @@ int NPC::getLoot()
 void NPC::update() 
 {
    Player *p = 0;
+   this->moving = false;
    if(mat::dist(pos, initPos) > maxNpcMoveDist) {
       aiType = AIType::Walking;
       dir = mat::to(pos, initPos);
@@ -265,12 +266,12 @@ void NPC::update()
          dir = newDir;
          vec2 newPos = pos + dir * getDt() * npcAttackSpeed;
          if(mat::dist(newPos, p->pos) > attackRange) {
-            move(newPos, newDir);
+            move(newPos, newDir, true);
          }
       }
    }
    else if(aiType == AIType::Walking) {
-      move(pos + dir * getDt() * npcWalkSpeed, dir);
+      move(pos + dir * getDt() * npcWalkSpeed, dir, true);
    }
 }
 
@@ -310,11 +311,12 @@ void NPC::takeDamage(int damage)
    hp = max(0, hp-damage);
 }
 
-void NPC::move(vec2 pos, vec2 dir)
+void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
    getOM().move(this, pos);
    this->pos = pos;
    this->dir = dir;
+   this->moving = moving;
 }
 
 int NPC::getObjectType() const
