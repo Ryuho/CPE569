@@ -230,11 +230,11 @@ void WorldData::processPacket(pack::Packet p)
             int type = objs.idToIndex[sig.val].type;
             if(type != ObjectType::Missile)
                printf("Removed %s %d\n", 
-               type == ObjectType::Item ? "Item" :
-               type == ObjectType::NPC ? "NPC" :
-               type == ObjectType::Player ? "Player" :
-               "Unknown",
-               sig.val);
+                  type == ObjectType::Item ? "Item" :
+                  type == ObjectType::NPC ? "NPC" :
+                  type == ObjectType::Player ? "Player" :
+                  "Unknown",
+                  sig.val);
             objs.removeObject(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }

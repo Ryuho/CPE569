@@ -147,6 +147,8 @@ bool ObjectManager::check(int id, int type)
 
 void ObjectManager::init(float width, float height, float regionSize)
 {
+   width = 2*width;
+   height = 2*height;
    this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
    this->regionSize = regionSize;
    unsigned xBuckets = ((int)(width / regionSize));
@@ -174,8 +176,13 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
    //clamp
+   int tempx = x;
+   int tempy = y;
    util::clamp(x, 0, (int)regions.size()-1);
    util::clamp(y, 0, (int)regions[0].size()-1);
+   if(tempx != x || tempy != y) {
+      printf("Error getRegion() <%d, %d> -> <%d, %d>\n", tempx, tempy, x, y);
+   }
 }
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
@@ -202,6 +209,10 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
       }
    }
    if(regs.size() == 0) {
+      //if((x == 0 || x == (int)regions.size()-1) 
+      //      && (y == 0 || y == (int)regions[0].size()-1)) {
+      //   printf("Error3: getRegions() xy<%d %d> pos<%0.1f %0.1f>\n", x, y, pos.x, pos.y);
+      //}
       regs.push_back(&regions[x][y]);
    } 
    else if (regs.size() > 4) {
