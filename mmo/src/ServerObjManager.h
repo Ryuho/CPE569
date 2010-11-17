@@ -51,10 +51,10 @@ namespace server {
      NPC *getNpc(int id);
      Item *getItem(int id);
 
-     vector<Player *> collidingPlayers(Geometry g, vec2 center);
-     vector<Missile *> collidingMissiles(Geometry g, vec2 center);
-     vector<NPC *> collidingNPCs(Geometry g, vec2 center);
-     vector<Item *> collidingItems(Geometry g, vec2 center);
+     vector<Player *> collidingPlayers(Geometry g, const vec2 &center);
+     vector<Missile *> collidingMissiles(Geometry g, const vec2 &center);
+     vector<NPC *> collidingNPCs(Geometry g, const vec2 &center);
+     vector<Item *> collidingItems(Geometry g, const vec2 &center);
 
      void add(Player *p);
      void add(Missile *m);

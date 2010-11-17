@@ -72,7 +72,7 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
 
 
    //HUGE AMOUNT OF DEBUG CODE!!
-   /*
+/*
    int c = 0;
    for(unsigned x = 0; x < om.regions.size(); x++) {
       for(unsigned y = 0; y < om.regions[x].size(); y++) {
@@ -114,7 +114,7 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
       printf("Error 5: remove %d failed %d times\n", objs[i]->id, c);
       exit(1);
    }
-   */
+*/
 
    delete objs[i];
    idToIndex.erase(id);
@@ -187,7 +187,7 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
 {
-   return new Rectangle(
+   return Rectangle(
       vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
       regionSize, regionSize);
 }
@@ -265,7 +265,7 @@ void ObjectManager::move(NPC *n, const vec2 &newPos)
    omMoveTemplate(n, newPos, *this);
 }
 
-vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
+vector<Player *> ObjectManager::collidingPlayers(Geometry g, const vec2 &center)
 {
    std::vector<Player *> ret;
    std::vector<Region *> regs;
@@ -282,7 +282,7 @@ vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
    return ret;
 }
 
-vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
+vector<Missile *> ObjectManager::collidingMissiles(Geometry g, const vec2 &center)
 {
    std::vector<Missile *> ret;
    std::vector<Region *> regs;
@@ -299,7 +299,7 @@ vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
    return ret;
 }
 
-vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
+vector<NPC *> ObjectManager::collidingNPCs(Geometry g, const vec2 &center)
 {
    std::vector<NPC *> ret;
    std::vector<Region *> regs;
@@ -316,7 +316,7 @@ vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
    return ret;
 }
 
-vector<Item *> ObjectManager::collidingItems(Geometry g, vec2 center)
+vector<Item *> ObjectManager::collidingItems(Geometry g, const vec2 &center)
 {
    std::vector<Item *> ret;
    std::vector<Region *> regs;

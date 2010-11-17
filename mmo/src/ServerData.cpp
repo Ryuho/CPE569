@@ -40,7 +40,7 @@ void Player::gainRupees(int rupees)
 
 Geometry Player::getGeom() const
 {
-   return new Circle(pos, (float)playerRadius);
+   return Circle(pos, (float)playerRadius);
 }
 
 int Player::getObjectType() const
@@ -93,7 +93,7 @@ void Missile::update()
 
 Geometry Missile::getGeom() const
 {
-   return new Circle(pos, arrowRadius);
+   return Circle(pos, arrowRadius);
 }
 
 int Missile::getObjectType() const
@@ -280,7 +280,7 @@ Geometry NPC::getGeom() const
       case NPCType::Fairy: //16x16
       case NPCType::Bat:
       case NPCType::Bird:
-         return new Circle(pos, 16*1.5f);
+         return Circle(pos, 16*1.5f);
          break;
       case NPCType::Thief: //16x32
       case NPCType::Squirrel: 
@@ -289,7 +289,7 @@ Geometry NPC::getGeom() const
       case NPCType::Cactus:
       case NPCType::Wizard:
       case NPCType::Goblin:
-         return new Circle(pos, 22*1.5f);
+         return Circle(pos, 22*1.5f);
          break;
       case NPCType::Cyclops: //32x32
       case NPCType::Chicken:
@@ -297,12 +297,12 @@ Geometry NPC::getGeom() const
       case NPCType::Bush:
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         return new Circle(pos, 23.5f*1.5f);
+         return Circle(pos, 23.5f*1.5f);
          break;
       default:
          printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
    }
-   return new Circle(pos, 0.00001f);
+   return Circle(pos, 0.0f);
 }
 
 void NPC::takeDamage(int damage)
@@ -370,21 +370,21 @@ Geometry Item::getGeom() const
       case ItemType::GreenRupee:
       case ItemType::RedRupee:
       case ItemType::BlueRupee:
-         return new Circle(pos, 8*1.5f);
+         return Circle(pos, 12*1.5f);
          break; //unreachable
       case ItemType::Explosion:
-         return new Circle(pos, 55*1.5f);
+         return Circle(pos, 55*1.5f);
          break;
       case ItemType::Stump:
-         return new Circle(pos, 32*1.5f);
+         return Circle(pos, 32*1.5f);
          break;
       case ItemType::Heart:
-         return new Circle(pos, 16*1.5f);
+         return Circle(pos, 13*1.5f);
          break;
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);
    }
-   return new Circle(pos, 0.0f);
+   return Circle(pos, 0.0f);
 }
 
 int Item::getObjectType() const
