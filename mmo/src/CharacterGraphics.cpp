@@ -526,12 +526,11 @@ void initCharacterResources()
       heartAnim.dirs[Direction::Down].push_back(vec2i(24,4));
 
 	  teleportorAnim.init(&sprites16, AnimType::Forward, true);
-      teleportorAnim.speed = 100;
-      teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,2));
-      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,3));
-      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,2));
-      //teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,3));
-
+     teleportorAnim.speed = 100;
+     teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,2));
+     //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,3));
+     //teleportorAnim.dirs[Direction::Down].push_back(vec2i(25,2));
+     //teleportorAnim.dirs[Direction::Down].push_back(vec2i(24,3));
 
       initalized = true;
    }

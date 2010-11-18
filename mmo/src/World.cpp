@@ -44,23 +44,25 @@ void World::update(int ticks, float dt) {
    data->dt = dt;
    data->update();
 }
-void World::draw() { data->draw(); }
+void World::draw() { 
+   data->draw(); 
+}
 
 void setUpBoarder()
 {
 	for(int i = 0, j = 0; i < wHeight+40; i = i + 40, j++)
 	{
-		clientState->objs.addItem(Item(j, ItemType::Teleportor, vec2(wWidth, i)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(wWidth, -i)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-wWidth, i)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-wWidth, -i)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, i)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, -i)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, i)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, -i)));
 	}
 	for(int i = 0, j = wWidth / 10 + 1; i < wWidth+40; i = i + 40, j++)
 	{
-		clientState->objs.addItem(Item(j, ItemType::Teleportor, vec2(i, wHeight)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-i, wHeight)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(i, -wHeight)));
-		clientState->objs.addItem(Item(++j, ItemType::Teleportor, vec2(-i, -wHeight)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(i, wHeight)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-i, wHeight)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(i, -wHeight)));
+		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-i, -wHeight)));
 	}
 }
 void WorldData::init(const char *host, int port)
@@ -160,7 +162,7 @@ void WorldData::update()
 			player.pos.y = -worldHeight;
 		}
    } else
-      player.stop();
+      player.moving = false;
 
    pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
 
@@ -176,29 +178,14 @@ void WorldData::processPacket(pack::Packet p)
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
-         Player *p = objs.getPlayer(pos.id);
-         if(p)
-            p->move(pos.pos, pos.dir, pos.moving != 0);
-         else
-            printf("Accessing unknown Player %d\n", pos.id);
+         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         //printf("Accessing unknown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
-         NPC *npc = objs.getNPC(pos.id);
-         if(npc) {
-            if(!npc->moving && pos.moving) {
-               npc->anim->animStart = getTicks();
-            }
-            npc->pos = pos.pos;
-            npc->dir = pos.dir;
-            npc->moving = pos.moving != 0;
-         }
-         else
-            printf("Accessing unknown NPC %d\n", pos.id);
+         objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         //printf("Accessing unknown NPC %d\n", pos.id);
       } else if(objs.checkObject(pos.id, ObjectType::Item)) {
-         Item *item = objs.getItem(pos.id);
-         if(item)
-            item->pos = pos.pos;
-         else
-            printf("Accessing unknown Item %d\n", pos.id);
+         objs.getItem(pos.id)->move(pos.pos);
+         //printf("Accessing unknown Item %d\n", pos.id);
       }
       else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
@@ -207,20 +194,21 @@ void WorldData::processPacket(pack::Packet p)
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.id) {
          objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
-         
-         printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
+         printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Missile) {
          objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
       } 
       else if (i.type == ObjectType::NPC) {
          objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
-         printf("Added NPC %d hp=%d\n", i.id, i.hp);
+         printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Item) {
          objs.addItem(Item(i.id, i.subType, i.pos));
-         printf("Added Item %d \n", i.id);
+         printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
+      else
+         printf("Error: Unknown initialize type %d\n", i.type);
    } 
    else if (p.type == signal) {
       Signal sig(p);
@@ -228,8 +216,16 @@ void WorldData::processPacket(pack::Packet p)
          if(sig.val == this->player.id)
             printf("\n\n!!! Disconnected from server !!!\n\n");
          else {
+            int type = objs.idToIndex[sig.val].type;
+            if(type != ObjectType::Missile)
+               printf("Removed %s %d\n", 
+                  type == ObjectType::Item ? "Item" :
+                  type == ObjectType::NPC ? "NPC" :
+                  type == ObjectType::Player ? "Player" :
+                  "Unknown",
+                  sig.val);
             objs.removeObject(sig.val);
-            printf("Object %d disconnected\n", sig.val);
+            //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
          player.rupees = sig.val;
@@ -250,7 +246,7 @@ void WorldData::processPacket(pack::Packet p)
          player.hp = hc.hp;
          shadow.hp = hc.hp;
       } 
-      else if (objs.checkObject(hc.id, ObjectType::Player)) {
+      else if(objs.checkObject(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
       else if(objs.checkObject(hc.id, ObjectType::NPC)) {
@@ -285,8 +281,6 @@ void WorldData::draw()
    glTexCoord2f(xoffset,1+yoffset);
    glVertex2f(0, height);
    glEnd();
-
-	
    
    glTranslatef(-player.pos.x + width/2, -player.pos.y + height/2, 0.0);
 	
@@ -352,44 +346,17 @@ void World::rightClick(vec2 mousePos)
    vec2 clickPos = clientState->player.pos + mousePos 
       - vec2(data->width/2,data->height/2);
    pack::Click(clickPos, clientState->player.id).makePacket().sendTo(data->conn);
-   printf("Clicked <%5.1f %5.1f>\n", mousePos.x, mousePos.y);
+   printf("Clicked <%5.1f %5.1f>\n", clickPos.x, clickPos.y);
 }
 
 void World::spawnItem()
 {
-/*
-   Item i;
-   i.init(data->player.pos + vec2(100, 100), (Item::Type) (rand() % ((int)Item::MaxItem)));
-   data->items.push_back(i);
-   */
+
 }
 
 void World::spawnNPC()
 {
    pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
-/*
-   NPC n;
-   //float t = rand()/(float)RAND_MAX;
-   //vec2 _pos = vec2(cos(t*2*PI), sin(t*2*PI)) * 1600;
-
-   int minv, maxv, midv;
-   minv = 700;
-   maxv = 1200;
-   midv = 400;
-
-   vec2 _pos = vec2(rand()%maxv - minv, rand()%maxv - minv);
-   if(_pos.x >= 0.0 && _pos.x < midv)
-      _pos.x = midv;
-   else if(_pos.x < 0.0 && _pos.x > -midv)
-      _pos.x = -midv;
-   if(_pos.y >= 0.0 && _pos.y < midv)
-      _pos.y = midv;
-   else if(_pos.y < 0.0 && _pos.y > -midv)
-      _pos.y = -midv;
-   //n.init(data->player.pos + _pos, NPC::Ganon);
-   n.init(data->player.pos + _pos, (NPC::Type) (rand() % ((int)NPC::MaxNPC)));
-   data->npcs.push_back(n);
-   */
 }
 
 // Global accessor functions

@@ -3,32 +3,39 @@
 
 namespace server {
 
-void ObjectManager::addPlayer(Player &p)
+template <typename T>
+void omAddTemplate(T *val, std::vector<T *> &vec, int type, ObjectManager &om)
 {
-   idToIndex[p.id] = Index(players.size(), ObjectType::Player);
-   players.push_back(new Player(p));
-   move(players.back(), players.back()->pos);
+   //Add to Index map
+   om.idToIndex[val->id] = ObjectManager::Index(vec.size(), type);
+   //Add to OM's vector
+   vec.push_back(val);
+   //Add to regions
+   std::vector<Region *> regs;
+   om.getRegions(val->pos, val->getGeom(), regs);
+   for(unsigned i = 0; i < regs.size(); i++) {
+      regs[i]->add(val);
+   }
 }
 
-void ObjectManager::addMissile(Missile &m)
+void ObjectManager::add(Player *p)
 {
-   idToIndex[m.id] = Index(missiles.size(), ObjectType::Missile);
-   missiles.push_back(new Missile(m));
-   move(missiles.back(), missiles.back()->pos);
+   omAddTemplate(p, players, ObjectType::Player, *this);
 }
 
-void ObjectManager::addNPC(NPC &n)
+void ObjectManager::add(Missile *m)
 {
-   idToIndex[n.id] = Index(npcs.size(), ObjectType::NPC);
-   npcs.push_back(new NPC(n));
-   move(npcs.back(), npcs.back()->pos);
+   omAddTemplate(m, missiles, ObjectType::Missile, *this);
 }
 
-void ObjectManager::addItem(Item &i)
+void ObjectManager::add(NPC *n)
 {
-   idToIndex[i.id] = Index(items.size(), ObjectType::Item);
-   items.push_back(new Item(i));
-   move(items.back(), items.back()->pos);
+   omAddTemplate(n, npcs, ObjectType::NPC, *this);
+}
+
+void ObjectManager::add(Item *i)
+{
+   omAddTemplate(i, items, ObjectType::Item, *this);
 }
 
 Player *ObjectManager::getPlayer(int id)
@@ -64,8 +71,8 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
    }
 
 
-   /*
    //HUGE AMOUNT OF DEBUG CODE!!
+/*
    int c = 0;
    for(unsigned x = 0; x < om.regions.size(); x++) {
       for(unsigned y = 0; y < om.regions[x].size(); y++) {
@@ -79,23 +86,35 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
                + om.regions[x][y].missiles.size() 
                + om.regions[x][y].players.size()
                + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
-               printf("error 1\n");
+               printf("Error 1\n");
             om.regions[x][y].remove(objs[i]);
             if(om.regions[x][y].items.size() 
                + om.regions[x][y].missiles.size() 
                + om.regions[x][y].players.size()
                + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
-               printf("error 2\n");
+               printf("Error 2\n");
             c++;
             //printf("%d=<%d,%d> ", c, x, y);
          }
+         om.regions[x][y].remove(objs[i]);
+         if(om.regions[x][y].items.size() 
+            + om.regions[x][y].missiles.size() 
+            + om.regions[x][y].players.size()
+            + om.regions[x][y].npcs.size() != isize + msize + psize + nsize)
+            printf("Error 3\n");
+         om.regions[x][y].remove(objs[i]);
+         if(om.regions[x][y].items.size() 
+            + om.regions[x][y].missiles.size() 
+            + om.regions[x][y].players.size()
+            + om.regions[x][y].npcs.size() != isize + msize + psize + nsize)
+            printf("Error 4\n");
       }
    }
    if(c != 0) {
-      printf("Error: remove %d failed %d times\n", objs[i]->id, c);
+      printf("Error 5: remove %d failed %d times\n", objs[i]->id, c);
       exit(1);
    }
-   */
+*/
 
    delete objs[i];
    idToIndex.erase(id);
@@ -107,7 +126,8 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
 }
 
 void ObjectManager::remove(int id)
-{   int i = idToIndex[id].index;
+{   
+   int i = idToIndex[id].index;
 
    if (idToIndex[id].type == ObjectType::Player)
       omRemoveTempl(idToIndex, players, id, *this);
@@ -119,7 +139,6 @@ void ObjectManager::remove(int id)
       omRemoveTempl(idToIndex, items, id, *this);
 }
 
-
 bool ObjectManager::check(int id, int type)
 {
    map<int, Index>::iterator itr = idToIndex.find(id);
@@ -128,6 +147,8 @@ bool ObjectManager::check(int id, int type)
 
 void ObjectManager::init(float width, float height, float regionSize)
 {
+   width = 2*width;
+   height = 2*height;
    this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
    this->regionSize = regionSize;
    unsigned xBuckets = ((int)(width / regionSize));
@@ -155,13 +176,18 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
    //clamp
+   int tempx = x;
+   int tempy = y;
    util::clamp(x, 0, (int)regions.size()-1);
    util::clamp(y, 0, (int)regions[0].size()-1);
+   if(tempx != x || tempy != y) {
+      printf("Error getRegion() <%d, %d> -> <%d, %d>\n", tempx, tempy, x, y);
+   }
 }
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
 {
-   return new Rectangle(
+   return Rectangle(
       vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
       regionSize, regionSize);
 }
@@ -183,6 +209,10 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
       }
    }
    if(regs.size() == 0) {
+      //if((x == 0 || x == (int)regions.size()-1) 
+      //      && (y == 0 || y == (int)regions[0].size()-1)) {
+      //   printf("Error3: getRegions() xy<%d %d> pos<%0.1f %0.1f>\n", x, y, pos.x, pos.y);
+      //}
       regs.push_back(&regions[x][y]);
    } 
    else if (regs.size() > 4) {
@@ -191,7 +221,7 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
 }
 
 template <typename T>
-void moveTemplate(T *p, vec2 newPos, ObjectManager &om)
+void omMoveTemplate(T *p, const vec2 &newPos, ObjectManager &om)
 {
    std::vector<Region *> regsOld, regsNew;
    om.getRegions(p->pos, p->getGeom(), regsOld);
@@ -215,27 +245,27 @@ void moveTemplate(T *p, vec2 newPos, ObjectManager &om)
    }
 }
 
-void ObjectManager::move(Player *p, vec2 newPos)
+void ObjectManager::move(Player *p, const vec2 &newPos)
 {
-   moveTemplate(p, newPos, *this);
+   omMoveTemplate(p, newPos, *this);
 }
 
-void ObjectManager::move(Item *i, vec2 newPos)
+void ObjectManager::move(Item *i, const vec2 &newPos)
 {
-   moveTemplate(i, newPos, *this);
+   omMoveTemplate(i, newPos, *this);
 }
 
-void ObjectManager::move(Missile *m, vec2 newPos)
+void ObjectManager::move(Missile *m, const vec2 &newPos)
 {
-   moveTemplate(m, newPos, *this);
+   omMoveTemplate(m, newPos, *this);
 }
 
-void ObjectManager::move(NPC *n, vec2 newPos)
+void ObjectManager::move(NPC *n, const vec2 &newPos)
 {
-   moveTemplate(n, newPos, *this);
+   omMoveTemplate(n, newPos, *this);
 }
 
-vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
+vector<Player *> ObjectManager::collidingPlayers(Geometry g, const vec2 &center)
 {
    std::vector<Player *> ret;
    std::vector<Region *> regs;
@@ -252,7 +282,7 @@ vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
    return ret;
 }
 
-vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
+vector<Missile *> ObjectManager::collidingMissiles(Geometry g, const vec2 &center)
 {
    std::vector<Missile *> ret;
    std::vector<Region *> regs;
@@ -269,7 +299,7 @@ vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
    return ret;
 }
 
-vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
+vector<NPC *> ObjectManager::collidingNPCs(Geometry g, const vec2 &center)
 {
    std::vector<NPC *> ret;
    std::vector<Region *> regs;
@@ -286,7 +316,7 @@ vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
    return ret;
 }
 
-vector<Item *> ObjectManager::collidingItems(Geometry g, vec2 center)
+vector<Item *> ObjectManager::collidingItems(Geometry g, const vec2 &center)
 {
    std::vector<Item *> ret;
    std::vector<Region *> regs;

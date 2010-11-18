@@ -61,14 +61,18 @@ bool RectanglePlane(const Rectangle *rec, const Plane *pl)
 
 bool RectanglePoint(const Rectangle *rec, const Point *p)
 {
-   printf("RectanglePoint unimplemented\n");
-   return false;
+   return p->pos.x >= rec->botLeft.x 
+      && p->pos.y >= rec->botLeft.y 
+      && p->pos.x <= rec->botLeft.x + rec->w 
+      && p->pos.y <= rec->botLeft.x + rec->h;
 }
 
-bool RectangleRectangle(const Rectangle *rec, const Rectangle *rec2)
+bool RectangleRectangle(const Rectangle *rec1, const Rectangle *rec2)
 {
-   printf("RectangleRectangle unimplemented\n");
-   return false;
+   return rec2->botLeft.x + rec2->w >= rec1->botLeft.x //r2.right >= r1.left
+      && rec2->botLeft.x <= rec1->botLeft.x + rec1->w //r2.left <= r1.right
+      && rec2->botLeft.y + rec2->h >= rec1->botLeft.y //r2.top >= r1.bot
+      && rec2->botLeft.y <= rec1->botLeft.y + rec1->h; //r2.bot <= r1.top
 }
 
 

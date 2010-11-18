@@ -9,6 +9,9 @@ using namespace geom;
 
 int stopAfterTicks = 100;
 
+////////////////// PLAYER //////////////////
+////////////////////////////////////////////
+
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
    : id(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp)
 {
@@ -20,29 +23,27 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
    lastUpdate = getTicks();
    if (moving && !this->moving)
       animStart = getTicks();
-
    this->pos = pos;
    this->dir = dir;
    this->moving = moving;
 }
 
-void Player::stop()
-{
-   moving = false;
-}
-
 void Player::update()
 {
-   if (moving && getTicks() - lastUpdate < playerPredictTicks) {
+   if (moving && getTicks() - lastUpdate < predictTicks) {
       pos = pos + dir * getDt() * playerSpeed;
    } else {
       moving = false;
    }
 }
 
+////////////////// MISSILE //////////////////
+/////////////////////////////////////////////
+
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
    : id(id), type(type), pos(pos), alive(true)
 {
+   lastUpdate = getTicks();
    this->dir = dir;
    if (this->dir.length() > 0.0)
       this->dir = normalize(this->dir);
@@ -53,9 +54,20 @@ void Missile::update()
    pos = pos + dir * projectileSpeed * getDt();
 }
 
+void Missile::move(vec2 pos, vec2 dir)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+   this->dir = dir;
+}
+
+////////////////// ITEM //////////////////
+//////////////////////////////////////////
+
 Item::Item(int id, int type, vec2 pos) 
    : id(id), type(type), pos(pos)
 {
+    lastUpdate = getTicks();
     alive = true;
     initGraphics();
 }
@@ -64,6 +76,15 @@ void Item::update()
 {
 
 }
+
+void Item::move(vec2 pos)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+}
+
+////////////////// NPC //////////////////
+/////////////////////////////////////////
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
    : id(id), type(type), pos(pos), dir(dir), moving(moving), hp(hp)
@@ -74,9 +95,26 @@ NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
 
 void NPC::update()
 {
-   
+   if (moving && getTicks() - lastUpdate < predictTicks) {
+      pos = pos + dir * getDt() * npcWalkSpeed;
+   } else {
+      moving = false;
+   }
 }
 
+void NPC::move(vec2 pos, vec2 dir, bool moving)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+   this->dir = dir;
+   if(!this->moving && moving) {
+      anim->animStart = getTicks();
+   }
+   this->moving = moving;
+}
+
+////////////////// OBJECTHOLDER //////////////////
+//////////////////////////////////////////////////
 
 void ObjectHolder::addPlayer(Player p)
 {
@@ -220,5 +258,8 @@ void ObjectHolder::drawAll()
 
    for (unsigned i = 0; i < players.size(); i++)
       players[i].draw();
+
+   for (unsigned i = 0; i < border.size(); i++)
+      border[i].draw();
 }
 

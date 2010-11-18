@@ -18,6 +18,10 @@ struct GameServer {
    void processClientPacket(pack::Packet p, int fromid);
    void processServerPacket(pack::Packet p, int fromid);
 
+   void updateNPCs(int ticks, float dt);
+   void updateMissiles(int ticks, float dt);
+   void updatePlayers(int ticks, float dt);
+
    void update(int ticks);
 
    ConnectionManager &cm;

@@ -40,7 +40,7 @@ void Player::gainRupees(int rupees)
 
 Geometry Player::getGeom() const
 {
-   return new Circle(pos, (float)playerRadius);
+   return Circle(pos, (float)playerRadius);
 }
 
 int Player::getObjectType() const
@@ -55,6 +55,7 @@ Player::Player(pack::Packet &serialized)
 
 void Player::deserialize(pack::Packet &serialized)
 {
+   printf("Error Player::deserialize untested - update with members!");
    if(serialized.type == pack::serialPlayer) {
       serialized.data.readInt(id).readInt(hp).readInt(exp).readInt(rupees)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
@@ -66,6 +67,7 @@ void Player::deserialize(pack::Packet &serialized)
 
 pack::Packet Player::serialize() const
 {
+   printf("Error Player::serialize untested - update with members!");
    pack::Packet p(pack::serialPlayer);
    p.data.writeInt(id).writeInt(hp).writeInt(exp).writeInt(rupees)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
@@ -85,7 +87,6 @@ Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
       this->dir = normalize(this->dir);
 }
 
-
 void Missile::update()
 {
    move(pos + dir * projectileSpeed * getDt(), dir);
@@ -93,7 +94,12 @@ void Missile::update()
 
 Geometry Missile::getGeom() const
 {
-   return new Circle(pos, arrowRadius);
+   return Circle(pos, arrowRadius);
+}
+
+int Missile::getDamage() const
+{
+   return rand()%6 + 5;
 }
 
 int Missile::getObjectType() const
@@ -108,6 +114,7 @@ Missile::Missile(pack::Packet &serialized)
 
 void Missile::deserialize(pack::Packet &serialized)
 {
+   printf("Error Missile::deserialize untested - update with members!");
    if(serialized.type == pack::serialMissile) {
       serialized.data.readInt(id).readInt(owned).readInt(type).readInt(spawnTime)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
@@ -119,6 +126,7 @@ void Missile::deserialize(pack::Packet &serialized)
 
 pack::Packet Missile::serialize() const
 {
+   printf("Error Missile::serialize untested - update with members!");
    pack::Packet p(pack::serialMissile);
    p.data.writeInt(id).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
@@ -136,7 +144,7 @@ void Missile::move(vec2 pos, vec2 dir)
 
 NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
    : id(id), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
-   aiTicks(0), attackId(0), initPos(pos)
+   aiTicks(0), attackId(0), initPos(pos), moving(false)
 {
 
 }
@@ -225,6 +233,7 @@ int NPC::getLoot()
 void NPC::update() 
 {
    Player *p = 0;
+   this->moving = false;
    if(mat::dist(pos, initPos) > maxNpcMoveDist) {
       aiType = AIType::Walking;
       dir = mat::to(pos, initPos);
@@ -265,12 +274,12 @@ void NPC::update()
          dir = newDir;
          vec2 newPos = pos + dir * getDt() * npcAttackSpeed;
          if(mat::dist(newPos, p->pos) > attackRange) {
-            move(newPos, newDir);
+            move(newPos, newDir, true);
          }
       }
    }
    else if(aiType == AIType::Walking) {
-      move(pos + dir * getDt() * npcWalkSpeed, dir);
+      move(pos + dir * getDt() * npcWalkSpeed, dir, true);
    }
 }
 
@@ -280,7 +289,7 @@ Geometry NPC::getGeom() const
       case NPCType::Fairy: //16x16
       case NPCType::Bat:
       case NPCType::Bird:
-         return new Circle(pos, 16*1.5f);
+         return Circle(pos, 16*1.5f);
          break;
       case NPCType::Thief: //16x32
       case NPCType::Squirrel: 
@@ -289,7 +298,7 @@ Geometry NPC::getGeom() const
       case NPCType::Cactus:
       case NPCType::Wizard:
       case NPCType::Goblin:
-         return new Circle(pos, 22*1.5f);
+         return Circle(pos, 22*1.5f);
          break;
       case NPCType::Cyclops: //32x32
       case NPCType::Chicken:
@@ -297,12 +306,12 @@ Geometry NPC::getGeom() const
       case NPCType::Bush:
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         return new Circle(pos, 23.5f*1.5f);
+         return Circle(pos, 23.5f*1.5f);
          break;
       default:
          printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
    }
-   return new Circle(pos, 0.00001f);
+   return Circle(pos, 0.0f);
 }
 
 void NPC::takeDamage(int damage)
@@ -310,11 +319,12 @@ void NPC::takeDamage(int damage)
    hp = max(0, hp-damage);
 }
 
-void NPC::move(vec2 pos, vec2 dir)
+void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
    getOM().move(this, pos);
    this->pos = pos;
    this->dir = dir;
+   this->moving = moving;
 }
 
 int NPC::getObjectType() const
@@ -330,6 +340,7 @@ NPC::NPC(pack::Packet &serialized)
 
 void NPC::deserialize(pack::Packet &serialized)
 {
+   printf("Error NPC::deserialize untested - update with members!");
    if(serialized.type == pack::serialNPC) {
       serialized.data.readInt(id).readInt(hp).readInt(type)
          .readInt(aiTicks).readInt(aiType).readInt(attackId)
@@ -342,6 +353,7 @@ void NPC::deserialize(pack::Packet &serialized)
 
 pack::Packet NPC::serialize() const
 {
+   printf("Error NPC::serialize untested - update with members!");
    pack::Packet p(pack::serialNPC);
    p.data.writeInt(id).writeInt(hp).writeInt(type)
       .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
@@ -370,21 +382,21 @@ Geometry Item::getGeom() const
       case ItemType::GreenRupee:
       case ItemType::RedRupee:
       case ItemType::BlueRupee:
-         return new Circle(pos, 8*1.5f);
+         return Circle(pos, 12*1.5f);
          break; //unreachable
       case ItemType::Explosion:
-         return new Circle(pos, 55*1.5f);
+         return Circle(pos, 55*1.5f);
          break;
       case ItemType::Stump:
-         return new Circle(pos, 32*1.5f);
+         return Circle(pos, 32*1.5f);
          break;
       case ItemType::Heart:
-         return new Circle(pos, 16*1.5f);
+         return Circle(pos, 13*1.5f);
          break;
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);
    }
-   return new Circle(pos, 0.0f);
+   return Circle(pos, 0.0f);
 }
 
 int Item::getObjectType() const
@@ -399,6 +411,7 @@ Item::Item(pack::Packet &serialized)
 
 void Item::deserialize(pack::Packet &serialized)
 {
+   printf("Error Item::deserialize untested - update with members!");
    if(serialized.type == pack::serialItem) {
       serialized.data.readInt(id).readInt(type)
          .readFloat(pos.x).readFloat(pos.y)
@@ -410,6 +423,7 @@ void Item::deserialize(pack::Packet &serialized)
 
 pack::Packet Item::serialize() const
 {
+   printf("Error Item::serialize untested - update with members!");
    pack::Packet p(pack::serialItem);
    p.data.writeInt(id).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);

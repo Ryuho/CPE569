@@ -5,6 +5,7 @@
 #include <map>
 #include "matrix.h"
 #include "Geometry.h"
+#include "Sprite.h"
 
 using mat::vec2;
 struct Animation;
@@ -14,9 +15,8 @@ void initCharacterResources();
 struct Player {
    Player() : id(0), alive(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
-   void move(vec2 pos, vec2 dir, bool moving);
-   void stop();
 
+   void move(vec2 pos, vec2 dir, bool moving);
    void update();
    void draw();
 
@@ -31,26 +31,26 @@ struct Player {
 struct Missile {
    Missile(int id, int type, vec2 pos, vec2 dir);
 
+   void move(vec2 pos, vec2 dir);
    void update();
    void draw();
 
-   int type;
    bool alive;
    vec2 pos, dir;
-   int id;
+   int id, type, lastUpdate;
 };
 
 struct Item {
    Item(int id, int type, vec2 pos);
 
+   void move(vec2 pos);
    void update();
    void draw();
    
-   int type;
    vec2 pos;
    bool alive;
    Animation *anim;
-   int id;
+   int id, type, lastUpdate;
 private:
    void initGraphics();
 };
@@ -58,15 +58,15 @@ private:
 struct NPC {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
 
+   void move(vec2 pos, vec2 dir, bool moving);
    void resetAnimation();
    void update();
    void draw();
    
-   int type;
    vec2 pos, dir;
    bool alive, moving;
    Animation *anim;
-   int id, hp;
+   int id, hp, type, lastUpdate;
 private:
    void initGraphics();
 };
@@ -83,6 +83,7 @@ struct ObjectHolder {
    std::vector<Item> items;
    std::vector<NPC> npcs;
    std::map<int, IdType> idToIndex;
+   std::vector<Item> border;
 
    void addPlayer(Player p);
    void addMissile(Missile m);
