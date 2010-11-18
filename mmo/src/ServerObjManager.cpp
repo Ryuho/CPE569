@@ -215,9 +215,9 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
       //}
       regs.push_back(&regions[x][y]);
    } 
-   else if (regs.size() > 4) {
-      printf("Error: regs.size = %d (4 should be max?)\n", regs.size());
-   }
+   //else if (regs.size() > 4) {
+   //   printf("Error: regs.size = %d (4 should be max?)\n", regs.size());
+   //}
 }
 
 template <typename T>

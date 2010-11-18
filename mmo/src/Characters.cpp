@@ -247,17 +247,22 @@ void ObjectHolder::updateAll()
 
 void ObjectHolder::drawAll()
 {
+   int ticks = getTicks();
    for (unsigned i = 0; i < items.size(); i++)
       items[i].draw();
 
    for (unsigned i = 0; i < missiles.size(); i++)
       missiles[i].draw();
    
-   for (unsigned i = 0; i < npcs.size(); i++)
-      npcs[i].draw();
+   for (unsigned i = 0; i < npcs.size(); i++) {
+      if(ticks - npcs[i].lastUpdate < noDrawTicks)
+         npcs[i].draw();
+   }
 
-   for (unsigned i = 0; i < players.size(); i++)
-      players[i].draw();
+   for (unsigned i = 0; i < players.size(); i++) {
+      if(ticks - players[i].lastUpdate < noDrawTicks)
+         players[i].draw();
+   }
 
    for (unsigned i = 0; i < border.size(); i++)
       border[i].draw();
