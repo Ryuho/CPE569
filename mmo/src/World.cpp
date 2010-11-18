@@ -50,14 +50,14 @@ void World::draw() {
 
 void setUpBoarder()
 {
-	for(int i = 0, j = 0; i < wHeight+40; i = i + 40, j++)
+	for(int i = 0, j = 0; i < wHeight+41; i = i + 41, j++)
 	{
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, i)));
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, -i)));
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, i)));
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, -i)));
 	}
-	for(int i = 0, j = wWidth / 10 + 1; i < wWidth+40; i = i + 40, j++)
+	for(int i = 0, j = wWidth / 10 + 1; i < wWidth+41; i = i + 41, j++)
 	{
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(i, wHeight)));
 		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-i, wHeight)));
@@ -95,8 +95,8 @@ void WorldData::init(const char *host, int port)
    
    pack::Connect c(p);
 	
-	wHeight = c.worldHeight;
-	wWidth = c.worldWidth;
+	wHeight = c.worldHeight / 2;
+	wWidth = c.worldWidth / 2;
    if (!conn.select(1000)) {
       printf("Timed out waiting for initalize packet\n");
       exit(-1);
@@ -145,21 +145,21 @@ void WorldData::update()
    if (playerMoveDir.length() > 0.0) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
-		if (player.pos.x > worldWidth)
+		if (player.pos.x > wWidth - 41)
 		{
-			player.pos.x = worldWidth;
+			player.pos.x = wWidth - 41;
 		}
-		else if (player.pos.x < -worldWidth)
+		else if (player.pos.x < -wWidth + 41)
 		{
-			player.pos.x = -worldWidth;
+			player.pos.x = -wWidth + 41;
 		}
-		if (player.pos.y > worldHeight)
+		if (player.pos.y > wHeight)
 		{
-			player.pos.y = worldHeight;
+			player.pos.y = wHeight;
 		}
-		else if (player.pos.y < -worldHeight)
+		else if (player.pos.y < -wHeight + 41)
 		{
-			player.pos.y = -worldHeight;
+			player.pos.y = -wHeight + 41;
 		}
    } else
       player.moving = false;
