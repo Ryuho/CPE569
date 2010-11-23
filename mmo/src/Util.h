@@ -22,7 +22,7 @@ namespace util {
    //////////////////////////////////////////////
    // Returns a random float between 0.0 and 0.9999~
    inline float frand() { 
-      return rand() / (float)(RAND_MAX+1);
+      return rand() / (float)(RAND_MAX);
    }
 
    // Returns a random float between min and max inclusive
@@ -42,7 +42,7 @@ namespace util {
    void removeDuplicates(std::vector<T> &v)
    {
       std::sort(v.begin(), v.end());
-      std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
+      typename std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
       v.resize(std::unique(v.begin(), v.end()) - v.begin());
    }
 
@@ -94,7 +94,7 @@ namespace util {
    template<typename T>
    void vec_print_ptrs(std::ostream& os, std::vector<T*>& v, char* separator="\n")
    {
-      std::vector<T*>::iterator iter;
+      typename std::vector<T*>::iterator iter;
       for (iter = v.begin(); iter != (v.end() - 1); iter++ ) {
          os << (**iter) << separator;
       }
@@ -113,7 +113,7 @@ namespace util {
    template<typename T>
    void vec_print(std::ostream& os, std::vector<T>& v, char* separator="\n")
    {
-      std::vector<T>::iterator iter;
+      typename std::vector<T>::iterator iter;
       for (iter = v.begin(); iter != v.end() - 1; iter++ ) {
          os << *iter << separator;
       }
