@@ -22,10 +22,32 @@ vec2 randPos2(int minRadius, int maxRadius)
    return vec2(sin(angle)*radius, cos(angle)*radius);
 }
 
-void spawnNPC(int id)
+int npcType(int regionX, int regionY)
 {
-   NPC *n = new NPC(id, npcMaxHp, randPos(-400, 400), 
-      vec2(0,1), (rand() % ((int)NPCType::Goblin+1)));
+   //assumes regionX and regionY are valid
+   int maxType = (int) NPCType::Goblin;
+   int rows = getOM().regions.size();
+   int cols = getOM().regions[0].size();
+   int difficulty = abs(std::max(regionX - rows/2, regionY - cols/2));
+   //float difficultyScalar = ((float)rows) / (2*maxType);
+   float difficultyScalar = ((float)maxType*2) / rows;
+   int type = difficulty*difficultyScalar + rand() % 5;
+   return util::clamp(type, 0, maxType); //ensure valid range
+}
+
+void spawnNPC(int regionX, int regionY)
+{
+   util::clamp(regionX, 0, (int)getOM().regions.size()-1);
+   util::clamp(regionY, 0,  (int)getOM().regions[0].size()-1);
+
+   vec2 botLeft(getOM().worldBotLeft.x + regionSize*regionX,
+      getOM().worldBotLeft.y + regionSize*regionY);
+   vec2 pos(util::frand(botLeft.x, botLeft.x + regionSize),
+      util::frand(botLeft.y, botLeft.y + regionSize));
+
+   NPC *n = new NPC(newId(), npcMaxHp, pos, 
+      vec2(0,1), npcType(regionX, regionY));
+
    getOM().add(n);
    printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
    serverState->cm.clientBroadcast(Initialize(n->id, ObjectType::NPC, 
@@ -225,8 +247,12 @@ void GameServer::update(int ticks)
    //if there is a player connected, spawn up to 6 NPCs
 
    if(om.players.size() > 0) {
-      if(rint(5) == 0 && om.npcs.size() < 10){
-         spawnNPC(newId());
+      if(rint(25) == 0 && om.npcs.size() < 500){
+         for(unsigned i = 0; i < om.regions.size(); i++) {
+            for(unsigned j = 0; j < om.regions[0].size(); j++) {
+               spawnNPC(i, j);
+            }
+         }
       }
    }
 

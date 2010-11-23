@@ -263,16 +263,6 @@ void NPC::update()
          }
       }
    }
-/*
-   for(unsigned i = 0; i < getOM().players.size(); i++) {
-      if(mat::dist(getOM().players[i]->pos, pos) < npcAggroRange) {
-         p = getOM().players[i];
-         aiType = AIType::Attacking;
-         attackId = p->id;
-         //printf("%d attacking %d\n", id, attackId);
-      }
-   }
-*/
    if(aiType == AIType::Attacking 
          && (!getOM().check(attackId, ObjectType::Player) || !p)) {
       attackId = 0;

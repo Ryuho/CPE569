@@ -186,13 +186,13 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
    //clamp
-   int tempx = x;
-   int tempy = y;
    util::clamp(x, 0, (int)regions.size()-1);
    util::clamp(y, 0, (int)regions[0].size()-1);
-   if(tempx != x || tempy != y) {
-      printf("Error getRegion() <%d, %d> -> <%d, %d>\n", tempx, tempy, x, y);
-   }
+   //int tempx = x;
+   //int tempy = y;
+   //if(tempx != x || tempy != y) {
+   //   printf("Error getRegion() <%d, %d> -> <%d, %d>\n", tempx, tempy, x, y);
+   //}
 }
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
@@ -230,10 +230,27 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
    //}
 }
 
+bool ObjectManager::inBounds(vec2 pos) const
+{
+   return pos.x >= worldBotLeft.x && pos.x <= worldBotLeft.x+worldWidth
+      && pos.y >= worldBotLeft.y && pos.y <= worldBotLeft.y+worldHeight;
+}
+
 template <typename T>
 void omMoveTemplate(T *p, const vec2 &newPos, ObjectManager &om)
 {
    std::vector<Region *> regsOld, regsNew;
+   /*
+   vec2 newPos2(newPos);
+
+   if(!om.inBounds(newPos2)) {
+      int x, y;
+      om.getRegion(newPos2, x, y);
+      newPos2 = vec2(om.worldBotLeft.x + (0.5f+regionSize)*x, 
+         om.worldBotLeft.y + (0.5f+regionSize)*y);
+   }
+   */
+
    om.getRegions(p->pos, p->getGeom(), regsOld);
    p->pos = newPos;
    om.getRegions(p->pos, p->getGeom(), regsNew);

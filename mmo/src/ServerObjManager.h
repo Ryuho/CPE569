@@ -45,6 +45,7 @@ namespace server {
      };
      
      void init(float width, float height, float regionWidth);
+     bool inBounds(vec2 pos) const;
 
      Player *getPlayer(int id);
      Missile *getMissile(int id);
@@ -82,7 +83,6 @@ namespace server {
      vector<vector<Region> > regions; //starts botLeft and increases in <X,Y> 
 
      map<int,int> oldTypes;
-  private:
      vec2 worldBotLeft;
      float regionSize;
   };
