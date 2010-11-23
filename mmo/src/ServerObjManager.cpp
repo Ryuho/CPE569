@@ -205,7 +205,7 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
    for(unsigned i = minX; i <= maxX; i++) {
       for(unsigned j = minY; j <= maxY; j++) {
          if(getRegionGeom(i,j).collision(g))
-            regs.push_back(&regions[x][y]);
+            regs.push_back(&regions[i][j]);
       }
    }
    if(regs.size() == 0) {
@@ -304,6 +304,7 @@ vector<NPC *> ObjectManager::collidingNPCs(Geometry g, const vec2 &center)
    std::vector<NPC *> ret;
    std::vector<Region *> regs;
    getRegions(center, g, regs);
+
    for(unsigned i = 0; i < regs.size(); i++) {
       std::vector<NPC *> &regNPCs = regs[i]->npcs;
       for(unsigned j = 0; j < regNPCs.size(); j++) {
@@ -321,6 +322,7 @@ vector<Item *> ObjectManager::collidingItems(Geometry g, const vec2 &center)
    std::vector<Item *> ret;
    std::vector<Region *> regs;
    getRegions(center, g, regs);
+
    for(unsigned i = 0; i < regs.size(); i++) {
       std::vector<Item *> &regItems = regs[i]->items;
       for(unsigned j = 0; j < regItems.size(); j++) {
