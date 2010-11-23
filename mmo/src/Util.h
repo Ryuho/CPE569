@@ -42,7 +42,7 @@ namespace util {
    void removeDuplicates(std::vector<T> &v)
    {
       std::sort(v.begin(), v.end());
-      typename std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
+      //typename std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
       v.resize(std::unique(v.begin(), v.end()) - v.begin());
    }
 

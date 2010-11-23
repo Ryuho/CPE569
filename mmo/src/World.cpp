@@ -121,7 +121,6 @@ void WorldData::init(const char *host, int port)
    setUpBoarder();
    shadow = player;
 
-   mono.init("DejaVuSansMono.ttf", 12);
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
@@ -134,6 +133,8 @@ void World::graphicsInit(int width, int height)
    data->height = height;
 
    data->ground = fromTGA("grass.tga");
+   
+   data->mono.init("DejaVuSansMono.ttf", 12);
 }
 
 void WorldData::update()
@@ -309,10 +310,8 @@ void WorldData::draw()
    objs.drawAll();
    
    player.draw();
-   glColor4ub(255,255,255,255);
-   glEnable(GL_TEXTURE_2D);
-   freetype::print(mono, 00.0, 00.0,
-      "GO GO PRINT!!!!\n");
+   
+   freetype::print(mono, 50, 50, "OH GOOD LORD");
 }
 
 void World::move(mat::vec2 dir)

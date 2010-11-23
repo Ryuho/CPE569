@@ -288,6 +288,8 @@ void print(const font_data &ft_font, float x, float y, const char *fmt, ...)  {
 
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
 	glMatrixMode(GL_MODELVIEW);
+   glPushMatrix();
+   glLoadIdentity();
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
@@ -330,6 +332,8 @@ void print(const font_data &ft_font, float x, float y, const char *fmt, ...)  {
 
 	}
 
+	glMatrixMode(GL_MODELVIEW);
+   glPopMatrix();
 
 	glPopAttrib();		
 

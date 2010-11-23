@@ -6,6 +6,8 @@ namespace server {
 template <typename T>
 void omAddTemplate(T *val, std::vector<T *> &vec, int type, ObjectManager &om)
 {
+   om.oldTypes[val->id] = type;
+
    //Add to Index map
    om.idToIndex[val->id] = ObjectManager::Index(vec.size(), type);
    //Add to OM's vector
@@ -127,6 +129,11 @@ void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex,
 
 void ObjectManager::remove(int id)
 {   
+   if (idToIndex.find(id) == idToIndex.end()) {
+      printf("Tried to remove an object %d with no idToIndex value type %d\n", id, oldTypes[id] == constants::ObjectType::Missile);
+      return;
+   }
+
    int i = idToIndex[id].index;
 
    if (idToIndex[id].type == ObjectType::Player)
@@ -137,6 +144,8 @@ void ObjectManager::remove(int id)
       omRemoveTempl(idToIndex, npcs, id, *this);
    else if (idToIndex[id].type == ObjectType::Item)
       omRemoveTempl(idToIndex, items, id, *this);
+   else
+      printf("object %d had unknown type: %d\n", id, idToIndex[id].type);
 }
 
 bool ObjectManager::check(int id, int type)

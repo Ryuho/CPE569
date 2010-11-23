@@ -80,6 +80,8 @@ namespace server {
      vector<Item *> items;
      
      vector<vector<Region> > regions; //starts botLeft and increases in <X,Y> 
+
+     map<int,int> oldTypes;
   private:
      vec2 worldBotLeft;
      float regionSize;
