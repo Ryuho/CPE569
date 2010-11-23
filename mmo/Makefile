@@ -1,7 +1,7 @@
 
 all: client server client_bot
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o obj/ServerObjManager.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o
@@ -18,6 +18,9 @@ obj/CharacterGraphics.o: src/CharacterGraphics.cpp src/Characters.h
 
 obj/GameServer.o: src/GameServer.cpp src/GameServer.h src/packet.h src/ServerUtil.h
 	g++ -c -o obj/GameServer.o src/GameServer.cpp
+
+obj/ServerObjManager.o: src/ServerObjManager.h src/ServerObjManager.cpp
+	g++ -c -o obj/ServerObjManager.o src/ServerObjManager.cpp
 
 obj/server.o: src/server.cpp src/packet.h
 	g++ -c -o obj/server.o src/server.cpp

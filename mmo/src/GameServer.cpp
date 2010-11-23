@@ -1,8 +1,8 @@
 #include "GameServer.h"
 #include "Constants.h"
+#include "Numbers.h"
 #include <cstdio>
 #include <time.h>
-#include "Numbers.h"
 
 using namespace pack;
 
@@ -173,7 +173,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    else if (p.type == pack::click) {
       Click click(p);
       if(om.check(id, ObjectType::Player)) {
-         Geometry point(Point(click.pos));
+         Geometry point = Point(click.pos);
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
          std::vector<Item *> items = om.collidingItems(point, click.pos);
