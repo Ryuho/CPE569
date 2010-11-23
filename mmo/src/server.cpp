@@ -163,16 +163,28 @@ int main(int argc, const char* argv[])
    return 0;
 }
 
-void ConnectionManager::sendPacket(pack::Packet p, int toid)
+void ConnectionManager::clientSendPacket(pack::Packet p, int toid)
 {
    p.sendTo(clientConnections[idToClientIndex[toid]].conn);
 }
 
 
-void ConnectionManager::broadcast(pack::Packet p)
+void ConnectionManager::clientBroadcast(pack::Packet p)
 {
    for (unsigned i = 0; i < clientConnections.size(); i++)
       p.sendTo(clientConnections[i].conn);
+}
+
+void ConnectionManager::serverSendPacket(pack::Packet p, int toid)
+{
+   p.sendTo(serverConnections[idToServerIndex[toid]].conn);
+}
+
+
+void ConnectionManager::serverBroadcast(pack::Packet p)
+{
+   for (unsigned i = 0; i < serverConnections.size(); i++)
+      p.sendTo(serverConnections[i].conn);
 }
 
 // server -> client connection functions

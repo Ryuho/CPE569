@@ -28,7 +28,7 @@ void spawnNPC(int id)
       vec2(0,1), (rand() % ((int)NPCType::Goblin+1)));
    getOM().add(n);
    printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
-   serverState->cm.broadcast(Initialize(n->id, ObjectType::NPC, 
+   serverState->cm.clientBroadcast(Initialize(n->id, ObjectType::NPC, 
       n->type, n->pos, n->dir, n->hp).makePacket());
 }
 
@@ -38,7 +38,7 @@ void spawnItem(int id)
    Item *item = new Item(id, pos, rand() % (ItemType::Explosion+1));
    getOM().add(item);
    printf("Spawn Item id=%d type=%d\n", item->id, item->type);
-   serverState->cm.broadcast(Initialize(item->id, ObjectType::Item, item->type,
+   serverState->cm.clientBroadcast(Initialize(item->id, ObjectType::Item, item->type,
          item->pos, vec2(), 0));
 }
 
@@ -48,7 +48,7 @@ void spawnStump(int id)
    Item *stump = new Item(id, pos, ItemType::Stump);
    getOM().add(stump);
    printf("Spawn Stump id=%d type=%d\n", stump->id, stump->type);
-   serverState->cm.broadcast(Initialize(stump->id, ObjectType::Item, stump->type,
+   serverState->cm.clientBroadcast(Initialize(stump->id, ObjectType::Item, stump->type,
          stump->pos, vec2(), 0));
 }
 
@@ -73,26 +73,26 @@ void GameServer::newClientConnection(int id)
    Player *newPlayer = new Player(id, pos, vec2(0,1), playerMaxHp);
    om.add(newPlayer);
 
-	cm.sendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
-	cm.broadcast(Initialize(newPlayer->id, 
+	cm.clientSendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
+	cm.clientBroadcast(Initialize(newPlayer->id, 
       ObjectType::Player, 0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
 
    //tell old players about new player
    for(unsigned i = 0; i < om.players.size(); i++) {
       Player &p = *om.players[i];
       Initialize init(p.id, ObjectType::Player, 0, p.pos, p.dir, p.hp);
-      cm.sendPacket(init, id);
+      cm.clientSendPacket(init, id);
    }
    //tell new player about previous Items
    for(unsigned i = 0; i < om.items.size(); i++) {
       Item &item = *om.items[i];
-      cm.sendPacket(Initialize(item.id, ObjectType::Item, item.type,
+      cm.clientSendPacket(Initialize(item.id, ObjectType::Item, item.type,
          item.pos, vec2(), 0), id);
    }
    //tell new player about previous NPCs
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];
-      cm.sendPacket(Initialize(npc.id, ObjectType::NPC, 
+      cm.clientSendPacket(Initialize(npc.id, ObjectType::NPC, 
          npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
    //make a new NPC and tell everybody about it
@@ -103,21 +103,21 @@ void GameServer::newClientConnection(int id)
 void GameServer::newServerConnection(int id)
 {
    printf("New server connection: %d\n", id);
+   cm.serverBroadcast(Signal(Signal::hello));
 
-   //std::vector<unsigned long> ulong();
 }
 
 void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
-   cm.broadcast(Signal(Signal::remove, id).makePacket());
+   cm.clientBroadcast(Signal(Signal::remove, id).makePacket());
    om.remove(id);
 }
 
 void GameServer::serverDisconnect(int id)
 {
    printf("Server %d disconnected\n", id);
-   //cm.broadcast(Signal(Signal::remove, id).makePacket());
+   //cm.clientBroadcast(Signal(Signal::remove, id).makePacket());
    //om.remove(id);
 }
 
@@ -129,7 +129,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
 ////////////TODO: Replace with Area of Influence ////////////
 /////////////////////////////////////////////////////////////
-//cm.broadcast(pos);
+//cm.clientBroadcast(pos);
       } else
          printf("Accessing unknown Player %d\n", pos.id);
    }
@@ -147,7 +147,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
                om.add(m);
                Initialize init(m->id, ObjectType::Missile, 
                   m->type, m->pos, m->dir, 0);
-               cm.broadcast(init);
+               cm.clientBroadcast(init);
             }
          }
          else
@@ -157,7 +157,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          if(om.check(id, ObjectType::Player)) {
             Player *p = om.getPlayer(id);
             p->takeDamage(1);
-            cm.broadcast(HealthChange(id, p->hp));
+            cm.clientBroadcast(HealthChange(id, p->hp));
          }
          else
             printf("Error: Packet Unknown Player id %d\n", id);
@@ -168,7 +168,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Missile *m = new Missile(newId(),id, om.getPlayer(id)->pos, ar.direction);
       om.add(m);
       Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
-      cm.broadcast(init);
+      cm.clientBroadcast(init);
    }
    else if (p.type == pack::click) {
       Click click(p);
@@ -186,13 +186,13 @@ void GameServer::processClientPacket(pack::Packet p, int id)
                0;
             if(rupees > 0) {
                pl.gainRupees(rupees);
-               cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
+               cm.clientSendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
             }
 			else if(item.type == ItemType::Stump)
 			{
 				return;
 			}
-            cm.broadcast(Signal(Signal::remove, item.id));
+            cm.clientBroadcast(Signal(Signal::remove, item.id));
             om.remove(item.id); //only remove one item per click max
          }
       }
@@ -249,11 +249,11 @@ void GameServer::updateNPCs(int ticks, float dt)
             if(om.check(m.owned, ObjectType::Player)) {
                Player &p = *om.getPlayer(m.owned);
                p.gainExp(npc.getExp());
-               cm.sendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
+               cm.clientSendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
             }
             removeNPC = true;
          }
-         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+         cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
          om.remove(m.id);
       }
       if(removeNPC) {
@@ -261,19 +261,19 @@ void GameServer::updateNPCs(int ticks, float dt)
          if(lootItem >= 0) {
             Item *item = new Item(newId(), npc.pos, lootItem);
             om.add(item);
-            cm.broadcast(Initialize(item->id, ObjectType::Item, item->type,
+            cm.clientBroadcast(Initialize(item->id, ObjectType::Item, item->type,
                item->pos, vec2(0,1), 0));
          }
-         cm.broadcast(Signal(Signal::remove, npc.id).makePacket());
+         cm.clientBroadcast(Signal(Signal::remove, npc.id).makePacket());
          om.remove(npc.id);
          i--;
       } else {
          npc.update();
 ////////////TODO: Replace with Area of Influence ////////////
 /////////////////////////////////////////////////////////////
-//cm.broadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
+//cm.clientBroadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
          if(npcHit)
-            cm.broadcast(HealthChange(npc.id, npc.hp));
+            cm.clientBroadcast(HealthChange(npc.id, npc.hp));
       }
    }
 }
@@ -286,7 +286,7 @@ void GameServer::updateMissiles(int ticks, float dt)
       //missile out of bound
       Missile &m = *om.missiles[i];
       if(ticks - m.spawnTime >= maxProjectileTicks){
-         cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+         cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
          om.remove(m.id);
          i--;
       }
@@ -306,32 +306,32 @@ void GameServer::updatePlayers(int ticks, float dt)
          Missile &m = *collided[mdx];
          if(collided[mdx]->owned != p.id) {
             p.takeDamage(m.getDamage());
-            cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+            cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);
             damaged = true;
          }
       }
       if(p.hp == 0) {
          //death
-         cm.broadcast(Signal(Signal::remove, p.id).makePacket());
+         cm.clientBroadcast(Signal(Signal::remove, p.id).makePacket());
          cm.removeClientConnection(p.id);
          om.remove(p.id);
          pdx--;
          continue;
       } else {
          if(damaged)
-            cm.broadcast(HealthChange(p.id, p.hp));
+            cm.clientBroadcast(HealthChange(p.id, p.hp));
 
          Geometry areaOfInfluence(Circle(p.pos, areaOfInfluenceRadius));
          std::vector<NPC *> aoinpcs = om.collidingNPCs(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
             NPC &npc = *aoinpcs[i];
-            cm.sendPacket(Position(npc.pos, npc.dir, npc.moving, npc.id), p.id);
+            cm.clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.id), p.id);
          }
          std::vector<Player *> aoiplayers = om.collidingPlayers(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoiplayers.size(); i++) {
             Player &player = *aoiplayers[i];
-            cm.sendPacket(Position(player.pos, player.dir, player.moving, player.id), 
+            cm.clientSendPacket(Position(player.pos, player.dir, player.moving, player.id), 
                p.id);
          }
 

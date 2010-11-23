@@ -15,16 +15,27 @@ struct ConnectionInfo {
 };
 
 struct ConnectionManager {
-   void sendPacket(pack::Packet p, int id);
-   void broadcast(pack::Packet p);
+   void clientSendPacket(pack::Packet p, int id);
+   void clientBroadcast(pack::Packet p);
+   void serverSendPacket(pack::Packet p, int id);
+   void serverBroadcast(pack::Packet p);
 
    template<typename T>
-   void sendPacket(T t, int id) {
-      sendPacket(t.makePacket(), id);
+   void clientSendPacket(T t, int id) {
+      clientSendPacket(t.makePacket(), id);
    }
    template<typename T>
-   void broadcast(T t) {
-      broadcast(t.makePacket());
+   void clientBroadcast(T t) {
+      clientBroadcast(t.makePacket());
+   }
+
+   template<typename T>
+   void serverSendPacket(T t, int id) {
+      serverSendPacket(t.makePacket(), id);
+   }
+   template<typename T>
+   void serverBroadcast(T t) {
+      serverBroadcast(t.makePacket());
    }
 
 
