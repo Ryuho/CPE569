@@ -290,8 +290,11 @@ void NPC::update()
          }
       }
    }
-   else if(aiType == AIType::Walking) {
-      move(pos + dir * getDt() * npcWalkSpeed, dir, true);
+   else {
+      this->gainHp(npcOutOfCombatHpPerTick);
+      if(aiType == AIType::Walking) {
+         move(pos + dir * getDt() * npcWalkSpeed, dir, true);
+      }
    }
 }
 
@@ -377,6 +380,12 @@ pack::Packet NPC::serialize() const
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeFloat(initPos.x).writeFloat(initPos.y);
    return p;
+}
+
+void NPC::gainHp(int hp)
+{
+   this->hp = this->hp + hp;
+   util::clamp(this->hp, 0, npcMaxHp);
 }
 
 // Item

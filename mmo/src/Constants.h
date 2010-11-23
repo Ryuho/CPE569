@@ -19,6 +19,8 @@ namespace constants {
 
    const int regionSize = 1000;
    const int noDrawTicks = 400;
+   const int npcOutOfCombatHpPerTick = 1;
+   const int playerHpPerTick = 1;
 
    #define PI 3.14159265359
 
@@ -34,7 +36,7 @@ namespace constants {
    const float NPCRadius = 20.0f; // used for collision detection
    const float attackRange = 200.0f;
    const float maxNpcMoveDist = 2000.0f;
-   const float npcAggroRange = 325.0f;
+   const float npcAggroRange = 355.0f;
 
    const int greenRupeeValue = 1;
    const int blueRupeeValue = 3;

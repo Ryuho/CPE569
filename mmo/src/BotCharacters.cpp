@@ -10,7 +10,7 @@ using namespace game;
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
    : id(id), pos(pos), dir(dir), hp(hp), moving(false), alive(true)
 {
-
+   lastUpdate = getTicks();
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
@@ -22,7 +22,7 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
 
 void Player::update()
 {
-
+   lastUpdate = getTicks();
 }
 
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
@@ -41,23 +41,40 @@ void Missile::update()
 Item::Item(int id, int type, vec2 pos) 
    : id(id), type(type), pos(pos), alive(true)
 {
-
+   lastUpdate = getTicks();
 }
 
 void Item::update()
 {
+   lastUpdate = getTicks();
+}
 
+bool Item::isCollectable() const
+{
+   switch (type) {
+      case ItemType::GreenRupee:
+      case ItemType::RedRupee:
+      case ItemType::BlueRupee:
+      case ItemType::Heart:
+         return true;
+      case ItemType::Explosion:
+      case ItemType::Stump:
+         break;
+      default:
+         printf("Error Item::isCollectable - Unknown item type %d\n", type);
+   }
+   return false;
 }
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
    : id(id), type(type), hp(hp), pos(pos), dir(dir), moving(moving), alive(true)
 {
-
+   lastUpdate = getTicks();
 }
 
 void NPC::update()
 {
-   
+   lastUpdate = getTicks();
 }
 
 

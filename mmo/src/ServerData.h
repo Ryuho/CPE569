@@ -69,6 +69,7 @@ namespace server {
       Geometry getGeom() const;
       int getLoot();
       int getExp();
+      void gainHp(int hp);
       void move(vec2 pos, vec2 dir, bool moving);
       int getObjectType() const;
       Packet serialize() const;

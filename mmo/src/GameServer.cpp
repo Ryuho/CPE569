@@ -360,6 +360,7 @@ void GameServer::updatePlayers(int ticks, float dt)
    for(unsigned pdx = 0; pdx < om.players.size(); pdx++) {
       Player &p = *om.players[pdx];
 
+      p.gainHp(playerHpPerTick);
       std::vector<Item *> collidedItems = om.collidingItems(p.getGeom(), p.pos);
       if(collidedItems.size() > 0) {
          Item &item = *collidedItems[0];

@@ -15,6 +15,7 @@ struct Player {
 
    void update();
 
+   int lastUpdate;
    vec2 dir, pos;
    float radius;
    bool moving, alive;
@@ -36,7 +37,9 @@ struct Missile {
 struct Item {
    Item(int id, int type, vec2 pos);
    void update();
-   
+   bool isCollectable() const;
+
+   int lastUpdate;
    bool alive;
    int type;
    vec2 pos;
@@ -47,6 +50,7 @@ struct NPC {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
    void update();
    
+   int lastUpdate;
    bool moving, alive;
    int type;
    vec2 pos, dir;

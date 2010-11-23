@@ -80,21 +80,25 @@ void sleepms(int ms)
 #endif
 
 static int printcount = 0;
-static float dirchange = 0.0f;
-static const float timeBetweenDirChanges = 2.0f; //2 seconds
+//static float dirchange = 0.0f;
+//static const float timeBetweenDirChanges = 1.0f; //2 seconds
 static const float botHomingRange = 1200.0f;
-static const float botAggroRange = 600.0f;
+static const float botAggroRange = 700.0f;
 static const float botFightRange = 300.0f;
-static const float maxBotWalkDistance = 1500.0f;
+static const float maxBotWalkDistance = (worldWidth + worldHeight - 1)/4;
 static const float maxBotItemGrab = botAggroRange;
 bool tostart = false;
 bool fighting = false;
 int fightingId = 0; //npc we are fighting
 int delay = 30;
 static const int printDelay = 50;
-bool homing = true;
-bool looting = false;
-static const int lootDelay = 400;
+bool homing = false;
+bool looting = true;
+static const int botLootTickDelay = 1300;
+static int nextLoot = 0;
+static int nextDirChange = 0;
+static const int dirChangeDelay = 2000;
+
 
 void BotWorldData::update(int ticks, float dt)
 {
@@ -159,7 +163,8 @@ void BotWorldData::update(int ticks, float dt)
          //finish NPC
          if(objs.checkObject(fightingId, ObjectType::NPC)) {
             fightNpc = objs.getNPC(fightingId);
-            if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f)
+            if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f
+                  || fightNpc->lastUpdate > noDrawTicks)
                fighting = false;
             else {
                if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
@@ -168,6 +173,11 @@ void BotWorldData::update(int ticks, float dt)
                   player.dir = mat::to(player.pos, fightNpc->pos);
                   player.dir.normalize();
                }
+               else if(ticks > nextDirChange) {
+                  nextDirChange = ticks + dirChangeDelay;
+                  float randAngle = ((rand() % 359) / 180.0f) * PI;
+                  player.dir = vec2(cos(randAngle), sin(randAngle));
+               }
                shooting = true;
             }
          } else
@@ -175,7 +185,8 @@ void BotWorldData::update(int ticks, float dt)
       } else {
          //check if NPC in range (turn on fighting)
          for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
-            if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange) {
+            if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
+                  && objs.npcs[i].lastUpdate < noDrawTicks) {
                fightingId = objs.npcs[i].id;
                fighting = true;
                printf("fighting %d\n", fightingId);
@@ -183,9 +194,8 @@ void BotWorldData::update(int ticks, float dt)
          }
          if(!fighting) {
             //Walking around
-            dirchange += dt;
-            if(dirchange > timeBetweenDirChanges) {
-               dirchange = 0.0f;
+            if(ticks > nextDirChange) {
+               nextDirChange = ticks + dirChangeDelay;
                if(homing) {
                   for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
                      if(mat::dist(player.pos, objs.npcs[i].pos) < botHomingRange) {
@@ -205,10 +215,12 @@ void BotWorldData::update(int ticks, float dt)
    //pick up nearby items
    if(looting) {
       for(unsigned i = 0; i < objs.items.size(); i++) {
-         if(mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab) {
+         if(objs.items[i].isCollectable() 
+               && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
+               && nextLoot < ticks) {
             player.moving = false;
             pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
-            sleepms(lootDelay);
+            nextLoot = ticks + botLootTickDelay;
             rightClick(objs.items[i].pos);
             printf("looting item %d\n", objs.items[i].id);
          }
