@@ -43,7 +43,7 @@ namespace util {
    {
       std::sort(v.begin(), v.end());
       std::vector<T>::iterator newEnd = std::unique(v.begin(), v.end());
-      v.resize(newEnd - v.begin());
+      v.resize(std::unique(v.begin(), v.end()) - v.begin());
    }
 
    //This only removes the first, different than std::remove()

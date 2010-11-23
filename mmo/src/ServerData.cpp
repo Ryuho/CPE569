@@ -240,6 +240,24 @@ void NPC::update()
       dir.normalize();
       aiTicks = getTicks() + rand() % 1000;
    }
+
+   Geometry aggroCircle(Circle(pos, npcAggroRange));
+   std::vector<Player *> closePlayers 
+      = getOM().collidingPlayers(aggroCircle, pos);
+   if(closePlayers.size() > 0) {
+      aiType = AIType::Attacking;
+      p = closePlayers[0];
+      attackId = p->id;
+      float dist = mat::dist(p->pos, pos);
+      for(unsigned i = 1; i < closePlayers.size(); i++) {
+         float dist2 = mat::dist(closePlayers[i]->pos, pos);
+         if(dist2 < dist) {
+            p = closePlayers[i];
+            attackId = p->id;
+         }
+      }
+   }
+/*
    for(unsigned i = 0; i < getOM().players.size(); i++) {
       if(mat::dist(getOM().players[i]->pos, pos) < npcAggroRange) {
          p = getOM().players[i];
@@ -248,23 +266,21 @@ void NPC::update()
          //printf("%d attacking %d\n", id, attackId);
       }
    }
-   if(aiType == AIType::Attacking) {
-      if(!getOM().check(attackId, ObjectType::Player) 
-            || mat::dist(getOM().getPlayer(attackId)->pos, pos) >= npcAggroRange) {
-         attackId = 0;
-         aiType = AIType::Stopped;
-         return;
-      }
+*/
+   if(aiType == AIType::Attacking 
+         && (!getOM().check(attackId, ObjectType::Player) || !p)) {
+      attackId = 0;
+      aiType = AIType::Stopped;
+      return;
    }
-   if(aiTicks - getTicks() <= 0) {
-      if(aiType == AIType::Stopped || aiType == AIType::Walking) {
-         aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
-         aiTicks = getTicks() + rand() % 1000 + 300;
-         if(aiType == AIType::Walking) {
-            float angle = ((rand() % 360) / 180.0f) * PI;
-            dir = vec2(cos(angle), sin(angle));
-            dir.normalize();
-         }
+   if(aiTicks - getTicks() <= 0
+         && (aiType == AIType::Stopped || aiType == AIType::Walking)) {
+      aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
+      aiTicks = getTicks() + rand() % 1000 + 300;
+      if(aiType == AIType::Walking) {
+         float angle = ((rand() % 360) / 180.0f) * PI;
+         dir = vec2(cos(angle), sin(angle));
+         dir.normalize();
       }
    }
    if(aiType == AIType::Attacking) {

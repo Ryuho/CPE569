@@ -129,7 +129,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
 ////////////TODO: Replace with Area of Influence ////////////
 /////////////////////////////////////////////////////////////
-cm.broadcast(pos);
+//cm.broadcast(pos);
       } else
          printf("Accessing unknown Player %d\n", pos.id);
    }
@@ -180,7 +180,6 @@ cm.broadcast(pos);
          if(items.size() > 0) {
             Player &pl = *om.getPlayer(click.id);
             Item &item = *items[0];
-            cm.broadcast(Signal(Signal::remove, item.id));
             int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
                item.type == ItemType::BlueRupee ? blueRupeeValue :
                item.type == ItemType::RedRupee ? redRupeeValue :
@@ -268,7 +267,7 @@ void GameServer::updateNPCs(int ticks, float dt)
          npc.update();
 ////////////TODO: Replace with Area of Influence ////////////
 /////////////////////////////////////////////////////////////
-cm.broadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
+//cm.broadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
          if(npcHit)
             cm.broadcast(HealthChange(npc.id, npc.hp));
       }
@@ -318,7 +317,7 @@ void GameServer::updatePlayers(int ticks, float dt)
       } else {
          if(damaged)
             cm.broadcast(HealthChange(p.id, p.hp));
-/*
+
          Geometry areaOfInfluence(Circle(p.pos, areaOfInfluenceRadius));
          std::vector<NPC *> aoinpcs = om.collidingNPCs(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
@@ -331,7 +330,7 @@ void GameServer::updatePlayers(int ticks, float dt)
             cm.sendPacket(Position(player.pos, player.dir, player.moving, player.id), 
                p.id);
          }
-*/
+
       }
    }
 }
