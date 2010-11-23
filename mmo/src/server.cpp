@@ -55,42 +55,59 @@ int newId()
 }
 
 int main(int argc, const char* argv[])
-{  
+{
+   printf("Something\n");
    //decalre vars that are going to be used
-   int portNumber;
-   const char* altAddress;
-   int altPort;
+   int clientPort, serverPort;
+   const char* altAddress = 0;
+   int altPort = -1;
 
-   if(argc == 1){
-      printf("Usage: server <client port number> <alternate server address> <alternate server port>\n");
-      portNumber = 27027;
-      altPort = 27028;
+   if(argc == 3) {
+      clientPort = atoi(argv[1]);
+      serverPort = atoi(argv[2]);
+   } else if (argc == 5) {
+      clientPort = atoi(argv[1]);
+      serverPort = atoi(argv[2]);
+      altAddress = argv[3];
+      altPort = atoi(argv[4]);
+   } else {
+      printf("Usage: server <client port number> <server port number> [ <alternate server address> <alternate server port> ]\r\n");
+      printf("Using defaults...\n");
+      clientPort = 27027;
+      serverPort = 27028;
    }
-   else if(argc >= 2){
-      printf("port=|%s|\n",argv[1]);
-      portNumber = atoi(argv[1]);
-   }
-  
+
    setupSockets();
-   Server clientServ(portNumber);
+
+   printf("Starting server with ports: %d and %d\n", clientPort, serverPort);
+   Server clientServ(clientPort);
    clientServ.listen(5);
+   Server serverServ(serverPort);
+   serverServ.listen(5);
+
+   if (!clientServ || !serverServ) {
+      printf("Failed to set up sockets on one or more ports\n");
+      return -1;
+   }
 
    ConnectionManager cm;
 
-   if(argc == 4){
-      altAddress = argv[2];
-      altPort = atoi(argv[3]);
+   if(altPort > 0) {
+      printf("Connecting to another server: %s %d\n", altAddress, altPort);
       Connection servConn(altAddress,altPort);
+      if (!servConn) {
+         printf("Failed to connect to alternate server\n");
+         return -1;
+      }
       cm.addServerConnection(servConn,newId());
+   } else {
+      printf("Server started as independant host.\n");
    }
-
-   Server serverServ(altPort);
-   serverServ.listen(5);
 
    GameServer gs(cm);
 
-   printf("Accepting client Connections on port %d\n", clientServ.port());
-   
+   printf("Game server started, accepting client Connections on port %d\n", clientServ.port());
+
    while (true) {
       while (clientServ.select()) {
          int id = newId();
@@ -118,7 +135,7 @@ int main(int argc, const char* argv[])
          }
       }
 
-      /*for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
+      for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
          Connection conn = cm.serverConnections[i].conn;
          while (conn.select()) {
             if (conn) {
@@ -130,7 +147,7 @@ int main(int argc, const char* argv[])
                break;
             }
          }
-      }*/
+      }
 
       gs.update(currentTicks());
       
@@ -194,9 +211,9 @@ void ConnectionManager::removeClientAt(int i)
 
 void ConnectionManager::addServerConnection(Connection conn, int id)
 {
-   map<int,int>::iterator itr = idToClientIndex.find(id);
-   if (itr != idToClientIndex.end()) {
-      printf("Error, duplicate connection id: %d\n", id);
+   map<int,int>::iterator itr = idToServerIndex.find(id);
+   if (itr != idToServerIndex.end()) {
+      printf("Error, duplicate server id: %d\n", id);
       exit(-1);
    }
 
@@ -206,20 +223,20 @@ void ConnectionManager::addServerConnection(Connection conn, int id)
 
 void ConnectionManager::removeServerConnection(int id)
 {
-   removeClientAt(idToClientIndex[id]);
+   removeServerAt(idToServerIndex[id]);
 }
 
 void ConnectionManager::removeServerAt(int i)
 {
-   if (clientConnections[i].conn)
-      clientConnections[i].conn.close();
+   if (serverConnections[i].conn)
+      serverConnections[i].conn.close();
 
-   idToClientIndex.erase(clientConnections[i].id);
-   if (clientConnections.size() > 1) {
-      clientConnections[i] = clientConnections.back();
-      idToClientIndex[clientConnections[i].id] = i;
+   idToServerIndex.erase(serverConnections[i].id);
+   if (serverConnections.size() > 1) {
+      serverConnections[i] = serverConnections.back();
+      idToServerIndex[serverConnections[i].id] = i;
    }
-   clientConnections.pop_back();
+   serverConnections.pop_back();
 }
 
 
