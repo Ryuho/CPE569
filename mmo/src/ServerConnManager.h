@@ -1,8 +1,9 @@
-#ifndef _SERVER_UTIL_H_
-#define _SERVER_UTIL_H_
+#ifndef _SERVERCONNMANAGER_H_
+#define _SERVERCONNMANAGER_H_
 
 #include "packet.h"
 #include <map>
+
 
 void sleepms(int ms);
 int currentTicks();
@@ -55,5 +56,6 @@ struct ConnectionManager {
    std::map<int, int> idToServerIndex;
    std::vector<ConnectionInfo> serverConnections;
 };
+
 
 #endif
