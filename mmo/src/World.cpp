@@ -5,6 +5,7 @@
 #include "Constants.h"
 #include "GLUtil.h"
 #include "Sprite.h"
+#include "FreeType.h"
 
 using namespace constants;
 
@@ -15,6 +16,8 @@ struct WorldData {
    float dt;
    vec2 playerMoveDir;
    int arrowTick, specialTick;
+
+   freetype::font_data mono;
 
    ObjectHolder objs;
    Player player, shadow;
@@ -117,6 +120,8 @@ void WorldData::init(const char *host, int port)
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
    setUpBoarder();
    shadow = player;
+
+   mono.init("DejaVuSansMono.ttf", 12);
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
@@ -304,6 +309,10 @@ void WorldData::draw()
    objs.drawAll();
    
    player.draw();
+   glColor4ub(255,255,255,255);
+   glEnable(GL_TEXTURE_2D);
+   freetype::print(mono, 00.0, 00.0,
+      "GO GO PRINT!!!!\n");
 }
 
 void World::move(mat::vec2 dir)
