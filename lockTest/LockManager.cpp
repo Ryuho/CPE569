@@ -88,7 +88,7 @@ void LMData::operator()()
             hosts[c.getSocket()] = Host(c, -2);
             printf("%d Got a new lock connection %d\n", ownId, c.getSocket());
          } else {
-            Connection c = hosts[readySds[i]].c;
+			Connection c = hosts[readySds[i]].c;
             while (c && c.select()) {
                handlePacket(c);
                if (exitNow)
@@ -147,6 +147,11 @@ void LMData::handlePacket(Connection c)
          // Forward a request to appropriate lock manager
          //printf("%d forwarding acquire to %d\n", ownId, locks[id]->owner);
          m.unlock_shared();
+		 /**if(!hostExists(locks[id]->owner))
+		 {
+			 toSelf.send(Packet().writeInt(ops::failure).writeInt(id));
+			 return;
+		 }**/
          hosts[idToSocket[locks[id]->owner]].c.send(p);
          localWaitingOn = hosts[idToSocket[locks[id]->owner]].c.getSocket();
       } else {
@@ -163,6 +168,10 @@ void LMData::handlePacket(Connection c)
       m.lock_shared();
       if (c.getSocket() == toSelf.getSocket() && locks[id]->owner != -1) {
          //printf("%d sent release to remote host %d\n", ownId, locks[id]->owner);
+		 /**if (!hostExists(locks[id]->owner)) {
+			printf("host does not exist for id: %d\n",id);
+			return;
+		 }**/
          hosts[idToSocket[locks[id]->owner]].c.send(p);
          if (lockData) {
             lockData->sendLockData(id, hosts[idToSocket[locks[id]->owner]].c);
@@ -258,7 +267,7 @@ void LMData::handlePacket(Connection c)
    } else if (op == ops::connect) {
       hosts[c.getSocket()].id = id;
       idToSocket[id] = c.getSocket();
-      //ss.add(c.getSocket());
+      ss.add(c.getSocket());
       printf("%d Lockmanager %d now identified\n", ownId, id);
    } else if (op == ops::failure) {
       printf("got a failure for id %d\n", id);

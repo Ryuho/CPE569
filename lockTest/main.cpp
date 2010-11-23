@@ -49,6 +49,7 @@ void otherThread(int t)
       lm.addHost("localhost", 27032, 2);
       lm.addRemoteLock(7, 2);
       dt->vals[1] = 20000;
+	  //lm.shutDown();
    } else {
       lm.addLocalLock(7);
       lm.addHost("localhost", 27031, 1);
@@ -56,10 +57,12 @@ void otherThread(int t)
       dt->vals[2] = 30000;
    }
 
+   //if(t != 1) {
    for(int i = 0; i < 500; i++) {
       int id = 5 + rand()%3;
       lm.acquire(id);
-      //printf("t%d a\n", t);
+      
+	  //printf("t%d a\n", t);
       dt->vals[id-5]++;
       //printf("t%d r\n", t);
       lm.release(id); 
@@ -73,6 +76,7 @@ void otherThread(int t)
    lm.release(6);
    lm.release(5);
    printf("0: %d, 1: %d, 2: %d\n", dt->vals[0], dt->vals[1], dt->vals[2]);
+   //}
 
    /*Connection c("localhost", 27030);
    
@@ -133,6 +137,13 @@ int main()
       //printf("m%d r\n", i);
       lm.release(id);
    }
+
+   if(lm.acquire(999999))
+   {
+	   printf("acquired lock for id 999999 that should not exist\n");
+   }
+   lm.release(99999999);
+   
    
    //sleep(1000);
    printf("mdone\n");
