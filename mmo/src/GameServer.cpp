@@ -1,8 +1,8 @@
 #include "GameServer.h"
 #include "Constants.h"
+#include "Numbers.h"
 #include <cstdio>
 #include <time.h>
-#include "Numbers.h"
 
 using namespace pack;
 
@@ -173,11 +173,11 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    else if (p.type == pack::click) {
       Click click(p);
       if(om.check(id, ObjectType::Player)) {
-         Geometry point(Point(click.pos));
+         Geometry point = Point(click.pos);
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
          std::vector<Item *> items = om.collidingItems(point, click.pos);
-         if(items.size() > 0) {
+		 if(items.size() > 0) {
             Player &pl = *om.getPlayer(click.id);
             Item &item = *items[0];
             int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
@@ -188,6 +188,10 @@ void GameServer::processClientPacket(pack::Packet p, int id)
                pl.gainRupees(rupees);
                cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
             }
+			else if(item.type == ItemType::Stump)
+			{
+				return;
+			}
             cm.broadcast(Signal(Signal::remove, item.id));
             om.remove(item.id); //only remove one item per click max
          }

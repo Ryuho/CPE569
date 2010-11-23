@@ -85,6 +85,9 @@ namespace geom {
 
    struct Geometry {
       Geometry(GeometryBase &g) : ptr(g.clone()) {}
+      Geometry(Circle g) : ptr(g.clone()) {}
+      Geometry(Point g) : ptr(g.clone()) {}
+      Geometry(Rectangle g) : ptr(g.clone()) {}
       Geometry(GeometryBase *g) : ptr(g) {}
       bool collision(Geometry g) { return ptr->collision(g.ptr.get()); }
       boost::shared_ptr<GeometryBase> ptr;
