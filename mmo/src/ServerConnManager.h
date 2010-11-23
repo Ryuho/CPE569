@@ -55,6 +55,8 @@ struct ConnectionManager {
 
    std::map<int, int> idToServerIndex;
    std::vector<ConnectionInfo> serverConnections;
+
+   int ownServerId;
 };
 
 

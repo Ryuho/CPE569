@@ -16,12 +16,33 @@ using sock::Server;
 using sock::Packet;
 using sock::setupSockets;
 
+int nextId = 100;
+int nextServId = 1;
 
 int newId()
 {
-   static int id = 100;
-   return id++;
+   return nextId++;
 }
+
+int newServId()
+{
+   return nextServId++;
+}
+
+int updateServId(int last)
+{
+   nextServId = max(nextServId, last+1);
+}
+
+struct TConn {
+   TConn(sock::Connection conn) : conn(conn) {}
+   int servId;
+   Connection conn;
+};
+
+namespace ServerOps { enum {
+   request, good, bad
+};}
 
 int main(int argc, const char* argv[])
 {
@@ -30,6 +51,7 @@ int main(int argc, const char* argv[])
    int clientPort, serverPort;
    const char* altAddress = 0;
    int altPort = -1;
+   vector<TConn> tconns;
 
    if(argc == 3) {
       clientPort = atoi(argv[1]);
@@ -64,13 +86,24 @@ int main(int argc, const char* argv[])
    if(altPort > 0) {
       printf("Connecting to another server: %s %d\n", altAddress, altPort);
       Connection servConn(altAddress,altPort);
+      sock::Packet p;
+
       if (!servConn) {
          printf("Failed to connect to alternate server\n");
          return -1;
       }
+      servConn.send(sock::Packet().writeInt(ServerOps::request));
+      if (!servConn.select(1000)) {
+         printf("timed out waiting for host server\n");
+         return -1;
+      }
+      p.readInt(cm.ownServerId);
+      printf("Connected to host server with id %d!\n", cm.ownServerId);
+
       cm.addServerConnection(servConn,newId());
    } else {
-      printf("Server started as independant host.\n");
+      cm.ownServerId = newServId();
+      printf("Server started as independant host. id: %d\n", cm.ownServerId);
    }
 
    GameServer gs(cm);
@@ -86,7 +119,11 @@ int main(int argc, const char* argv[])
 
       while (serverServ.select()) {
          int id = newId();
-         cm.addServerConnection(serverServ.accept(), id);
+         Connection newServ = serverServ.accept();
+         int sid = newServId();
+         sock::Packet p;
+         newServ.send(p.writeInt(sid));
+         cm.addServerConnection(newServ, id);
          gs.newServerConnection(id);
       }
    
