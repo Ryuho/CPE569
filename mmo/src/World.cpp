@@ -5,6 +5,7 @@
 #include "Constants.h"
 #include "GLUtil.h"
 #include "Sprite.h"
+#include "FreeType.h"
 
 using namespace constants;
 
@@ -15,6 +16,8 @@ struct WorldData {
    float dt;
    vec2 playerMoveDir;
    int arrowTick, specialTick;
+
+   freetype::font_data mono;
 
    ObjectHolder objs;
    Player player, shadow;
@@ -115,8 +118,11 @@ void WorldData::init(const char *host, int port)
    }
 	
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
+   player.exp = 0;
+   player.rupees = 0;
    setUpBoarder();
    shadow = player;
+
 
    printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
@@ -129,6 +135,8 @@ void World::graphicsInit(int width, int height)
    data->height = height;
 
    data->ground = fromTGA("grass.tga");
+   
+   data->mono.init("DejaVuSansMono.ttf", 12);
 }
 
 void WorldData::update()
@@ -193,13 +201,22 @@ void WorldData::processPacket(pack::Packet p)
    }
    else if (p.type == initialize) {
       Initialize i(p);
-      if (i.type == ObjectType::Player && i.id != player.id) {
-         objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
-         printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+      if (i.type == ObjectType::Player) {
+         if(i.id == player.id) {
+            player.pos = i.pos;
+            player.dir = i.dir;
+            player.hp = i.hp;
+            printf("Initialized self %d <%0.1f, %0.1f>\n", 
+               i.id, i.pos.x, i.pos.y);
+         } 
+         else {
+            objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
+            printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+         }
       }
       else if (i.type == ObjectType::Missile) {
          objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
-      } 
+      }
       else if (i.type == ObjectType::NPC) {
          objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
@@ -305,6 +322,8 @@ void WorldData::draw()
    objs.drawAll();
    
    player.draw();
+   
+   freetype::print(mono, 50, 50, "Experience: %d        Rupees: %d", player.exp, player.rupees);
 }
 
 void World::move(mat::vec2 dir)

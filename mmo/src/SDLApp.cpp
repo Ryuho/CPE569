@@ -1,4 +1,5 @@
 #include "SDLApp.h"
+#include "FreeType.h"
 #include <ctime>
 using namespace mat;
 

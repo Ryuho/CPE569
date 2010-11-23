@@ -203,6 +203,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\src\ServerConnManager.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\ServerConnManager.h"
+			>
+		</File>
+		<File
 			RelativePath=".\src\ServerData.cpp"
 			>
 		</File>

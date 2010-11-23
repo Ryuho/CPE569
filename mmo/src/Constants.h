@@ -18,7 +18,7 @@ namespace constants {
    const int deltaRegion = 1;
 
    const int regionSize = 1000;
-   const int noDrawTicks = 2000;
+   const int noDrawTicks = 400;
 
    #define PI 3.14159265359
 

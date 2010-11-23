@@ -135,7 +135,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SDL.lib SDLmain.lib OpenGL32.lib GLu32.lib glew32.lib wsock32.lib"
+				AdditionalDependencies="SDL.lib SDLmain.lib OpenGL32.lib GLu32.lib glew32.lib wsock32.lib freetype.lib"
 				OutputFile="$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -236,6 +236,14 @@
 		</File>
 		<File
 			RelativePath=".\src\Constants.h"
+			>
+		</File>
+		<File
+			RelativePath=".\src\FreeType.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\FreeType.h"
 			>
 		</File>
 		<File
