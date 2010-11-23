@@ -367,9 +367,9 @@ void GameServer::updatePlayers(int ticks, float dt)
          std::vector<Player *> aoiplayers = om.collidingPlayers(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoiplayers.size(); i++) {
             Player &player = *aoiplayers[i];
+            cm.clientSendPacket(HealthChange(player.id, player.hp), p.id);
             if(player.id != p.id) {
                //Sending pos packet to player can cause jittering
-               cm.clientSendPacket(HealthChange(player.id, player.hp), p.id);
                cm.clientSendPacket(Position(player.pos, player.dir, player.moving, player.id), 
                   p.id);
             }
