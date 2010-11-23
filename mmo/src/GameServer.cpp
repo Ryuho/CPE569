@@ -127,9 +127,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Position pos(p);
       if(om.check(id, ObjectType::Player)) {
          om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
-////////////TODO: Replace with Area of Influence ////////////
-/////////////////////////////////////////////////////////////
-//cm.broadcast(pos);
       } else
          printf("Accessing unknown Player %d\n", pos.id);
    }
@@ -177,23 +174,28 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
          std::vector<Item *> items = om.collidingItems(point, click.pos);
-		 if(items.size() > 0) {
+		    if(items.size() > 0) {
             Player &pl = *om.getPlayer(click.id);
             Item &item = *items[0];
-            int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
-               item.type == ItemType::BlueRupee ? blueRupeeValue :
-               item.type == ItemType::RedRupee ? redRupeeValue :
-               0;
-            if(rupees > 0) {
-               pl.gainRupees(rupees);
-               cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
+            if(item.isCollectable()) {
+               int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+                     item.type == ItemType::BlueRupee ? blueRupeeValue :
+                     item.type == ItemType::RedRupee ? redRupeeValue :
+                     0;
+               if(rupees > 0) {
+                  pl.gainRupees(rupees);
+                  cm.sendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
+               }
+			      else if(item.type == ItemType::Heart) {
+				      //cm.broadcast(HealthChange(pl.id, pl.hp));
+                  pl.gainHp(heartValue);
+			      }
+               else
+                  printf("Click collected unknown item type %d type=%d\n",
+                     item.id, item.type);
+               cm.broadcast(Signal(Signal::remove, item.id));
+               om.remove(item.id); //only remove one item per click max
             }
-			else if(item.type == ItemType::Stump)
-			{
-				return;
-			}
-            cm.broadcast(Signal(Signal::remove, item.id));
-            om.remove(item.id); //only remove one item per click max
          }
       }
       else
@@ -239,11 +241,28 @@ void GameServer::updateNPCs(int ticks, float dt)
    for(unsigned i = 0; i < om.npcs.size(); i++) {
       NPC &npc = *om.npcs[i];
       bool removeNPC = false;
-      bool npcHit = false;
+      //bool npcHit = false;
+
+      std::vector<Item *> collidedItems = om.collidingItems(npc.getGeom(), npc.pos);
+      if(collidedItems.size() > 0) {
+         Item &item = *collidedItems[0];
+         if(item.isCollidable()) {
+            vec2 pushDir = mat::to(item.pos, npc.pos);
+            if(pushDir.length() > 0.01) //no divide by zero!
+               pushDir.normalize();
+            else
+               pushDir = vec2(1, 0);
+            npc.move(item.pos + pushDir * (item.getRadius() + npc.getRadius()), 
+               npc.dir, npc.moving);
+            //not needed since self is within Area of Influence?
+            //cm.sendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
+         }
+      }
+
       std::vector<Missile *> ms = om.collidingMissiles(npc.getGeom(), npc.pos);
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
          Missile &m = *ms[j];
-         npcHit = true;
+         //npcHit = true;
          npc.takeDamage(m.getDamage());
          if(npc.hp == 0) {
             if(om.check(m.owned, ObjectType::Player)) {
@@ -269,11 +288,8 @@ void GameServer::updateNPCs(int ticks, float dt)
          i--;
       } else {
          npc.update();
-////////////TODO: Replace with Area of Influence ////////////
-/////////////////////////////////////////////////////////////
-//cm.broadcast(pack::Position(npc.pos, npc.dir, npc.moving, npc.id));
-         if(npcHit)
-            cm.broadcast(HealthChange(npc.id, npc.hp));
+         //if(npcHit)
+            //cm.broadcast(HealthChange(npc.id, npc.hp));
       }
    }
 }
@@ -290,8 +306,17 @@ void GameServer::updateMissiles(int ticks, float dt)
          om.remove(m.id);
          i--;
       }
-      else
+      else {
          m.update();
+         std::vector<Item *> collidedItems = om.collidingItems(m.getGeom(), m.pos);
+         for(unsigned i = 0; i < collidedItems.size(); i++) {
+            if(collidedItems[i]->isCollidable()) {
+               cm.broadcast(Signal(Signal::remove, m.id).makePacket());
+               om.remove(m.id);
+               break;
+            }
+         }
+      }
    }
 }
 
@@ -299,29 +324,32 @@ void GameServer::updatePlayers(int ticks, float dt)
 {
    for(unsigned pdx = 0; pdx < om.players.size(); pdx++) {
       Player &p = *om.players[pdx];
-      /*
+
       std::vector<Item *> collidedItems = om.collidingItems(p.getGeom(), p.pos);
       if(collidedItems.size() > 0) {
-         printf(".");
          Item &item = *collidedItems[0];
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, p.pos);
-            if(pushDir.length() > 0.1)
+            if(pushDir.length() > 0.01) //no divide by zero!
                pushDir.normalize();
-            p.pos = pushDir * item.getRadius();
+            else
+               pushDir = vec2(1, 0);
+            p.move(item.pos + pushDir * (item.getRadius() + playerRadius), p.dir);
+            //not needed since self is within Area of Influence?
+            //cm.sendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
          }
       }
-      */
+
       //if player is colliding with any missle that is not owned by it, they take dmg
       std::vector<Missile *> collidedMis = om.collidingMissiles(p.getGeom(), p.pos);
-      bool damaged = false;
+      //bool damaged = false;
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *collidedMis[mdx];
          if(m.owned != p.id) {
             p.takeDamage(m.getDamage());
             cm.broadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);
-            damaged = true;
+            //damaged = true;
          }
       }
       if(p.hp == 0) {
@@ -332,20 +360,22 @@ void GameServer::updatePlayers(int ticks, float dt)
          pdx--;
          continue;
       } else {
-         if(damaged)
-            cm.broadcast(HealthChange(p.id, p.hp));
+         //if(damaged)
+         //   cm.broadcast(HealthChange(p.id, p.hp));
 
          Geometry areaOfInfluence(Circle(p.pos, areaOfInfluenceRadius));
          std::vector<NPC *> aoinpcs = om.collidingNPCs(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
             NPC &npc = *aoinpcs[i];
             cm.sendPacket(Position(npc.pos, npc.dir, npc.moving, npc.id), p.id);
+            cm.sendPacket(HealthChange(npc.id, npc.hp), p.id);
          }
          std::vector<Player *> aoiplayers = om.collidingPlayers(areaOfInfluence, p.pos);
          for(unsigned i = 0; i < aoiplayers.size(); i++) {
             Player &player = *aoiplayers[i];
             cm.sendPacket(Position(player.pos, player.dir, player.moving, player.id), 
                p.id);
+            cm.sendPacket(HealthChange(player.id, player.hp), p.id);
          }
       }
    }

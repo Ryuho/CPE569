@@ -75,6 +75,12 @@ pack::Packet Player::serialize() const
    return p;
 }
 
+void Player::gainHp(int hp)
+{
+   this->hp = this->hp + hp;
+   util::clamp(this->hp, 0, playerMaxHp);
+}
+
 
 // Missile
 
@@ -411,6 +417,23 @@ bool Item::isCollidable() const
          printf("Error Item::isCollidable - Unknown item type %d\n", type);
    }
    return type == ItemType::Stump;
+}
+
+bool Item::isCollectable() const
+{
+   switch (type) {
+      case ItemType::GreenRupee:
+      case ItemType::RedRupee:
+      case ItemType::BlueRupee:
+      case ItemType::Heart:
+         return true;
+      case ItemType::Explosion:
+      case ItemType::Stump:
+         break;
+      default:
+         printf("Error Item::isCollectable - Unknown item type %d\n", type);
+   }
+   return false;
 }
 
 float Item::getRadius() const

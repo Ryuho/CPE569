@@ -177,6 +177,7 @@ void WorldData::processPacket(pack::Packet p)
       Position pos(p);
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
+         player.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("Accessing unknown Player %d\n", pos.id);

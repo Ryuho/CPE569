@@ -26,6 +26,8 @@ namespace constants {
    const int playerMaxHp = 200;
 	const int worldHeight = 5000;
 	const int worldWidth = 5000;
+
+   const int heartValue = playerMaxHp/4;
    
    const float playerRadius = 20.0f; // used for collision detection
    const float arrowRadius = 16.0f; // used for collision detection

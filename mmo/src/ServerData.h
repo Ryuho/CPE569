@@ -37,6 +37,7 @@ namespace server {
       float getRadius() const;
       int getObjectType() const;
       Packet serialize() const;
+      void gainHp(int hp);
       void deserialize(Packet &serialized);
       
       vec2 pos, dir;
@@ -84,6 +85,7 @@ namespace server {
       Item(Packet &serialized);
       float getRadius() const;
       Geometry getGeom() const;
+      bool isCollectable() const;
       bool isCollidable() const;
       void move(vec2 pos);
       int getObjectType() const;
