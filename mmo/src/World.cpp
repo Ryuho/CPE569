@@ -118,6 +118,8 @@ void WorldData::init(const char *host, int port)
    }
 	
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
+   player.exp = 0;
+   player.rupees = 0;
    setUpBoarder();
    shadow = player;
 
@@ -311,7 +313,7 @@ void WorldData::draw()
    
    player.draw();
    
-   freetype::print(mono, 50, 50, "OH GOOD LORD");
+   freetype::print(mono, 50, 50, "Experience: %d        Rupees: %d", player.exp, player.rupees);
 }
 
 void World::move(mat::vec2 dir)
