@@ -299,13 +299,13 @@ void NPC::update()
    }
 }
 
-Geometry NPC::getGeom() const
+float NPC::getRadius() const
 {
    switch(type) {
       case NPCType::Fairy: //16x16
       case NPCType::Bat:
       case NPCType::Bird:
-         return Circle(pos, 16*1.5f);
+         return 16*1.5f;
          break;
       case NPCType::Thief: //16x32
       case NPCType::Squirrel: 
@@ -314,7 +314,7 @@ Geometry NPC::getGeom() const
       case NPCType::Cactus:
       case NPCType::Wizard:
       case NPCType::Goblin:
-         return Circle(pos, 22*1.5f);
+         return 22*1.5f;
          break;
       case NPCType::Cyclops: //32x32
       case NPCType::Chicken:
@@ -322,12 +322,17 @@ Geometry NPC::getGeom() const
       case NPCType::Bush:
       case NPCType::BigFairy:
       case NPCType::Ganon:
-         return Circle(pos, 23.5f*1.5f);
+         return 23.5f*1.5f;
          break;
       default:
-         printf("Error NPC::getGeom() - unknown NPC type %d\n", type);
+         printf("Error NPC::getRadius() - unknown NPC type %d\n", type);
    }
-   return Circle(pos, 0.0f);
+   return 0.0f;
+}
+
+Geometry NPC::getGeom() const
+{
+   return Circle(pos, getRadius());
 }
 
 void NPC::takeDamage(int damage)
@@ -392,27 +397,48 @@ void Item::move(vec2 pos)
    this->pos = pos;
 }
 
-Geometry Item::getGeom() const
+bool Item::isCollidable() const
 {
    switch (type) {
       case ItemType::GreenRupee:
       case ItemType::RedRupee:
       case ItemType::BlueRupee:
-         return Circle(pos, 12*1.5f);
+      case ItemType::Explosion:
+      case ItemType::Stump:
+      case ItemType::Heart:
+         break;
+      default:
+         printf("Error Item::isCollidable - Unknown item type %d\n", type);
+   }
+   return type == ItemType::Stump;
+}
+
+float Item::getRadius() const
+{
+   switch (type) {
+      case ItemType::GreenRupee:
+      case ItemType::RedRupee:
+      case ItemType::BlueRupee:
+         return 12*1.5f;
          break; //unreachable
       case ItemType::Explosion:
-         return Circle(pos, 55*1.5f);
+         return 55*1.5f;
          break;
       case ItemType::Stump:
-         return Circle(pos, 32*1.5f);
+         return 32*1.5f;
          break;
       case ItemType::Heart:
-         return Circle(pos, 13*1.5f);
+         return 13*1.5f;
          break;
       default:
          printf("Error Item::getGeom - Unknown item type %d\n", type);
    }
-   return Circle(pos, 0.0f);
+   return 0.0f;
+}
+
+Geometry Item::getGeom() const
+{
+   return Circle(pos, getRadius());
 }
 
 int Item::getObjectType() const

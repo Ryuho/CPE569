@@ -34,6 +34,7 @@ namespace server {
       void gainExp(int exp);
       void gainRupees(int rupees);
       Geometry getGeom() const;
+      float getRadius() const;
       int getObjectType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
@@ -63,6 +64,7 @@ namespace server {
       NPC(Packet &serialized);
       void update();
       void takeDamage(int damage);
+      float getRadius() const;
       Geometry getGeom() const;
       int getLoot();
       int getExp();
@@ -80,7 +82,9 @@ namespace server {
    struct Item : Object {
       Item(int id, vec2 pos, int type = ItemType::GreenRupee);
       Item(Packet &serialized);
+      float getRadius() const;
       Geometry getGeom() const;
+      bool isCollidable() const;
       void move(vec2 pos);
       int getObjectType() const;
       Packet serialize() const;

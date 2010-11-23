@@ -295,12 +295,25 @@ void GameServer::updatePlayers(int ticks, float dt)
 {
    for(unsigned pdx = 0; pdx < om.players.size(); pdx++) {
       Player &p = *om.players[pdx];
+      /*
+      std::vector<Item *> collidedItems = om.collidingItems(p.getGeom(), p.pos);
+      if(collidedItems.size() > 0) {
+         printf(".");
+         Item &item = *collidedItems[0];
+         if(item.isCollidable()) {
+            vec2 pushDir = mat::to(item.pos, p.pos);
+            if(pushDir.length() > 0.1)
+               pushDir.normalize();
+            p.pos = pushDir * item.getRadius();
+         }
+      }
+      */
       //if player is colliding with any missle that is not owned by it, they take dmg
-      std::vector<Missile *> collided = om.collidingMissiles(p.getGeom(), p.pos);
+      std::vector<Missile *> collidedMis = om.collidingMissiles(p.getGeom(), p.pos);
       bool damaged = false;
-      for(unsigned mdx = 0; mdx < collided.size(); mdx++) {
-         Missile &m = *collided[mdx];
-         if(collided[mdx]->owned != p.id) {
+      for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
+         Missile &m = *collidedMis[mdx];
+         if(m.owned != p.id) {
             p.takeDamage(m.getDamage());
             cm.broadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);
@@ -330,7 +343,6 @@ void GameServer::updatePlayers(int ticks, float dt)
             cm.sendPacket(Position(player.pos, player.dir, player.moving, player.id), 
                p.id);
          }
-
       }
    }
 }
