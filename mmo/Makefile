@@ -5,13 +5,13 @@ server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o obj/FreeType.o
-	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU
+	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU -lfreetype
 
 client_bot: obj/botmain.o obj/BotApp.o obj/BotWorld.o obj/BotCharacters.o obj/socket.o
 	g++ -o client_bot $^ libGLEW.a -lglut -lSDL -lGLU
 
 obj/FreeType.o: src/FreeType.h src/FreeType.cpp
-	g++ -c -o obj/FreeType.o src/FreeType.cpp
+	g++ -c -o obj/FreeType.o src/FreeType.cpp -I/usr/include/freetype2
 
 obj/ServerData.o: src/ServerData.h src/ServerData.cpp
 	g++ -c -o obj/ServerData.o src/ServerData.cpp
