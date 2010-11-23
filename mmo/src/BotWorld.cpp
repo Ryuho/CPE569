@@ -4,10 +4,18 @@
 
 using namespace constants;
 
+const float BotWorldData::botHomingRange = 1200.0f;
+const float BotWorldData::botAggroRange = 700.0f;
+const float BotWorldData::botFightRange = 300.0f;
+const float BotWorldData::maxBotItemGrab = botAggroRange;
+const float BotWorldData::maxBotWalkDistance 
+      = (constants::worldWidth + constants::worldHeight - 1)/4;
+
 // This pointer points to the current 
 
 // Interface stubs
-void BotWorld::init(const char *host, int port) {
+void BotWorld::init(const char *host, int port)
+{
    data.init(host,port);
 }
 
@@ -60,6 +68,18 @@ void BotWorldData::init(const char *host, int port)
    player = Player(i.id, i.pos, i.dir, playerMaxHp);
    initPos = i.pos;
 
+   fightNpc = 0;
+   tostart = false;
+   fighting = false;
+   homing = false;
+   dodging = false;
+   looting = true;
+   shooting = false;
+   nextLoot = 0;
+   nextDirChange = 0;
+   fightingId = 0;
+   delay = 30;
+
    printf("Connected to server successfully\nYour id is %d\n", player.id);
 }
 
@@ -79,27 +99,6 @@ void sleepms(int ms)
 
 #endif
 
-static int printcount = 0;
-//static float dirchange = 0.0f;
-//static const float timeBetweenDirChanges = 1.0f; //2 seconds
-static const float botHomingRange = 1200.0f;
-static const float botAggroRange = 700.0f;
-static const float botFightRange = 300.0f;
-static const float maxBotWalkDistance = (worldWidth + worldHeight - 1)/4;
-static const float maxBotItemGrab = botAggroRange;
-bool tostart = false;
-bool fighting = false;
-int fightingId = 0; //npc we are fighting
-int delay = 30;
-static const int printDelay = 50;
-bool homing = false;
-bool looting = true;
-static const int botLootTickDelay = 1300;
-static int nextLoot = 0;
-static int nextDirChange = 0;
-static const int dirChangeDelay = 2000;
-
-
 void BotWorldData::update(int ticks, float dt)
 {
    //handle packets
@@ -111,7 +110,119 @@ void BotWorldData::update(int ticks, float dt)
          exit(-1);
       }
    }
+   updatePlayerPos(ticks, dt);
+   objs.updateAll();
 
+   /////////////////// BOT AI ///////////////////
+   //////////////////////////////////////////////
+   player.moving = true;
+   shooting = false;
+   if(tostart) { 
+      //Returning to start
+      tostart = mat::dist(player.pos, initPos) > 100;
+   }
+   else {
+      tostart = mat::dist(player.pos, initPos) > maxBotWalkDistance;
+      if(tostart) {
+         player.dir = mat::to(player.pos, initPos);
+         printf("returning to start\n");
+      }
+      else if(fighting) {
+         updateFighting(ticks, dt);
+      } else 
+         updateNotFighting(ticks, dt);
+   }
+   player.dir.normalize();
+
+   //pick up nearby items
+   if(looting) {
+      updateLooting(ticks, dt);
+   }
+   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
+   if(shooting) {
+      shootArrow(mat::to(player.pos, fightNpc->pos).normalize());
+   }
+   //sleep delay (so it doesn't eat the CPU resources)
+   sleepms(delay);
+}
+
+void BotWorldData::updateLooting(int ticks, float dt)
+{
+   for(unsigned i = 0; i < objs.items.size(); i++) {
+      if(objs.items[i].isCollectable() 
+            && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
+            && nextLoot < ticks) {
+         player.moving = false;
+         pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
+         nextLoot = ticks + botLootTickDelay;
+         rightClick(objs.items[i].pos);
+         printf("looting item %d\n", objs.items[i].id);
+      }
+   }
+}
+
+void BotWorldData::updateFighting(int ticks, float dt)
+{
+   //finish NPC
+   if(objs.checkObject(fightingId, ObjectType::NPC)) {
+      fightNpc = objs.getNPC(fightingId);
+      if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f
+            || fightNpc->lastUpdate > noDrawTicks)
+         fighting = false;
+      else {
+         if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
+            player.moving = false;
+         if(homing) {
+            player.dir = mat::to(player.pos, fightNpc->pos);
+            player.dir.normalize();
+            if(dodging && ticks > nextDirChange) {
+               float randAngle = ((rand() % 359) / 180.0f) * PI;
+               nextDirChange = ticks + dirChangeDelay;
+               player.dir = vec2(cos(randAngle), sin(randAngle));
+            }
+         }
+         else if(ticks > nextDirChange) {
+            nextDirChange = ticks + dirChangeDelay;
+            float randAngle = ((rand() % 359) / 180.0f) * PI;
+            player.dir = vec2(cos(randAngle), sin(randAngle));
+         }
+         shooting = true;
+      }
+   } else
+      fighting = false;
+}
+
+void BotWorldData::updateNotFighting(int ticks, float dt)
+{
+   //check if NPC in range (turn on fighting)
+   for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
+      if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
+            && objs.npcs[i].lastUpdate < noDrawTicks) {
+         fightingId = objs.npcs[i].id;
+         fighting = true;
+         printf("fighting %d\n", fightingId);
+      }
+   }
+   if(!fighting) {
+      //Walking around
+      if(ticks > nextDirChange) {
+         nextDirChange = ticks + dirChangeDelay;
+         if(homing) {
+            for(unsigned i = 0; i < objs.npcs.size(); i++) {
+               if(mat::dist(player.pos, objs.npcs[i].pos) < botHomingRange) {
+                  player.dir = mat::to(player.pos, objs.npcs[i].pos);
+               }
+            }
+         } else {
+            float randAngle = ((rand() % 359) / 180.0f) * PI;
+            player.dir = vec2(cos(randAngle), sin(randAngle));
+         }
+      }
+   }
+}
+
+void BotWorldData::updatePlayerPos(int ticks, float dt)
+{
    //ensure the bot doesn't go off of map
    if(player.moving) {
       player.move(player.pos + player.dir * dt * playerSpeed, player.dir, player.moving);
@@ -129,109 +240,6 @@ void BotWorldData::update(int ticks, float dt)
 		}
       //pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
    }
-
-   //update objects (needed?)
-   objs.updateAll();
-   
-   //Crash detection
-   /*
-   printcount++;
-   if(printcount == printDelay) {
-      printf("0\n");
-   } else if (printcount >= 2*printDelay) {
-      printf("1\n");
-      printcount = 0;
-   }
-   */
-
-   /////////////////// BOT AI ///////////////////
-   //////////////////////////////////////////////
-   player.moving = true;
-   bool shooting = false;
-   NPC *fightNpc = 0;
-   if(tostart) { 
-      //Returning to start
-      tostart = mat::dist(player.pos, initPos) > 100;
-   }
-   else {
-      tostart = mat::dist(player.pos, initPos) > maxBotWalkDistance;
-      if(tostart) {
-         player.dir = mat::to(player.pos, initPos);
-         printf("returning to start\n");
-      }
-      else if(fighting) {
-         //finish NPC
-         if(objs.checkObject(fightingId, ObjectType::NPC)) {
-            fightNpc = objs.getNPC(fightingId);
-            if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f
-                  || fightNpc->lastUpdate > noDrawTicks)
-               fighting = false;
-            else {
-               if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
-                  player.moving = false;
-               if(homing) {
-                  player.dir = mat::to(player.pos, fightNpc->pos);
-                  player.dir.normalize();
-               }
-               else if(ticks > nextDirChange) {
-                  nextDirChange = ticks + dirChangeDelay;
-                  float randAngle = ((rand() % 359) / 180.0f) * PI;
-                  player.dir = vec2(cos(randAngle), sin(randAngle));
-               }
-               shooting = true;
-            }
-         } else
-            fighting = false;
-      } else {
-         //check if NPC in range (turn on fighting)
-         for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
-            if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
-                  && objs.npcs[i].lastUpdate < noDrawTicks) {
-               fightingId = objs.npcs[i].id;
-               fighting = true;
-               printf("fighting %d\n", fightingId);
-            }
-         }
-         if(!fighting) {
-            //Walking around
-            if(ticks > nextDirChange) {
-               nextDirChange = ticks + dirChangeDelay;
-               if(homing) {
-                  for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
-                     if(mat::dist(player.pos, objs.npcs[i].pos) < botHomingRange) {
-                        player.dir = mat::to(player.pos, objs.npcs[i].pos);
-                     }
-                  }
-               } else {
-                  float randAngle = ((rand() % 359) / 180.0f) * PI;
-                  player.dir = vec2(cos(randAngle), sin(randAngle));
-               }
-            }
-         }
-      }
-   }
-   player.dir.normalize();
-
-   //pick up nearby items
-   if(looting) {
-      for(unsigned i = 0; i < objs.items.size(); i++) {
-         if(objs.items[i].isCollectable() 
-               && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
-               && nextLoot < ticks) {
-            player.moving = false;
-            pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
-            nextLoot = ticks + botLootTickDelay;
-            rightClick(objs.items[i].pos);
-            printf("looting item %d\n", objs.items[i].id);
-         }
-      }
-   }
-   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
-   if(shooting) {
-      shootArrow(mat::to(player.pos, fightNpc->pos).normalize());
-   }
-   //sleep delay (so it doesn't eat the CPU resources)
-   sleepms(delay);
 }
 
 void BotWorldData::processPacket(pack::Packet p)
