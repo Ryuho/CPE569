@@ -50,7 +50,7 @@ bool RectangleCircle(const Rectangle *rec, const Circle *c)
    else if(test.y > rec->botLeft.y + rec->h)
       test.y = rec->botLeft.y + rec->h;
 
-   return mat::dist(test, c->pos) < c->radius;
+   return mat::dist(test, c->pos) <= c->radius;
 }
 
 bool RectanglePlane(const Rectangle *rec, const Plane *pl)

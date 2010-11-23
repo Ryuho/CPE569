@@ -219,7 +219,7 @@ void GameServer::update(int ticks)
    //if there is a player connected, spawn up to 6 NPCs
 
    if(om.players.size() > 0) {
-      if(rint(5) == 0 && om.npcs.size() <= 6){
+      if(rint(5) == 0 && om.npcs.size() < 10){
          spawnNPC(newId());
       }
    }

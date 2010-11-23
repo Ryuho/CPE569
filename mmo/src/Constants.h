@@ -15,6 +15,7 @@ namespace constants {
    const float areaOfInfluenceRadius = 1500;
 
    const int predictTicks = 200;
+   const int deltaRegion = 1;
 
    const int regionSize = 1000;
    const int noDrawTicks = 2000;

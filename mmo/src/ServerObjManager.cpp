@@ -197,10 +197,10 @@ void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs
    int x, y;
    getRegion(pos, x, y);
    unsigned minX, maxX, minY, maxY;
-   minX = max(0, x-1);
-   maxX = min((int)regions.size()-1, x+1);
-   minY = max(0, y-1);
-   maxY = min((int)regions[x].size()-1, y+1);
+   minX = max(0, x-deltaRegion);
+   maxX = min((int)regions.size()-1, x+deltaRegion);
+   minY = max(0, y-deltaRegion);
+   maxY = min((int)regions[x].size()-1, y+deltaRegion);
    regs.clear();
    for(unsigned i = minX; i <= maxX; i++) {
       for(unsigned j = minY; j <= maxY; j++) {
