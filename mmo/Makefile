@@ -1,7 +1,7 @@
 
 all: client server client_bot
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o obj/ServerObjManager.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o obj/ServerObjManager.o  obj/ServerConnManager.o
 	g++ -o server $^ -lrt
 
 client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o obj/FreeType.o
@@ -13,17 +13,20 @@ client_bot: obj/botmain.o obj/BotApp.o obj/BotWorld.o obj/BotCharacters.o obj/so
 obj/FreeType.o: src/FreeType.h src/FreeType.cpp
 	g++ -c -o obj/FreeType.o src/FreeType.cpp -I/usr/include/freetype2
 
-obj/ServerData.o: src/ServerData.h src/ServerData.cpp
-	g++ -c -o obj/ServerData.o src/ServerData.cpp
-
 obj/CharacterGraphics.o: src/CharacterGraphics.cpp src/Characters.h
 	g++ -c -o obj/CharacterGraphics.o src/CharacterGraphics.cpp -I/home/whess/glew-1.5.6/include
 
-obj/GameServer.o: src/GameServer.cpp src/GameServer.h src/packet.h src/ServerUtil.h
+obj/GameServer.o: src/GameServer.cpp src/GameServer.h src/packet.h src/ServerConnManager.h
 	g++ -c -o obj/GameServer.o src/GameServer.cpp
+
+obj/ServerData.o: src/ServerData.h src/ServerData.cpp
+	g++ -c -o obj/ServerData.o src/ServerData.cpp
 
 obj/ServerObjManager.o: src/ServerObjManager.h src/ServerObjManager.cpp
 	g++ -c -o obj/ServerObjManager.o src/ServerObjManager.cpp
+
+obj/ServerConnManager.o: src/ServerConnManager.h src/ServerConnManager.cpp src/packet.h
+	g++ -c -o obj/ServerConnManager.o src/ServerConnManager.cpp
 
 obj/server.o: src/server.cpp src/packet.h
 	g++ -c -o obj/server.o src/server.cpp
@@ -75,3 +78,4 @@ obj/Geometry.o: src/Geometry.cpp src/Geometry.h
 
 clean:
 	rm obj/*.o client client_bot server
+

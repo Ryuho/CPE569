@@ -1,7 +1,7 @@
 #ifndef _GAME_SERVER_H_
 #define _GAME_SERVER_H_
 
-#include "ServerUtil.h"
+#include "ServerConnManager.h"
 #include "ServerData.h"
 #include "ServerObjManager.h"
 
