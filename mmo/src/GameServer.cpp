@@ -156,7 +156,11 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    if (p.type == pack::position) {
       Position pos(p);
       if(om.check(id, ObjectType::Player)) {
-         om.getPlayer(id)->move(pos.pos, pos.dir, pos.moving != 0);
+         Player &pl = *om.getPlayer(id);
+         pl.move(pos.pos, pos.dir, pos.moving != 0);
+         //player went out of bounds or invalid positon?
+         if(pos.pos.x != pl.pos.x || pos.pos.y != pl.pos.y)
+            cm.clientSendPacket(Position(pl.pos, pl.dir, pl.moving, pl.id), pl.id);
       } else
          printf("Accessing unknown Player %d\n", pos.id);
    }
@@ -255,10 +259,9 @@ void GameServer::update(int ticks)
    dt = (float)((ticks - this->ticks)/1000.0);
    this->ticks = ticks;
 
-   //if there is a player connected, spawn up to 6 NPCs
-
+   //if there is a player connected, spawn up to 500 NPCs, distributed
    if(om.players.size() > 0) {
-      if(rint(25) == 0 && om.npcs.size() < 500){
+      if(om.npcs.size() < 500){
          for(unsigned i = 0; i < om.regions.size(); i++) {
             for(unsigned j = 0; j < om.regions[0].size(); j++) {
                spawnNPC(i, j);

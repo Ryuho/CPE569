@@ -157,8 +157,8 @@ bool ObjectManager::check(int id, int type)
 
 void ObjectManager::init(float width, float height, float regionSize)
 {
-   width = 2*width;
-   height = 2*height;
+   width = width;
+   height = height;
    this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
    this->regionSize = regionSize;
    unsigned xBuckets = ((int)(width / regionSize));
@@ -240,19 +240,20 @@ template <typename T>
 void omMoveTemplate(T *p, const vec2 &newPos, ObjectManager &om)
 {
    std::vector<Region *> regsOld, regsNew;
-   /*
+
    vec2 newPos2(newPos);
 
    if(!om.inBounds(newPos2)) {
+      if(om.inBounds(p->pos))
+         return;
       int x, y;
       om.getRegion(newPos2, x, y);
-      newPos2 = vec2(om.worldBotLeft.x + (0.5f+regionSize)*x, 
-         om.worldBotLeft.y + (0.5f+regionSize)*y);
+      newPos2 = vec2(om.worldBotLeft.x + regionSize*(x+0.5f), 
+         om.worldBotLeft.y + regionSize*(y+0.5f));
    }
-   */
 
    om.getRegions(p->pos, p->getGeom(), regsOld);
-   p->pos = newPos;
+   p->pos = newPos2;
    om.getRegions(p->pos, p->getGeom(), regsNew);
    bool same = regsOld.size() == regsNew.size() &&
       std::equal(regsOld.begin(), regsOld.end(), regsNew.begin());

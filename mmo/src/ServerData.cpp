@@ -18,7 +18,13 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
+   //this->pos = pos; Error to do this
+   //omMoveTemplate will get the wrong regions
+   //Even changing it after om.move() will be wrong 
+   //since if the move function doesn't like the positon
+
    getOM().move(this, pos);
+   //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
 }
@@ -91,6 +97,8 @@ Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
    this->dir = dir;
    if (this->dir.length() > 0.0)
       this->dir = normalize(this->dir);
+   else
+      this->dir = vec2(1,0);
 }
 
 void Missile::update()
@@ -141,8 +149,13 @@ pack::Packet Missile::serialize() const
 
 void Missile::move(vec2 pos, vec2 dir)
 {
+   //this->pos = pos; Error to do this
+   //omMoveTemplate will get the wrong regions
+   //Even changing it after om.move() will be wrong 
+   //since if the move function doesn't like the positon
+
    getOM().move(this, pos);
-   this->pos = pos;
+   //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
 }
 
@@ -341,8 +354,13 @@ void NPC::takeDamage(int damage)
 
 void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
+   //this->pos = pos; Error to do this
+   //omMoveTemplate will get the wrong regions
+   //Even changing it after om.move() will be wrong 
+   //since if the move function doesn't like the positon
+
    getOM().move(this, pos);
-   this->pos = pos;
+   //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
 }
@@ -398,8 +416,12 @@ Item::Item(int id, vec2 pos, int type)
 
 void Item::move(vec2 pos)
 {
+   //this->pos = pos; Error to do this
+   //omMoveTemplate will get the wrong regions
+   //Even changing it after om.move() will be wrong 
+   //since if the move function doesn't like the positon
+
    getOM().move(this, pos);
-   this->pos = pos;
 }
 
 bool Item::isCollidable() const
