@@ -11,7 +11,8 @@ using namespace constants;
 // Player
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), moving(false), hp(hp), rupees(0), exp(0)
+   : id(id), pos(pos), dir(dir), moving(false), hp(hp), 
+   rupees(0), exp(0), pvp(false)
 {
    
 }
@@ -95,7 +96,7 @@ Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
 {
    spawnTime = getTicks();
    this->dir = dir;
-   if (this->dir.length() > 0.0)
+   if (this->dir.length() > 0.0f)
       this->dir = normalize(this->dir);
    else
       this->dir = vec2(1,0);
@@ -287,14 +288,14 @@ void NPC::update()
       aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
       aiTicks = getTicks() + rand() % 1000 + 300;
       if(aiType == AIType::Walking) {
-         float angle = ((rand() % 360) / 180.0f) * PI;
+         float angle = ((rand() % 360) / 180.0f) * (float) PI;
          dir = vec2(cos(angle), sin(angle));
          dir.normalize();
       }
    }
    if(aiType == AIType::Attacking) {
       vec2 newDir = mat::to(pos, p->pos);
-      if(newDir.length() > 0.2f) {
+      if(newDir.length() > 0.0f) {
          newDir.normalize();
          dir = newDir;
          vec2 newPos = pos + dir * getDt() * npcAttackSpeed;

@@ -150,7 +150,7 @@ void WorldData::update()
       }
    }
 
-   if (playerMoveDir.length() > 0.0) {
+   if (playerMoveDir.length() > 0.0f) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
 		if (player.pos.x > wWidth - 41)
@@ -273,6 +273,26 @@ void WorldData::processPacket(pack::Packet p)
       else
          printf("Error: Health change on id %d\n", hc.id);
    }
+   else if(p.type == pack::changePvp) {
+      Pvp pvpPacket(p);
+      if(pvpPacket.id == getPlayer().id) {
+         getPlayer().pvp = pvpPacket.isPvpMode != 0;
+         if(getPlayer().pvp)
+            printf("You are in Pvp Mode\n");
+         else
+            printf("You are NOT in Pvp Mode\n");
+      }
+      else if(objs.checkObject(pvpPacket.id, ObjectType::Player)) {
+         Player &play = *objs.getPlayer(pvpPacket.id);
+         play.pvp = pvpPacket.isPvpMode != 0;
+         if(play.pvp)
+            printf("Player %d is in Pvp Mode\n", play.id);
+         else
+            printf("Player %d is NOT in Pvp Mode\n", play.id);
+      }
+      else
+         printf("Error: Unknown player %d for pvp packet\n", pvpPacket.id);
+   }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
 }
@@ -377,6 +397,12 @@ void World::spawnItem()
 void World::spawnNPC()
 {
    pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
+}
+
+void World::togglePvp()
+{
+   getPlayer().pvp = !getPlayer().pvp;
+   pack::Pvp(getPlayer().id, getPlayer().pvp).makePacket().sendTo(data->conn);
 }
 
 // Global accessor functions

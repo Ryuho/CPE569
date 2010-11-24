@@ -213,7 +213,7 @@ void BotWorldData::updateFighting(int ticks, float dt)
          }
          else if(ticks > nextDirChange) {
             nextDirChange = ticks + dirChangeDelay;
-            float randAngle = ((rand() % 359) / 180.0f) * PI;
+            float randAngle = ((rand() % 359) / 180.0f) * (float) PI;
             player.dir = vec2(cos(randAngle), sin(randAngle));
          }
          shooting = true;
@@ -244,7 +244,7 @@ void BotWorldData::updateNotFighting(int ticks, float dt)
                }
             }
          } else {
-            float randAngle = ((rand() % 359) / 180.0f) * PI;
+            float randAngle = ((rand() % 359) / 180.0f) * (float) PI;
             player.dir = vec2(cos(randAngle), sin(randAngle));
          }
       }
@@ -342,6 +342,8 @@ void BotWorldData::processPacket(pack::Packet p)
       }
       else
          printf("Error: Health change on id %d\n", hc.id);
+   }
+   else if(p.type == pack::changePvp) {
    }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());

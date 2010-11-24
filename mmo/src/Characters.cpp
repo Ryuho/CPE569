@@ -13,7 +13,7 @@ int stopAfterTicks = 100;
 ////////////////////////////////////////////
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp)
+   : id(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp), pvp(false)
 {
    lastUpdate = getTicks();
 }

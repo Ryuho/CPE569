@@ -26,6 +26,7 @@ struct Player {
    int animStart, lastUpdate;
    int id;
    int hp, rupees, exp;
+   bool pvp;
 };
 
 struct Missile {

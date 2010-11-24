@@ -41,7 +41,7 @@ namespace server {
       void deserialize(Packet &serialized);
       
       vec2 pos, dir;
-      bool moving, alive;
+      bool moving, alive, pvp;
       int id, hp, exp, rupees;
    };
 

@@ -31,7 +31,7 @@ int npcType(int regionX, int regionY)
    int difficulty = abs(std::max(regionX - rows/2, regionY - cols/2));
    //float difficultyScalar = ((float)rows) / (2*maxType);
    float difficultyScalar = ((float)maxType*2) / rows;
-   int type = difficulty*difficultyScalar + rand() % 5;
+   int type = (int)(difficulty*difficultyScalar + rand() % 5);
    return util::clamp(type, 0, maxType); //ensure valid range
 }
 
@@ -99,11 +99,13 @@ void GameServer::newClientConnection(int id)
 	cm.clientBroadcast(Initialize(newPlayer->id, 
       ObjectType::Player, 0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
 
-   //tell old players about new player
+   //tell new player about old players (includes self)
    for(unsigned i = 0; i < om.players.size(); i++) {
       Player &p = *om.players[i];
-      Initialize init(p.id, ObjectType::Player, 0, p.pos, p.dir, p.hp);
-      cm.clientSendPacket(init, id);
+      cm.clientSendPacket(Initialize(p.id, ObjectType::Player, 
+         0, p.pos, p.dir, p.hp), id);
+      if(p.pvp)
+         cm.clientSendPacket(Pvp(p.id, p.pvp), id);
    }
    //tell new player about previous Items
    for(unsigned i = 0; i < om.items.size(); i++) {
@@ -193,6 +195,9 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          else
             printf("Error: Packet Unknown Player id %d\n", id);
       }
+      else
+         printf("Error: Unknown Signal packet type=%d val=%d\n", 
+         signal.sig, signal.val);
    }
    else if (p.type == pack::arrow) {
       Arrow ar(p);
@@ -235,6 +240,16 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       else
          printf("Error invalid click Player id %d\n", click.id);
    }
+   else if(p.type == pack::changePvp) {
+      Pvp pvpPacket(p);
+      if(om.check(pvpPacket.id, ObjectType::Player)) {
+         Player &play = *om.getPlayer(pvpPacket.id);
+         play.pvp = pvpPacket.isPvpMode != 0;
+         cm.clientBroadcast(pvpPacket.makePacket());
+      }
+      else
+         printf("Error: Unknown player %d for pvp packet\n", pvpPacket.id);
+   }
    else
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
 }
@@ -261,7 +276,7 @@ void GameServer::update(int ticks)
 
    //if there is a player connected, spawn up to 500 NPCs, distributed
    if(om.players.size() > 0) {
-      if(om.npcs.size() < 500){
+      if(om.npcs.size() < 150){
          for(unsigned i = 0; i < om.regions.size(); i++) {
             for(unsigned j = 0; j < om.regions[0].size(); j++) {
                spawnNPC(i, j);
@@ -369,7 +384,7 @@ void GameServer::updatePlayers(int ticks, float dt)
          Item &item = *collidedItems[0];
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, p.pos);
-            if(pushDir.length() > 0.01) //no divide by zero!
+            if(pushDir.length() > 0.0f) //no divide by zero!
                pushDir.normalize();
             else
                pushDir = vec2(1, 0);
@@ -378,12 +393,16 @@ void GameServer::updatePlayers(int ticks, float dt)
          }
       }
 
-      //if player is colliding with any missle that is not owned by it, they take dmg
+      //if player is colliding with any missile that is not owned by it, they take dmg
       std::vector<Missile *> collidedMis = om.collidingMissiles(p.getGeom(), p.pos);
       //bool damaged = false;
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *collidedMis[mdx];
          if(m.owned != p.id) {
+            if(!p.pvp || (om.check(m.owned, ObjectType::Player) 
+                  && !om.getPlayer(m.owned)->pvp)) {
+               continue; //not in pvp mode, don't let other players attack
+            }
             p.takeDamage(m.getDamage());
             cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);

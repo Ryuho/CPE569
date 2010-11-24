@@ -19,6 +19,7 @@ struct World {
    void doSpecial();
    void spawnItem();
    void spawnNPC();
+   void togglePvp();
    void rightClick(vec2 mousePos);
 
 protected:

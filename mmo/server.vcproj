@@ -227,10 +227,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\src\ServerUtil.h"
-			>
-		</File>
-		<File
 			RelativePath=".\src\socket.cpp"
 			>
 		</File>

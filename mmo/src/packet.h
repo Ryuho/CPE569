@@ -24,6 +24,7 @@ enum PacketType {
    serialNPC = 11,
    serialMissile = 12,
    serverList = 13,
+   changePvp = 14,
 };
 
 // Simple structure for reading/writing using sockets.
@@ -132,6 +133,22 @@ struct Connect {
    }
 };
 
+struct Pvp
+{
+   int id; //player id
+   int isPvpMode;
+   Pvp() : id(0), isPvpMode(false) {}
+   Pvp(int id, bool isPvpMode) : id(id), isPvpMode(isPvpMode) {}
+   Pvp(Packet &p) {
+      p.data.readInt(id).readInt(isPvpMode).reset();
+   }
+   Packet makePacket() {
+      Packet p(changePvp);
+      p.data.writeInt(id).writeInt(isPvpMode);
+      return p;
+   }
+};
+
 // Used to combine all simple signals into one packet
 struct Signal {
    enum { 
@@ -141,7 +158,6 @@ struct Signal {
       hurtme = 4,       // damages the player
       changeExp = 5,
       changeRupee = 6,
-
    };
    int sig, val;
    Signal() : sig(0) {}

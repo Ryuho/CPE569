@@ -114,7 +114,7 @@ void drawQuad(vec2 bl, vec2 tr)
    glEnd();
 }
 
-void drawHpBar(float percent, int width, int height)
+void drawHpBar(float percent, int width, int height, bool isPvp)
 {
    float center = (width*2 * percent) - width;
 
@@ -122,7 +122,10 @@ void drawHpBar(float percent, int width, int height)
       return;
 
    glDisable(GL_TEXTURE_2D);
-   glColor4ub(0, 255, 0, 100);
+   if(isPvp)
+      glColor4ub(255, 200, 0, 100); //orangeish yellow
+   else
+      glColor4ub(0, 255, 0, 100); //green
    drawQuad(vec2(-width, height), vec2(center, height+2));
    glColor4ub(255, 0, 0, 100);
    drawQuad(vec2(center, height), vec2(width, height+2));
@@ -160,7 +163,7 @@ void Player::draw()
       sprites32.draw(adir-1, 0);
 
    glTranslatef(-1,0,0); // needs this offset or else it looks strange
-   drawHpBar((float)hp / playerMaxHp, 11, 13);
+   drawHpBar((float)hp / playerMaxHp, 11, 13, pvp);
 
    glPopMatrix();
 
@@ -265,7 +268,7 @@ void NPC::draw()
       glScalef(spriteZoom, spriteZoom, 1.0);
       anim->draw(dir, moving);
       glTranslatef(-1,0,0);
-      drawHpBar((float)hp / npcMaxHp, 11, 13);
+      drawHpBar((float)hp / npcMaxHp, 11, 13, true);
       glPopMatrix();
    }
 }

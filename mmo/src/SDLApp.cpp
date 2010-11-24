@@ -68,6 +68,9 @@ void SDLApp::update()
    if (inputMgr.keyPressed(SDLK_r)) {
       world.spawnNPC();
    }
+   if (inputMgr.keyPressed(SDLK_p)) {
+      world.togglePvp();
+   }
 
    vec2 dir(0.0, 0.0);
    if (inputMgr.keyDown(SDLK_w))

@@ -29,7 +29,7 @@ Missile::Missile(int id, int type, vec2 pos, vec2 dir)
    : id(id), type(type), pos(pos), alive(true)
 {
    this->dir = dir;
-   if (this->dir.length() > 0.0)
+   if (this->dir.length() > 0.0f)
       this->dir = normalize(this->dir);
 }
 
