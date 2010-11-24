@@ -153,6 +153,28 @@ void GameServer::serverDisconnect(int id)
    //om.remove(id);
 }
 
+void collectItem(Player &pl, Item &item)
+{
+   int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+      item.type == ItemType::BlueRupee ? blueRupeeValue :
+      item.type == ItemType::RedRupee ? redRupeeValue :
+      0;
+   if(rupees > 0) {
+      pl.gainRupees(rupees);
+      getCM().clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.id);
+   }
+   else if(item.type == ItemType::Heart) {
+      pl.gainHp(heartValue);
+   }
+   else {
+      printf("Collected unknown item type %d type=%d\n",
+         item.id, item.type);
+   }
+   getCM().clientBroadcast(Signal(Signal::remove, item.id));
+   getOM().remove(item.id); //only remove one item per click max
+}
+
+
 void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if (p.type == pack::position) {
@@ -217,23 +239,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             Player &pl = *om.getPlayer(click.id);
             Item &item = *items[0];
             if(item.isCollectable()) {
-                  int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
-                  item.type == ItemType::BlueRupee ? blueRupeeValue :
-                  item.type == ItemType::RedRupee ? redRupeeValue :
-                  0;
-               if(rupees > 0) {
-                  pl.gainRupees(rupees);
-                  cm.clientSendPacket(Signal(Signal::changeRupee, pl.rupees), click.id);
-               }
-               else if(item.type == ItemType::Heart) {
-                  pl.gainHp(heartValue);
-               }
-               else {
-                  printf("Click collected unknown item type %d type=%d\n",
-                  item.id, item.type);
-               }
-               cm.clientBroadcast(Signal(Signal::remove, item.id));
-               om.remove(item.id); //only remove one item per click max
+               collectItem(pl, item);
             }
          }
       }
@@ -317,18 +323,19 @@ void GameServer::updateNPCs(int ticks, float dt)
       std::vector<Missile *> ms = om.collidingMissiles(npc.getGeom(), npc.pos);
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
          Missile &m = *ms[j];
-         //npcHit = true;
-         npc.takeDamage(m.getDamage());
-         if(npc.hp == 0) {
-            if(om.check(m.owned, ObjectType::Player)) {
-               Player &p = *om.getPlayer(m.owned);
-               p.gainExp(npc.getExp());
-               cm.clientSendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
+         if(m.owned != npc.id && om.check(m.owned, ObjectType::Player)) {
+            npc.takeDamage(m.getDamage());
+            if(npc.hp == 0) {
+               if(om.check(m.owned, ObjectType::Player)) {
+                  Player &p = *om.getPlayer(m.owned);
+                  p.gainExp(npc.getExp());
+                  cm.clientSendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.id);
+               }
+               removeNPC = true;
             }
-            removeNPC = true;
+            cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
+            om.remove(m.id);
          }
-         cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
-         om.remove(m.id);
       }
       if(removeNPC) {
          int lootItem = npc.getLoot();
@@ -391,6 +398,9 @@ void GameServer::updatePlayers(int ticks, float dt)
             p.move(item.pos + pushDir * (item.getRadius() + playerRadius), p.dir);
             cm.clientSendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
          }
+         else if(item.isCollectable()) {
+            collectItem(p, item);
+         }
       }
 
       //if player is colliding with any missile that is not owned by it, they take dmg
@@ -399,8 +409,8 @@ void GameServer::updatePlayers(int ticks, float dt)
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *collidedMis[mdx];
          if(m.owned != p.id) {
-            if(!p.pvp || (om.check(m.owned, ObjectType::Player) 
-                  && !om.getPlayer(m.owned)->pvp)) {
+            if(p.pvp && om.check(m.owned, ObjectType::Player)
+                  && !om.getPlayer(m.owned)->pvp) {
                continue; //not in pvp mode, don't let other players attack
             }
             p.takeDamage(m.getDamage());
@@ -451,6 +461,11 @@ float getDt()
 ObjectManager &getOM()
 {
    return serverState->om;
+}
+
+ConnectionManager &getCM()
+{
+   return serverState->cm;
 }
 
 

@@ -74,10 +74,11 @@ namespace server {
       int getObjectType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
+      int getAttackDelay() const;
       
       vec2 pos, dir, initPos;
       bool moving;
-      int aiTicks, aiType, attackId;
+      int aiTicks, aiType, attackId, nextMissileTicks;
       int id, hp, type;
    };
 
@@ -87,7 +88,7 @@ namespace server {
       float getRadius() const;
       Geometry getGeom() const;
       bool isCollectable() const;
-      bool isCollidable() const;
+      bool isCollidable() const; //cannot be walked onto? Stump
       void move(vec2 pos);
       int getObjectType() const;
       Packet serialize() const;

@@ -164,9 +164,42 @@ void Missile::move(vec2 pos, vec2 dir)
 
 NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
    : id(id), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
-   aiTicks(0), attackId(0), initPos(pos), moving(false)
+   aiTicks(0), attackId(0), initPos(pos), moving(false), nextMissileTicks(0)
 {
 
+}
+
+int NPC::getAttackDelay() const
+{
+   switch(type) {
+      case NPCType::Fairy:
+      case NPCType::Bird:
+      case NPCType::Squirrel: 
+      case NPCType::Chicken:
+         return 800;
+         break; //unreachable
+      case NPCType::Bush:
+      case NPCType::Bat:
+      case NPCType::Thief:
+      case NPCType::Cactus:
+      case NPCType::Goblin:
+      case NPCType::Princess:
+      case NPCType::Vulture:
+         return 700;
+         break;
+      case NPCType::Cyclops:
+      case NPCType::Skeleton:
+      case NPCType::Wizard:
+         return 600;
+         break;
+      case NPCType::BigFairy:
+      case NPCType::Ganon:
+         return 500;
+         break;
+      default:
+         printf("Error NPC::getAttackDelay() - unknown NPC type %d\n", type);
+   }
+   return 0;
 }
 
 int NPC::getExp()
@@ -302,6 +335,15 @@ void NPC::update()
          if(mat::dist(newPos, p->pos) > attackRange) {
             move(newPos, newDir, true);
          }
+      }
+      if(getTicks() > nextMissileTicks) {
+         nextMissileTicks = getTicks() + getAttackDelay();
+         Missile *m = new Missile(newId(), id, pos, 
+            mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
+         getOM().add(m);
+         getCM().clientBroadcast(pack::Initialize(m->id, 
+            ObjectType::Missile, m->type, m->pos, 
+            m->dir, 0));
       }
    }
    else {

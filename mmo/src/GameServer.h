@@ -34,5 +34,6 @@ struct GameServer {
 int getTicks();
 float getDt();
 ObjectManager &getOM();
+ConnectionManager &getCM();
 
 #endif
