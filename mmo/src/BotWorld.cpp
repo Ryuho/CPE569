@@ -1,15 +1,22 @@
 #include "BotWorld.h"
 #include "packet.h"
 #include "Constants.h"
+#include "Util.h"
 
 using namespace constants;
 
 const float BotWorldData::botHomingRange = 1200.0f;
-const float BotWorldData::botAggroRange = 700.0f;
+const float BotWorldData::botAggroRange = 650.0f;
 const float BotWorldData::botFightRange = 300.0f;
 const float BotWorldData::maxBotItemGrab = botAggroRange;
 const float BotWorldData::maxBotWalkDistance 
       = (constants::worldWidth + constants::worldHeight - 1)/4;
+const float BotWorldData::returnWalkDistance 
+      = BotWorldData::maxBotWalkDistance* 0.7f;
+
+//Near zero means not really dodging
+//Large numbers will mean pretty much only dodging instead of heading towards the target
+const float BotWorldData::botDodgeRatio = 2.0f; 
 
 // This pointer points to the current 
 
@@ -72,11 +79,13 @@ void BotWorldData::init(const char *host, int port)
    tostart = false;
    fighting = false;
    homing = false;
-   dodging = false;
+   dodging = true;
    looting = true;
    shooting = false;
+   returnsAllWayToStart = false;
    nextLoot = 0;
    nextDirChange = 0;
+   nextDodgeChange = 0;
    fightingId = 0;
    delay = 30;
 
@@ -119,7 +128,10 @@ void BotWorldData::update(int ticks, float dt)
    shooting = false;
    if(tostart) { 
       //Returning to start
-      tostart = mat::dist(player.pos, initPos) > 100;
+      if(returnsAllWayToStart)
+         tostart = mat::dist(player.pos, initPos) > 100;
+      else
+         tostart = mat::dist(player.pos, initPos) > returnWalkDistance;
    }
    else {
       tostart = mat::dist(player.pos, initPos) > maxBotWalkDistance;
@@ -161,6 +173,15 @@ void BotWorldData::updateLooting(int ticks, float dt)
    }
 }
 
+vec2 tangentVec(vec2 v, bool right) {
+   v.normalize();
+   float angle = asin(v.y);
+   angle += 90.0f * ((float)PI / 180.0f);
+   if(right)
+      angle = -angle;
+   return vec2(cos(angle), sin(angle));
+}
+
 void BotWorldData::updateFighting(int ticks, float dt)
 {
    //finish NPC
@@ -170,16 +191,25 @@ void BotWorldData::updateFighting(int ticks, float dt)
             || fightNpc->lastUpdate > noDrawTicks)
          fighting = false;
       else {
-         if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
-            player.moving = false;
          if(homing) {
+            if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
+               player.moving = false;
             player.dir = mat::to(player.pos, fightNpc->pos);
-            player.dir.normalize();
-            if(dodging && ticks > nextDirChange) {
-               float randAngle = ((rand() % 359) / 180.0f) * PI;
-               nextDirChange = ticks + dirChangeDelay;
-               player.dir = vec2(cos(randAngle), sin(randAngle));
+         }
+         else if (dodging) {
+            vec2 towardNpc = mat::to(player.pos, fightNpc->pos);
+            towardNpc.normalize();
+            if(ticks > nextDodgeChange) {
+               dodgeDir = tangentVec(towardNpc, randomizeLeftRightDodge
+                  && util::irand(0,1) == 0);
+               nextDodgeChange = ticks + dodgeChangeDelay;
+               //printf("%0.2f %0.2f tangent(%0.2f %0.2f)\n", towardNpc.x, towardNpc.y, dodgeDir.x, dodgeDir.y);
             }
+            //if(mat::dist(player.pos, fightNpc->pos) < botFightRange) {
+            //   towardNpc = vec2(0,0) - towardNpc * 2*botDodgeRatio;
+            //}
+            player.dir = towardNpc + dodgeDir * botDodgeRatio;
+            //will be normalized later
          }
          else if(ticks > nextDirChange) {
             nextDirChange = ticks + dirChangeDelay;

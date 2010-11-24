@@ -27,13 +27,13 @@ namespace util {
 
    // Returns a random float between min and max inclusive
    inline float frand(float min, float max) { 
-      return min + (rand() / (float)RAND_MAX)*(max-min); 
+      return min + (rand() / (float)RAND_MAX)*(max-min + 1); 
    }
 
    // Returns a random int between min and max inclusive
    inline int irand(int min, int max) { 
       return min == max ? min :
-         min + (rand() % (max-min));
+         min + (rand() % (max-min + 1));
    }
 
    /////////////////// VECTORS ///////////////////
