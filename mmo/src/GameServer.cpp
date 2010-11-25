@@ -409,14 +409,15 @@ void GameServer::updatePlayers(int ticks, float dt)
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *collidedMis[mdx];
          if(m.owned != p.id) {
-            if(p.pvp && om.check(m.owned, ObjectType::Player)
-                  && !om.getPlayer(m.owned)->pvp) {
-               continue; //not in pvp mode, don't let other players attack
+            if(p.pvp && (om.check(m.owned, ObjectType::Player)
+                  && !om.getPlayer(m.owned)->pvp)) {
+               continue;
             }
+            else if(!p.pvp && (om.check(m.owned, ObjectType::Player)))
+               continue;
             p.takeDamage(m.getDamage());
             cm.clientBroadcast(Signal(Signal::remove, m.id).makePacket());
             om.remove(m.id);
-            //damaged = true;
          }
       }
       if(p.hp == 0) {

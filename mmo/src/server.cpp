@@ -29,7 +29,7 @@ int newServId()
    return nextServId++;
 }
 
-int updateServId(int last)
+void updateServId(int last)
 {
    nextServId = max(nextServId, last+1);
 }
