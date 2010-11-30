@@ -77,6 +77,7 @@ namespace sock {
       virtual bool check();
       unsigned long getAddr();
       int getPort();
+      bool tookMultipleReads();
    protected:
       virtual void setError();
       boost::shared_ptr<ConnectionInfo> info;

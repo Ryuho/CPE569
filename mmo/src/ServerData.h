@@ -43,6 +43,7 @@ namespace server {
       vec2 pos, dir;
       bool moving, alive, pvp;
       int id, sid, hp, exp, rupees;
+      bool shotThisFrame;
    };
 
    struct Missile : Object {

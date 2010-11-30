@@ -168,7 +168,7 @@ struct ConnectionInfo {
    SOCKET sd;
    u_long addr;
    u_short port;
-   bool active;
+   bool active, mreads;
    ~ConnectionInfo() { if (active) shutdownSocket(sd); active = false; }
 };
 
@@ -200,6 +200,7 @@ Connection::Connection(const char *host, int port)
    }
 
    info->active = true;
+   info->mreads = false;
 }
 
 Connection::Connection(unsigned long host, int port)
@@ -226,11 +227,13 @@ Connection::Connection(unsigned long host, int port)
    }
 
    info->active = true;
+   info->mreads = false;
 }
 
 Connection::Connection(ConnectionInfo *info) : info(info)
 {
    // intentionally empty
+   info->mreads = false;
 }
 
 bool Connection::send(const Packet &p)
@@ -304,10 +307,19 @@ bool Connection::recv(Packet &p, int size)
       }
    }
 
-   if (readCount > 1)
+   if (readCount > 1) {
       cerr << "-- recv took " << readCount << " attempts to retrieve packet." << endl;
+      info->mreads = true;
+   } else {
+      info->mreads = false;
+   }
 
    return true;
+}
+
+bool Connection::tookMultipleReads()
+{
+   return info->mreads;  
 }
 
 void Connection::close()

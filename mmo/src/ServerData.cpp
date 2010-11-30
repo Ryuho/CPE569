@@ -12,7 +12,7 @@ using namespace constants;
 
 Player::Player(int id, int sid, vec2 pos, vec2 dir, int hp)
    : id(id), sid(sid), pos(pos), dir(dir), moving(false), hp(hp), 
-   rupees(0), exp(0), pvp(false)
+   rupees(0), exp(0), pvp(false), shotThisFrame(false)
 {
    
 }

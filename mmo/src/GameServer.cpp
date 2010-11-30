@@ -213,10 +213,13 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::arrow) {
       Arrow ar(p);
-      Missile *m = new Missile(newId(),getCM().ownServerId,id, om.getPlayer(id)->pos, ar.direction);
-      om.add(m);
-      Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
-      cm.clientBroadcast(init);
+      if (!om.getPlayer(id)->shotThisFrame) {
+         om.getPlayer(id)->shotThisFrame = true;
+         Missile *m = new Missile(newId(),id, om.getPlayer(id)->pos, ar.direction);
+         om.add(m);
+         Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
+         cm.clientBroadcast(init);
+      }
    }
    else if (p.type == pack::click) {
       Click click(p);
@@ -376,6 +379,7 @@ void GameServer::updatePlayers(int ticks, float dt)
 {
    for(unsigned pdx = 0; pdx < om.players.size(); pdx++) {
       Player &p = *om.players[pdx];
+      p.shotThisFrame = false;
 
       p.gainHp(playerHpPerTick);
       std::vector<Item *> collidedItems = om.collidingItems(p.getGeom(), p.pos);

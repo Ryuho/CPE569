@@ -166,6 +166,7 @@ int main(int argc, const char* argv[])
 
    while (true) {
       displayBandwidth();
+      int startTicks = currentTicks();
 
       while (clientServ.select()) {
          int id = newId();
@@ -265,7 +266,11 @@ int main(int argc, const char* argv[])
 
       gs.update(currentTicks());
       
-      sleepms(50); // 50ms is pretty long...
+      int sleepTime = 100 - (currentTicks() - startTicks);
+      if (sleepTime > 0)
+         sleepms(50); // 50ms is pretty long...
+      else
+         printf("&&& Didn't sleep at all, sleeptime: %d\n", sleepTime);
    }
 
    for (unsigned i = 0; i < cm.clientConnections.size(); i++) {

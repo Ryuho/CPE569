@@ -42,15 +42,32 @@ struct Packet {
 
 // Read a packet from a connection
 inline Packet readPacket(sock::Connection conn) {
+   static int lastType, lastSize;
    int size, type;
    sock::Packet header;
    
    if (conn.recv(header, 8)) {
       header.readInt(size).readInt(type);
       Packet ret(type);
-      if (conn.recv(ret.data, size))
+      if (conn.tookMultipleReads() || size <= 0 || size > 100 || type <= 0 || type >= 30) {
+         printf("*** Header Multiple reads: %d\n", conn.tookMultipleReads());
+         printf("*** Strange packet, type: %d, size: %d\n", type, size);
+         printf("*** Last packet was type: %d, size: %d\n", lastType, lastSize);
+         //return Packet(0);
+      }
+
+      if (conn.recv(ret.data, size)) {
+         if (conn.tookMultipleReads()) {
+            printf("*** mutiple reads on data\n");
+            printf("*** Strange packet, type: %d, size: %d\n", type, size);
+            printf("*** Last packet was type: %d, size: %d\n", lastType, lastSize);
+         }
+         lastType = type;
+         lastSize = size;
          return ret;
+      }
    }
+
    
    return Packet(0);
 }
