@@ -235,7 +235,7 @@ Connection::Connection(ConnectionInfo *info) : info(info)
 
 bool Connection::send(const Packet &p)
 {
-   unsigned int bytesSent = 0, sendCount = 0;
+   unsigned int bytesSent = 0, sendCount = 0, sendVal;
    sock::bytesSent += p.size();
 
    if (!info->active)
@@ -243,11 +243,13 @@ bool Connection::send(const Packet &p)
 
    while (info->active && bytesSent < p.size()) {
       sendCount++;
-      if ((bytesSent += sockSend(info->sd, (const char *)&p[bytesSent], p.size()-bytesSent, MSG_NOSIGNAL)) == SOCKET_ERROR) {
+      sendVal = sockSend(info->sd, (const char *)&p[bytesSent], p.size()-bytesSent, MSG_NOSIGNAL);
+      bytesSent += sendVal;
+      if (sendVal == SOCKET_ERROR) {
          cerr << "-- send failed on attempt number " << sendCount << "." << endl;
          setError();
          return false;
-      } else if (bytesSent == 0) {
+      } else if (sendVal == 0) {
          cerr << "-- closing connection (sent 0 bytes)" << endl;
          return info->active = false;
       } else if (bytesSent != p.size()) {
