@@ -121,6 +121,22 @@ void shutdownSockets()
 #endif
 }
 
+int bytesRead = 0;
+int bytesSent = 0;
+
+int getBytesSent()
+{
+   int temp = bytesSent;
+   bytesSent = 0;
+   return temp;
+}
+
+int getBytesRead()
+{
+   int temp = bytesRead;
+   bytesRead = 0;
+   return temp;
+}
 
 bool Socket::select(int ms)
 {
@@ -220,7 +236,8 @@ Connection::Connection(ConnectionInfo *info) : info(info)
 bool Connection::send(const Packet &p)
 {
    unsigned int bytesSent = 0, sendCount = 0;
-   
+   sock::bytesSent += p.size();
+
    if (!info->active)
       return false;
 
@@ -248,6 +265,7 @@ bool Connection::send(const Packet &p)
 bool Connection::recv(Packet &p, int size)
 {
    int bytesRead = 0, readCount = 0;
+   sock::bytesRead += size;
 
    if (!info->active)
       return false;

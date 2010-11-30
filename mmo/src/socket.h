@@ -8,6 +8,9 @@ namespace sock {
    void setupSockets();
    void shutdownSockets();
 
+   int getBytesSent();
+   int getBytesRead();
+
    struct ConnectionInfo;
    struct ServerInfo;
    struct SelectInfo;
