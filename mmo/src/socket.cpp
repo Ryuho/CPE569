@@ -186,6 +186,32 @@ Connection::Connection(const char *host, int port)
    info->active = true;
 }
 
+Connection::Connection(unsigned long host, int port)
+{
+   info.reset(new ConnectionInfo);
+
+   info->active = false;
+   info->addr = host;
+   info->port = htons(port);
+
+   info->sd = socket(AF_INET, SOCK_STREAM, 0);
+   if (info->sd == INVALID_SOCKET) {
+      sockError();
+      return;
+   }
+
+   sockaddr_in sinRemote;
+   sinRemote.sin_family = AF_INET;
+   sinRemote.sin_addr.s_addr = info->addr;
+   sinRemote.sin_port = info->port;
+   if (connect(info->sd, (sockaddr*)&sinRemote, sizeof(sockaddr_in)) == SOCKET_ERROR) {
+      sockError();
+      return;
+   }
+
+   info->active = true;
+}
+
 Connection::Connection(ConnectionInfo *info) : info(info)
 {
    // intentionally empty
@@ -240,13 +266,19 @@ bool Connection::recv(Packet &p, int size)
 
    while (info->active && bytesRead < size) {
       readCount++;
-      if ((bytesRead += sockRecv(info->sd, (char *)&p[bytesRead], size-bytesRead, 0)) == SOCKET_ERROR) {
+      int readSize = sockRecv(info->sd, (char *)&p[bytesRead], size-bytesRead, 0);
+      bytesRead += readSize;
+      if (readSize == SOCKET_ERROR) {
          cerr << "-- recv failed on attempt number " << readCount << "." << endl;
          setError();
          return false;
-      } else if (bytesRead == 0) {
+      } else if (readSize == 0) {
          cerr << "-- closing connection (read 0 bytes)" << endl;
          return info->active = false;
+      } else if (readSize == -1) {
+         cerr << "-- got -1 in recv" << endl;
+         setError();
+         return false;
       } else if (bytesRead != size) {
          cerr << "-- read " << bytesRead << " out of " << size << endl;
       }
@@ -313,7 +345,7 @@ unsigned long Connection::getAddr()
 
 int Connection::getPort()
 {
-   return info->port;
+   return ntohs(info->port);
 }
 
 

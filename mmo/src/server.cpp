@@ -24,25 +24,28 @@ int newId()
    return nextId++;
 }
 
+void setIdOffset(int sid)
+{
+   nextId = sid << 24;
+}
+
 int newServId()
 {
    return nextServId++;
 }
 
-void updateServId(int last)
+bool updateServId(int last)
 {
+   bool ret = last >= nextServId;
    nextServId = max(nextServId, last+1);
+   return ret;
 }
 
 struct TConn {
-   TConn(sock::Connection conn) : conn(conn) {}
-   int servId;
+   TConn(sock::Connection conn) : conn(conn), servId(-1) {}
+   int servId, servPort, clientPort;
    Connection conn;
 };
-
-namespace ServerOps { enum {
-   request, good, bad
-};}
 
 int main(int argc, const char* argv[])
 {
@@ -92,21 +95,32 @@ int main(int argc, const char* argv[])
          printf("Failed to connect to alternate server\n");
          return -1;
       }
-      servConn.send(sock::Packet().writeInt(ServerOps::request));
-      if (!servConn.select(1000)) {
+      servConn.send(sock::Packet().writeInt(ServerOps::request).writeInt(clientPort).writeInt(serverPort));
+      if (!servConn.select(1000) || !servConn.recv(p, 12)) {
          printf("timed out waiting for host server\n");
          return -1;
       }
-      p.readInt(cm.ownServerId);
-      printf("Connected to host server with id %d!\n", cm.ownServerId);
+      int remoteId, remoteClientPort;
+      p.readInt(cm.ownServerId).readInt(remoteId).readInt(remoteClientPort);
+      printf("Connected to host server. using id %d!\n", cm.ownServerId);
+      cm.addServerConnection(servConn, remoteId, remoteClientPort, altPort);
 
-      cm.addServerConnection(servConn,newId());
+      if (cm.readServerList(servConn, cm.ownServerId, clientPort, serverPort)) {
+         printf("Connected to all other servers successfully, sending ready packets\n");
+
+         for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
+            cm.serverConnections[i].conn.send(sock::Packet().writeInt(ServerOps::ready));
+         }
+      } else {
+         printf("Unable to connect to all servers, aborting\n");
+         return -1;
+      }
    } else {
       cm.ownServerId = newServId();
-      printf("Server started as independant host. id: %d\n", cm.ownServerId);
+      printf("Server started as independent host. id: %d\n", cm.ownServerId);
    }
 
-   GameServer gs(cm);
+   GameServer gs(cm); // should also tell game server which server it connected to originally or none at all if independent
 
    printf("Game server started, accepting client Connections on port %d\n", clientServ.port());
 
@@ -119,12 +133,7 @@ int main(int argc, const char* argv[])
 
       while (serverServ.select()) {
          int id = newId();
-         Connection newServ = serverServ.accept();
-         int sid = newServId();
-         sock::Packet p;
-         newServ.send(p.writeInt(sid));
-         cm.addServerConnection(newServ, id);
-         gs.newServerConnection(id);
+         tconns.push_back(TConn(serverServ.accept()));
       }
    
       for (unsigned i = 0; i < cm.clientConnections.size(); i++) {
@@ -150,6 +159,63 @@ int main(int argc, const char* argv[])
                int id = cm.serverConnections[i].id;
                cm.removeServerAt(i--);
                gs.serverDisconnect(id);
+               break;
+            }
+         }
+      }
+
+      
+      for (unsigned i = 0; i < tconns.size(); i++) {
+         Connection conn = tconns[i].conn;
+         while (conn.select()) {
+            if (conn) {
+               sock::Packet p;
+               int op;
+               if (tconns[i].servId == -1) {
+                  conn.recv(p, 4);
+                  p.readInt(op);
+                  if (op == ServerOps::request) {
+                     // request would also tell us about its ports
+                     conn.recv(p, 8);
+                     int cp, sp;
+                     p.readInt(cp).readInt(sp);
+                     int sid = newServId();
+                     tconns[i].servId = sid;
+                     tconns[i].clientPort = cp;
+                     tconns[i].servPort = sp;
+                     conn.send(p.reset().writeInt(sid).writeInt(cm.ownServerId).writeInt(clientPort)); // Also send server list
+                     cm.sendServerList(conn);
+                  } else if (op == ServerOps::anounce) {
+                     // server will tell us its id and ports, we respond with good or bad
+                     conn.recv(p, 12);
+                     int sid, cp, sp;
+                     p.readInt(sid).readInt(cp).readInt(sp);
+                     tconns[i].servId = sid;
+                     tconns[i].clientPort = cp;
+                     tconns[i].servPort = sp;
+                     conn.send(p.reset().writeInt(updateServId(sid) ? ServerOps::good : ServerOps::bad));
+                  } else {
+                     printf("Got a packet from tconn with unknown id with unknown op: %d\n", op);
+                  }
+               } else { // We know about this server, waiting for it to tell us it connected to everyone
+                  conn.recv(p, 4);
+                  p.readInt(op);
+                  if (op == ServerOps::ready) {
+                     // Server succeeded, add to server lists
+                     cm.addServerConnection(conn, tconns[i].servId, tconns[i].clientPort, tconns[i].servPort);
+                     gs.newServerConnection(tconns[i].servId);
+                     tconns[i--] = tconns.back();
+                     tconns.pop_back();
+                     break;
+                  } else {
+                     printf("Got a packet from tconn with id %d and op %d when expecting ready\n", tconns[i].servId, op);
+                  }
+               }
+               //gs.processServerPacket(pack::readPacket(conn), cm.serverConnections[i].id);
+            } else {
+               conn.close();
+               tconns[i--] = tconns.back();
+               tconns.pop_back();
                break;
             }
          }

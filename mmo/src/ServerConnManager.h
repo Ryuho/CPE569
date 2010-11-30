@@ -9,10 +9,22 @@ void sleepms(int ms);
 int currentTicks();
 int newId();
 
+namespace ServerOps { enum {
+   request = 1, anounce, good, bad, ready
+};}
+
+
 struct ConnectionInfo {
    ConnectionInfo(int id, sock::Connection conn) : id(id), conn(conn) {}
    sock::Connection conn;
    int id;
+};
+
+struct ServerConnectionInfo {
+   ServerConnectionInfo(sock::Connection conn, int id, int clientPort, int serverPort)
+      : id(id), conn(conn), clientPort(clientPort), serverPort(serverPort) {}
+   sock::Connection conn;
+   int id, serverPort, clientPort;
 };
 
 struct ConnectionManager {
@@ -45,16 +57,18 @@ struct ConnectionManager {
    void removeClientConnection(int id);
    void removeClientAt(int index);
 
-   void addServerConnection(sock::Connection conn, int id);
+   void addServerConnection(sock::Connection conn, int id, int clientPort, int serverPort);
    void removeServerConnection(int id);  
    void removeServerAt(int index);
 
+   void sendServerList(sock::Connection conn);
+   bool readServerList(sock::Connection conn, int ownId, int ownCp, int ownSp);
 
    std::map<int, int> idToClientIndex; 
    std::vector<ConnectionInfo> clientConnections;
 
    std::map<int, int> idToServerIndex;
-   std::vector<ConnectionInfo> serverConnections;
+   std::vector<ServerConnectionInfo> serverConnections;
 
    int ownServerId;
 };

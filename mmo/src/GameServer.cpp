@@ -127,7 +127,7 @@ void GameServer::newClientConnection(int id)
 void GameServer::newServerConnection(int id)
 {
    printf("New server connection: %d\n", id);
-   std::vector<unsigned long> ulong;
+   /*std::vector<unsigned long> ulong;
 
    //TODO this is not the right address/port since this is the internal port
    //not the external port the other servers need to know about
@@ -136,7 +136,7 @@ void GameServer::newServerConnection(int id)
       ulong.push_back((unsigned long) cm.serverConnections[i].conn.getPort() );
    }
    
-   cm.serverBroadcast(ServerList(ulong));
+   cm.serverBroadcast(ServerList(ulong));*/
 }
 
 void GameServer::clientDisconnect(int id)
@@ -262,7 +262,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 
 void GameServer::processServerPacket(pack::Packet p, int id)
 {
-   if (p.type == pack::serverList) {
+   /*if (p.type == pack::serverList) {
       ServerList servList(p);
       printf("Got a server list packet! uLongList size is %d\n",servList.uLongList.size());
       for(unsigned i = 0; i < servList.uLongList.size(); i++){
@@ -271,7 +271,9 @@ void GameServer::processServerPacket(pack::Packet p, int id)
    }
    else{
       printf("Unknown server packet type=%d size=%d\n", p.type, p.data.size());
-   }
+   }*/
+
+   printf("Got a server packet, size: %d\n", p.data.size());
 }
 
 void GameServer::update(int ticks)

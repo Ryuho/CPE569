@@ -105,7 +105,7 @@ void ConnectionManager::removeClientAt(int i)
 
 // server -> server connection functions
 
-void ConnectionManager::addServerConnection(Connection conn, int id)
+void ConnectionManager::addServerConnection(Connection conn, int id, int clientPort, int serverPort)
 {
    map<int,int>::iterator itr = idToServerIndex.find(id);
    if (itr != idToServerIndex.end()) {
@@ -114,7 +114,7 @@ void ConnectionManager::addServerConnection(Connection conn, int id)
    }
 
    idToServerIndex[id] = serverConnections.size();
-   serverConnections.push_back(ConnectionInfo(id, conn));
+   serverConnections.push_back(ServerConnectionInfo(conn, id, clientPort, serverPort));
 }
 
 void ConnectionManager::removeServerConnection(int id)
@@ -133,4 +133,57 @@ void ConnectionManager::removeServerAt(int i)
       idToServerIndex[serverConnections[i].id] = i;
    }
    serverConnections.pop_back();
+}
+
+void ConnectionManager::sendServerList(sock::Connection conn)
+{
+   Packet p;
+   p.writeInt(serverConnections.size());
+
+   for (unsigned i = 0; i < serverConnections.size(); i++) {
+      p.writeLong(serverConnections[i].conn.getAddr())
+         .writeInt(serverConnections[i].id)
+         .writeInt(serverConnections[i].clientPort)
+         .writeInt(serverConnections[i].serverPort);
+   }
+
+   conn.send(p);
+}
+
+bool ConnectionManager::readServerList(sock::Connection conn, int ownId, int ownCp, int ownSp)
+{
+   Packet p, p2;
+   int n;
+
+   if (!conn.recv(p, 4))
+      return false;
+   p.readInt(n);
+
+   if (!conn.recv(p, n*(sizeof(unsigned long) + 3*sizeof(int))))
+      return false;
+
+   unsigned long addr;
+   int id, cp, sp;
+   for (int i = 0; i < n; i++) {
+      p.readLong(addr).readInt(id).readInt(cp).readInt(sp);
+      Connection serv(addr, sp);
+
+      if (!serv)
+         return false;
+
+      if (!serv.send(p2.reset().writeInt(ServerOps::anounce).writeInt(ownId).writeInt(ownCp).writeInt(ownSp)))
+         return false;
+
+      if (!serv.select(1000) || !serv.recv(p2, 4))
+         return false;
+
+      int op;
+      p2.readInt(op);
+      if (op != ServerOps::good)
+         return false;
+
+      addServerConnection(serv, id, cp, sp);
+   }
+
+   return true;
 }

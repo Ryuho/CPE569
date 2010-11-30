@@ -63,6 +63,7 @@ namespace sock {
    public:
       Connection() {}
       Connection(const char *host, int port);
+      Connection(unsigned long host, int port);
       Connection(ConnectionInfo *info);
       bool send(const Packet &p);
       bool recv(Packet &p, int size = -1);
