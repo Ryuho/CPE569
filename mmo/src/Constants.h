@@ -12,7 +12,7 @@ namespace constants {
 
    const float maxProjectileTicks = 500;
    const float projectileSpeed = 800;
-   const float areaOfInfluenceRadius = 1500;
+   const float areaOfInfluenceRadius = 800;
 
    const int predictTicks = 200;
    const int deltaRegion = 1;
