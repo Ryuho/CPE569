@@ -5,6 +5,7 @@
 #include "socket.h"
 #include "matrix.h"
 #include <string>
+#include <stdio.h>
 
 namespace pack {
 using namespace mat;

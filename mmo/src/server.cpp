@@ -42,7 +42,10 @@ void displayBandwidth()
 
    if (ticks - lastDisplay > refreshTime) {
       lastDisplay = ticks;
-      printf("sent: %d bytes, read: %d bytes\n", sock::getBytesSent(), sock::getBytesRead());
+      float skb = sock::getBytesSent() / 1000.0;
+      float rkb = sock::getBytesRead() / 1000.0;
+
+      printf("s=%2.2fkb|r=%2.2fkb\n", skb, rkb);
    }
 }
 

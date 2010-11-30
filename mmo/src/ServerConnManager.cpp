@@ -187,3 +187,13 @@ bool ConnectionManager::readServerList(sock::Connection conn, int ownId, int own
 
    return true;
 }
+
+void ConnectionManager::printPackStat()
+{
+   for(unsigned i = 0; i < packStat.size(); i++){
+      printf("|%d",packStat[i]);
+   }
+   printf("\n");
+}
+
+

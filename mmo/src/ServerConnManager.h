@@ -70,7 +70,11 @@ struct ConnectionManager {
    std::map<int, int> idToServerIndex;
    std::vector<ServerConnectionInfo> serverConnections;
 
+   void printPackStat();
+
+
    int ownServerId;
+   std::vector<int> packStat;
 };
 
 

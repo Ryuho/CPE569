@@ -215,7 +215,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Arrow ar(p);
       if (!om.getPlayer(id)->shotThisFrame) {
          om.getPlayer(id)->shotThisFrame = true;
-         Missile *m = new Missile(newId(),id, om.getPlayer(id)->pos, ar.direction);
+         Missile *m = new Missile(newId(),cm.ownServerId,id, om.getPlayer(id)->pos, ar.direction);
          om.add(m);
          Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
          cm.clientBroadcast(init);
