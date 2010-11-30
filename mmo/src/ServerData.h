@@ -27,7 +27,7 @@ namespace server {
    };
 
    struct Player : Object {
-      Player(int id, vec2 pos, vec2 dir, int hp);
+      Player(int id, int sid, vec2 pos, vec2 dir, int hp);
       Player(Packet &serialized);
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
@@ -42,11 +42,11 @@ namespace server {
       
       vec2 pos, dir;
       bool moving, alive, pvp;
-      int id, hp, exp, rupees;
+      int id, sid, hp, exp, rupees;
    };
 
    struct Missile : Object {
-      Missile(int id, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
+      Missile(int id, int sid, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
       Missile(Packet &serialized);
       void move(vec2 pos, vec2 dir);
       void update();
@@ -57,11 +57,11 @@ namespace server {
       void deserialize(Packet &serialized);
 
       vec2 pos, dir;
-      int id, owned, type, spawnTime;
+      int id, sid, owned, type, spawnTime;
    };
 
    struct NPC : Object {
-      NPC(int id, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
+      NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       NPC(Packet &serialized);
       void update();
       void takeDamage(int damage);
@@ -79,11 +79,11 @@ namespace server {
       vec2 pos, dir, initPos;
       bool moving;
       int aiTicks, aiType, attackId, nextMissileTicks;
-      int id, hp, type;
+      int id, sid, hp, type;
    };
 
    struct Item : Object {
-      Item(int id, vec2 pos, int type = ItemType::GreenRupee);
+      Item(int id, int sid, vec2 pos, int type = ItemType::GreenRupee);
       Item(Packet &serialized);
       float getRadius() const;
       Geometry getGeom() const;
@@ -95,7 +95,7 @@ namespace server {
       void deserialize(Packet &serialized);
 
       vec2 pos;
-      int id, type;
+      int id, sid, type;
    };
 
 } // end server namespace

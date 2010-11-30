@@ -45,7 +45,7 @@ void spawnNPC(int regionX, int regionY)
    vec2 pos(util::frand(botLeft.x, botLeft.x + regionSize),
       util::frand(botLeft.y, botLeft.y + regionSize));
 
-   NPC *n = new NPC(newId(), npcMaxHp, pos, 
+   NPC *n = new NPC(newId(), getCM().ownServerId, npcMaxHp, pos, 
       vec2(0,1), npcType(regionX, regionY));
 
    getOM().add(n);
@@ -57,7 +57,7 @@ void spawnNPC(int regionX, int regionY)
 void spawnItem(int id)
 {
    vec2 pos = randPos2(200, 350);
-   Item *item = new Item(id, pos, rand() % (ItemType::Explosion+1));
+   Item *item = new Item(id, getCM().ownServerId, pos, rand() % (ItemType::Explosion+1));
    getOM().add(item);
    printf("Spawn Item id=%d type=%d\n", item->id, item->type);
    serverState->cm.clientBroadcast(Initialize(item->id, ObjectType::Item, item->type,
@@ -67,7 +67,7 @@ void spawnItem(int id)
 void spawnStump(int id)
 {
    vec2 pos = randPos2(200, 350);
-   Item *stump = new Item(id, pos, ItemType::Stump);
+   Item *stump = new Item(id, getCM().ownServerId, pos, ItemType::Stump);
    getOM().add(stump);
    printf("Spawn Stump id=%d type=%d\n", stump->id, stump->type);
    serverState->cm.clientBroadcast(Initialize(stump->id, ObjectType::Item, stump->type,
@@ -92,7 +92,7 @@ void GameServer::newClientConnection(int id)
    
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
-   Player *newPlayer = new Player(id, pos, vec2(0,1), playerMaxHp);
+   Player *newPlayer = new Player(id, getCM().ownServerId, pos, vec2(0,1), playerMaxHp);
    om.add(newPlayer);
 
 	cm.clientSendPacket(Connect(id, constants::worldHeight, constants::worldWidth), id);
@@ -127,16 +127,6 @@ void GameServer::newClientConnection(int id)
 void GameServer::newServerConnection(int id)
 {
    printf("New server connection: %d\n", id);
-   /*std::vector<unsigned long> ulong;
-
-   //TODO this is not the right address/port since this is the internal port
-   //not the external port the other servers need to know about
-   for(size_t i = 0; i < cm.serverConnections.size(); i++){
-      ulong.push_back((unsigned long) cm.serverConnections[i].conn.getAddr() );
-      ulong.push_back((unsigned long) cm.serverConnections[i].conn.getPort() );
-   }
-   
-   cm.serverBroadcast(ServerList(ulong));*/
 }
 
 void GameServer::clientDisconnect(int id)
@@ -197,7 +187,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
                int arrowID = newId();
-               Missile *m = new Missile(newId(),id, play.pos, 
+               Missile *m = new Missile(newId(), cm.ownServerId, id, play.pos, 
                   vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
                om.add(m);
                Initialize init(m->id, ObjectType::Missile, 
@@ -223,7 +213,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == pack::arrow) {
       Arrow ar(p);
-      Missile *m = new Missile(newId(),id, om.getPlayer(id)->pos, ar.direction);
+      Missile *m = new Missile(newId(),getCM().ownServerId,id, om.getPlayer(id)->pos, ar.direction);
       om.add(m);
       Initialize init(m->id, ObjectType::Missile, m->type, m->pos, m->dir, 0);
       cm.clientBroadcast(init);
@@ -342,7 +332,7 @@ void GameServer::updateNPCs(int ticks, float dt)
       if(removeNPC) {
          int lootItem = npc.getLoot();
          if(lootItem >= 0) {
-            Item *item = new Item(newId(), npc.pos, lootItem);
+            Item *item = new Item(newId(),getCM().ownServerId, npc.pos, lootItem);
             om.add(item);
             cm.clientBroadcast(Initialize(item->id, ObjectType::Item, item->type,
                item->pos, vec2(0,1), 0));

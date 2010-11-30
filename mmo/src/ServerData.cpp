@@ -10,8 +10,8 @@ using namespace constants;
 
 // Player
 
-Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), moving(false), hp(hp), 
+Player::Player(int id, int sid, vec2 pos, vec2 dir, int hp)
+   : id(id), sid(sid), pos(pos), dir(dir), moving(false), hp(hp), 
    rupees(0), exp(0), pvp(false)
 {
    
@@ -65,7 +65,7 @@ void Player::deserialize(pack::Packet &serialized)
    //printf("Error Player::deserialize untested - update with members!");
    if(serialized.type == pack::serialPlayer) {
       int ipvp, ialive, imoving;
-      serialized.data.readInt(id).readInt(hp).readInt(exp).readInt(rupees)
+      serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(exp).readInt(rupees)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .readInt(imoving).readInt(ialive).readInt(ipvp).reset();
       pvp = ipvp != 0; //warningless cast to bool
@@ -83,7 +83,7 @@ pack::Packet Player::serialize() const
    int ipvp = (int)pvp;
    int ialive = (int)alive;
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(hp).writeInt(exp).writeInt(rupees)
+   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(exp).writeInt(rupees)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeInt(imoving).writeInt(ialive).writeInt(ipvp);
    return p;
@@ -98,8 +98,8 @@ void Player::gainHp(int hp)
 
 // Missile
 
-Missile::Missile(int id, int owned, mat::vec2 pos, mat::vec2 dir, int type)
-   : id(id), owned(owned), pos(pos), dir(dir), type(type)
+Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int type)
+   : id(id), sid(sid), owned(owned), pos(pos), dir(dir), type(type)
 {
    spawnTime = getTicks();
    this->dir = dir;
@@ -138,7 +138,7 @@ void Missile::deserialize(pack::Packet &serialized)
 {
    //printf("Error Missile::deserialize untested - update with members!");
    if(serialized.type == pack::serialMissile) {
-      serialized.data.readInt(id).readInt(owned).readInt(type).readInt(spawnTime)
+      serialized.data.readInt(id).readInt(sid).readInt(owned).readInt(type).readInt(spawnTime)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .reset();
    } 
@@ -150,7 +150,7 @@ pack::Packet Missile::serialize() const
 {
    //printf("Error Missile::serialize untested - update with members!");
    pack::Packet p(pack::serialMissile);
-   p.data.writeInt(id).writeInt(owned).writeInt(type).writeInt(spawnTime)
+   p.data.writeInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
    return p;
 }
@@ -169,8 +169,8 @@ void Missile::move(vec2 pos, vec2 dir)
 
 // NPC
 
-NPC::NPC(int id, int hp, vec2 pos, vec2 dir, int type)
-   : id(id), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
+NPC::NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type)
+   : id(id), sid(sid), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
    aiTicks(0), attackId(0), initPos(pos), moving(false), nextMissileTicks(0)
 {
 
@@ -345,7 +345,7 @@ void NPC::update()
       }
       if(getTicks() > nextMissileTicks) {
          nextMissileTicks = getTicks() + getAttackDelay();
-         Missile *m = new Missile(newId(), id, pos, 
+         Missile *m = new Missile(newId(), id, sid, pos, 
             mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
          getOM().add(m);
          getCM().clientBroadcast(pack::Initialize(m->id, 
@@ -430,7 +430,7 @@ void NPC::deserialize(pack::Packet &serialized)
    //printf("Error NPC::deserialize untested - update with members!");
    if(serialized.type == pack::serialNPC) {
       int imoving;
-      serialized.data.readInt(id).readInt(hp).readInt(type)
+      serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(type)
          .readInt(aiTicks).readInt(aiType).readInt(attackId)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .readFloat(initPos.x).readFloat(initPos.y).readInt(nextMissileTicks)
@@ -446,7 +446,7 @@ pack::Packet NPC::serialize() const
    //printf("Error NPC::serialize untested - update with members!");
    pack::Packet p(pack::serialNPC);
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(hp).writeInt(type)
+   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(type)
       .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeFloat(initPos.x).writeFloat(initPos.y).writeInt(nextMissileTicks)
@@ -462,8 +462,8 @@ void NPC::gainHp(int hp)
 
 // Item
 
-Item::Item(int id, vec2 pos, int type)
-   : id(id), pos(pos), type(type)
+Item::Item(int id, int sid, vec2 pos, int type)
+   : id(id), sid(sid),pos(pos), type(type)
 {
 
 }
@@ -553,7 +553,7 @@ void Item::deserialize(pack::Packet &serialized)
 {
    //printf("Error Item::deserialize untested - update with members!");
    if(serialized.type == pack::serialItem) {
-      serialized.data.readInt(id).readInt(type)
+      serialized.data.readInt(id).readInt(sid).readInt(type)
          .readFloat(pos.x).readFloat(pos.y)
          .reset();
    } 
@@ -565,7 +565,7 @@ pack::Packet Item::serialize() const
 {
    //printf("Error Item::serialize untested - update with members!");
    pack::Packet p(pack::serialItem);
-   p.data.writeInt(id).writeInt(type)
+   p.data.writeInt(id).writeInt(sid).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
 }
