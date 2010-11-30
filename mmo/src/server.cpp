@@ -34,11 +34,49 @@ int newServId()
    return nextServId++;
 }
 
+void displayBandwidth()
+{
+   static int lastDisplay = 0;
+   const static int refreshTime = 5000;
+   int ticks = currentTicks();
+
+   if (ticks - lastDisplay > refreshTime) {
+      lastDisplay = ticks;
+      printf("sent: %d bytes, read: %d bytes\n", sock::getBytesSent(), sock::getBytesRead());
+   }
+}
+
 bool updateServId(int last)
 {
    bool ret = last >= nextServId;
    nextServId = max(nextServId, last+1);
    return ret;
+}
+
+#define dotest(x) \
+   if (true) { \
+      x p = x(); \
+      printf("%s size: %d\n", #x, p.makePacket().data.size()); \
+   }
+
+void testPackets()
+{
+   /*pack::Arrow ar = pack::Arrow();
+   printf("Arrow size: %d\n", ar.makePacket().data.size());
+   pack::Click cl = pack::Click()
+   printf("Click size: %d\n", cl.makePacket().data.size());
+   pack::Connect co = pack::Connect()
+   printf("Connect size: %d\n", co.makePacket().data.size());*/
+
+   dotest(pack::Arrow);
+   dotest(pack::Click);
+   dotest(pack::Connect);
+   pack::HealthChange hc = pack::HealthChange(1, 1);
+   printf("HealthChange size: %d\n", hc.makePacket().data.size());
+   dotest(pack::Initialize);
+   dotest(pack::Position);
+   dotest(pack::Pvp);
+   dotest(pack::Signal);
 }
 
 struct TConn {
@@ -55,6 +93,8 @@ int main(int argc, const char* argv[])
    const char* altAddress = 0;
    int altPort = -1;
    vector<TConn> tconns;
+
+   testPackets();
 
    if(argc == 3) {
       clientPort = atoi(argv[1]);
@@ -125,6 +165,8 @@ int main(int argc, const char* argv[])
    printf("Game server started, accepting client Connections on port %d\n", clientServ.port());
 
    while (true) {
+      displayBandwidth();
+
       while (clientServ.select()) {
          int id = newId();
          cm.addClientConnection(clientServ.accept(), id);
