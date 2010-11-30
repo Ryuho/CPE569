@@ -50,13 +50,17 @@ int currentTicks()
 void ConnectionManager::clientSendPacket(pack::Packet p, int toid)
 {
    p.sendTo(clientConnections[idToClientIndex[toid]].conn);
+   updatePackStat(p.type);
 }
 
 
 void ConnectionManager::clientBroadcast(pack::Packet p)
 {
    for (unsigned i = 0; i < clientConnections.size(); i++)
+   {
       p.sendTo(clientConnections[i].conn);
+      updatePackStat(p.type);
+   }
 }
 
 void ConnectionManager::serverSendPacket(pack::Packet p, int toid)
@@ -190,10 +194,25 @@ bool ConnectionManager::readServerList(sock::Connection conn, int ownId, int own
 
 void ConnectionManager::printPackStat()
 {
-   for(unsigned i = 0; i < packStat.size(); i++){
+   for(unsigned i = 1; i < packStat.size(); i++){
       printf("|%d",packStat[i]);
    }
    printf("\n");
+   initPackStat();
+}
+
+void ConnectionManager::initPackStat()
+{
+   packStat.clear();
+   for(unsigned i = 0; i < 15; i++){
+      packStat.push_back(0);
+   }
+   
+}
+
+void ConnectionManager::updatePackStat(int packType)
+{
+   packStat[packType]++;
 }
 
 

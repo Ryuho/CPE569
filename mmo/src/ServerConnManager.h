@@ -71,7 +71,8 @@ struct ConnectionManager {
    std::vector<ServerConnectionInfo> serverConnections;
 
    void printPackStat();
-
+   void initPackStat();
+   void updatePackStat(int packType);
 
    int ownServerId;
    std::vector<int> packStat;

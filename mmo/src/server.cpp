@@ -34,6 +34,8 @@ int newServId()
    return nextServId++;
 }
 
+ConnectionManager *displayCM;
+
 void displayBandwidth()
 {
    static int lastDisplay = 0;
@@ -45,7 +47,8 @@ void displayBandwidth()
       float skb = sock::getBytesSent() / 1000.0;
       float rkb = sock::getBytesRead() / 1000.0;
 
-      printf("s=%2.2fkb|r=%2.2fkb\n", skb, rkb);
+      printf("s=%2.2fkb|r=%2.2fkb ", skb, rkb);
+      displayCM->printPackStat();
    }
 }
 
@@ -128,6 +131,9 @@ int main(int argc, const char* argv[])
    }
 
    ConnectionManager cm;
+   cm.initPackStat();
+   displayCM = &cm;
+
 
    if(altPort > 0) {
       printf("Connecting to another server: %s %d\n", altAddress, altPort);

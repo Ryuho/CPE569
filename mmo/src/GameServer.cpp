@@ -49,7 +49,7 @@ void spawnNPC(int regionX, int regionY)
       vec2(0,1), npcType(regionX, regionY));
 
    getOM().add(n);
-   printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
+   //printf("Spawned NPC id=%d type=%d\n", n->id, n->type);
    serverState->cm.clientBroadcast(Initialize(n->id, ObjectType::NPC, 
       n->type, n->pos, n->dir, n->hp).makePacket());
 }
