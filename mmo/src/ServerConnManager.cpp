@@ -49,8 +49,13 @@ int currentTicks()
 
 void ConnectionManager::clientSendPacket(pack::Packet p, int toid)
 {
-   p.sendTo(clientConnections[idToClientIndex[toid]].conn);
-   updatePackStat(p.type);
+   std::map<int,int>::iterator iter = idToClientIndex.find(toid);
+   if(iter != idToClientIndex.end()) {
+      p.sendTo(clientConnections[(*iter).second].conn);
+      updatePackStat(p.type);
+   }
+   else
+      printf("Error: clientSendPacket: Unable to send to %d\n", toid);
 }
 
 
@@ -65,13 +70,18 @@ void ConnectionManager::clientBroadcast(pack::Packet p)
 
 void ConnectionManager::serverSendPacket(pack::Packet p, int toid)
 {
-   p.sendTo(serverConnections[idToServerIndex[toid]].conn);
+   std::map<int,int>::iterator iter = idToServerIndex.find(toid);
+   if(iter != idToServerIndex.end()) {
+      p.sendTo(serverConnections[(*iter).second].conn);
+   }
+   else
+      printf("Error: serverSendPacket: Unable to send to %d\n", toid);
 }
 
 
 void ConnectionManager::serverBroadcast(pack::Packet p)
 {
-   for (unsigned i = 0; i < serverConnections.size(); i++)
+   for(unsigned i = 0; i < serverConnections.size(); i++)
       p.sendTo(serverConnections[i].conn);
 }
 
@@ -91,7 +101,12 @@ void ConnectionManager::addClientConnection(Connection conn, int id)
 
 void ConnectionManager::removeClientConnection(int id)
 {
-   removeClientAt(idToClientIndex[id]);
+   std::map<int,int>::iterator iter = idToClientIndex.find(id);
+   if (iter != idToClientIndex.end()) {
+      removeClientAt(idToClientIndex[(*iter).second]);
+   }
+   else
+      printf("Error: removeClientConnection: Unable to remove %d\n", id);
 }
 
 void ConnectionManager::removeClientAt(int i)
@@ -123,7 +138,12 @@ void ConnectionManager::addServerConnection(Connection conn, int id, int clientP
 
 void ConnectionManager::removeServerConnection(int id)
 {
-   removeServerAt(idToServerIndex[id]);
+   std::map<int,int>::iterator iter = idToServerIndex.find(id);
+   if (iter != idToClientIndex.end()) {
+      removeServerAt(idToServerIndex[(*iter).second]);
+   }
+   else
+      printf("Error: removeServerConnection: Unable to remove %d\n", id);
 }
 
 void ConnectionManager::removeServerAt(int i)

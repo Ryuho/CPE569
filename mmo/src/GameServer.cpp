@@ -119,9 +119,8 @@ void GameServer::newClientConnection(int id)
       cm.clientSendPacket(Initialize(npc.id, ObjectType::NPC, 
          npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
-   //make a new NPC and tell everybody about it
-   //int npcid = newId();
-   //spawnNPC(npcid);
+
+   cm.serverBroadcast(newPlayer->serialize());
 }
 
 void GameServer::newServerConnection(int id)
@@ -132,13 +131,16 @@ void GameServer::newServerConnection(int id)
 void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
-   cm.clientBroadcast(Signal(Signal::remove, id).makePacket());
+   Packet removePacket(Signal(Signal::remove, id).makePacket());
+   cm.clientBroadcast(removePacket);
+   cm.serverBroadcast(removePacket);
    om.remove(id);
 }
 
 void GameServer::serverDisconnect(int id)
 {
    printf("Server %d disconnected\n", id);
+   
    //cm.clientBroadcast(Signal(Signal::remove, id).makePacket());
    //om.remove(id);
 }
@@ -265,8 +267,39 @@ void GameServer::processServerPacket(pack::Packet p, int id)
    else{
       printf("Unknown server packet type=%d size=%d\n", p.type, p.data.size());
    }*/
-
-   printf("Got a server packet, size: %d\n", p.data.size());
+   if(p.type == pack::serialPlayer) {
+      Player *pl = new Player(p);
+      getOM().add(pl);
+   } 
+   else if(p.type == pack::serialItem) {
+      Item *item = new Item(p);
+      getOM().add(item);
+   }
+   else if(p.type == pack::serialMissile) {
+      Missile *mis = new Missile(p);
+      getOM().add(mis);
+   }
+   else if(p.type == pack::serialNPC) {
+      NPC *npc = new NPC(p);
+      getOM().add(npc);
+   }
+   else if(p.type == pack::signal) {
+      Signal signal(p);
+      if(signal.sig == Signal::remove) {
+         int total = getOM().items.size() + getOM().players.size() 
+            + getOM().npcs.size() + getOM().missiles.size();
+         getOM().remove(signal.val);
+         total -= getOM().items.size() + getOM().players.size() 
+            + getOM().npcs.size() + getOM().missiles.size();
+         if(total)
+            printf("Error: Failed to remove %d\n", signal.val);
+      }
+      else
+         printf("Error: unknown signal (sig=%d val=%d)\n", 
+            signal.sig, signal.val);
+   }
+   else
+      printf("Error: unknown server packet, size: %d\n", p.data.size());
 }
 
 void GameServer::update(int ticks)
