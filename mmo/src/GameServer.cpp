@@ -174,11 +174,17 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Position pos(p);
       if(om.check(id, ObjectType::Player)) {
          Player &pl = *om.getPlayer(id);
+         //printf("id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
+         //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
          pl.move(pos.pos, pos.dir, pos.moving != 0);
          //player went out of bounds or invalid positon?
-         if(pos.pos.x != pl.pos.x || pos.pos.y != pl.pos.y)
+         if(pos.pos.x != pl.pos.x || pos.pos.y != pl.pos.y) {
+            printf("Invalid Position: id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
+               pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
             cm.clientSendPacket(Position(pl.pos, pl.dir, pl.moving, pl.getId()), pl.getId());
-      } else
+         }
+      } 
+      else
          printf("Accessing unknown Player %d\n", pos.id);
    }
    else if (p.type == PacketType::signal) {
@@ -323,10 +329,13 @@ void GameServer::update(int ticks)
    }
    */
 
-   while(om.npcCount() < 1) {
-      int i = om.regionXSize/2;
-      int j = om.regionYSize/2;
-      spawnNPC(i, j);
+   while(om.npcCount() < 4) {
+      int i = om.regionXSize/2-1;
+      int j = om.regionYSize/2-1;
+      //spawnNPC(i, j);
+      //spawnNPC(i, j+1);
+      //spawnNPC(i+1, j);
+      spawnNPC(i+1, j+1);
    }
 
    updateMissiles(ticks, dt);

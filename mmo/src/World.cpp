@@ -153,26 +153,25 @@ void WorldData::update()
    if (playerMoveDir.length() > 0.0f) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
-		if (player.pos.x > wWidth - 41)
-		{
+		if (player.pos.x > wWidth - 41) {
 			player.pos.x = wWidth - 41;
 		}
-		else if (player.pos.x < -wWidth + 41)
-		{
+		else if (player.pos.x < -wWidth + 41) {
 			player.pos.x = -wWidth + 41;
 		}
-		if (player.pos.y > wHeight)
-		{
+
+		if (player.pos.y > wHeight) {
 			player.pos.y = wHeight;
 		}
-		else if (player.pos.y < -wHeight + 41)
-		{
+		else if (player.pos.y < -wHeight + 41) {
 			player.pos.y = -wHeight + 41;
 		}
-   } else
+   } 
+   else
       player.moving = false;
 
-   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
+   if(player.moving)
+      pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
 
    objs.updateAll();
 }
@@ -341,7 +340,8 @@ void WorldData::draw()
    
    player.draw();
    
-   freetype::print(mono, 50, 50, "Experience: %d        Rupees: %d", player.exp, player.rupees);
+   freetype::print(mono, 25, 65, "Experience: %d        Rupees: %d\n\nPos: %5.0f %5.0f", 
+      player.exp, player.rupees, player.pos.x, player.pos.y);
 }
 
 void World::move(mat::vec2 dir)
