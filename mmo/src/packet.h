@@ -20,8 +20,8 @@ struct Packet {
       sock::Packet header;
       header.writeInt(data.size()).writeInt(type);
       bool val = conn.send(header) && conn.send(data);
-      if(!val)
-         printf("sendTo: failure\n");
+      //if(!val)
+      //   printf("sendTo: failure\n");
       return val;
    }
 };

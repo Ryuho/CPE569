@@ -16,7 +16,7 @@ bool CirclePlane(const Circle *c, const Plane *p)
 
 bool PlanePlane(const Plane *p1, const Plane *p2)
 {
-   if (abs(p1->norm.dot(p2->norm)) == 1.0) // parallel planes
+   if (abs(p1->norm.dot(p2->norm)) == 1.0f) // parallel planes
       return abs(p1->d - p2->d) < p1->radius + p2->radius;
    else
       return true;

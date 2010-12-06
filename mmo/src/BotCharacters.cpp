@@ -8,7 +8,7 @@ using namespace constants;
 using namespace game;
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), hp(hp), moving(false), alive(true)
+   : Object(id), pos(pos), dir(dir), hp(hp), moving(false), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -26,7 +26,7 @@ void Player::update()
 }
 
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
-   : id(id), type(type), pos(pos), alive(true)
+   : Object(id), type(type), pos(pos), alive(true)
 {
    this->dir = dir;
    if (this->dir.length() > 0.0f)
@@ -39,7 +39,7 @@ void Missile::update()
 }
 
 Item::Item(int id, int type, vec2 pos) 
-   : id(id), type(type), pos(pos), alive(true)
+   : Object(id), type(type), pos(pos), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -67,7 +67,7 @@ bool Item::isCollectable() const
 }
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
-   : id(id), type(type), hp(hp), pos(pos), dir(dir), moving(moving), alive(true)
+   : Object(id), type(type), hp(hp), pos(pos), dir(dir), moving(moving), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -80,8 +80,8 @@ void NPC::update()
 
 void ObjectHolder::addPlayer(Player p)
 {
-   if (!checkObject(p.id, ObjectType::Player)) {
-      idToIndex[p.id] = IdType(players.size(), ObjectType::Player);
+   if (!checkObject(p.getId(), ObjectType::Player)) {
+      idToIndex[p.getId()] = IdType(players.size(), ObjectType::Player);
       players.push_back(p);
    }
 }
@@ -163,7 +163,7 @@ void removeTempl(map<int, ObjectHolder::IdType> &idToIndex, vector<T> &objs, int
    idToIndex.erase(id);
    if (objs.size() > 1) {
       objs[i] = objs.back();
-      idToIndex[objs[i].id].index = i;
+      idToIndex[objs[i].getId()].index = i;
    }
    objs.pop_back();
 }
@@ -193,7 +193,7 @@ void updateTempl(vector<T> &objs, ObjectHolder &o)
    for (unsigned i = 0; i < objs.size(); i++) {
       objs[i].update();
       if (!objs[i].alive) {
-         o.removeObject(objs[i].id);
+         o.removeObject(objs[i].getId());
          i--;
       }
    }

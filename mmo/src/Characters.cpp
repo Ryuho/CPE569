@@ -13,7 +13,7 @@ int stopAfterTicks = 100;
 ////////////////////////////////////////////
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : id(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp), pvp(false)
+   : Object(id), pos(pos), dir(dir), moving(false), alive(true), hp(hp), pvp(false)
 {
    lastUpdate = getTicks();
 }
@@ -41,7 +41,7 @@ void Player::update()
 /////////////////////////////////////////////
 
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
-   : id(id), type(type), pos(pos), alive(true)
+   : Object(id), type(type), pos(pos), alive(true)
 {
    lastUpdate = getTicks();
    this->dir = dir;
@@ -65,7 +65,7 @@ void Missile::move(vec2 pos, vec2 dir)
 //////////////////////////////////////////
 
 Item::Item(int id, int type, vec2 pos) 
-   : id(id), type(type), pos(pos)
+   : Object(id), type(type), pos(pos)
 {
     lastUpdate = getTicks();
     alive = true;
@@ -87,7 +87,7 @@ void Item::move(vec2 pos)
 /////////////////////////////////////////
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
-   : id(id), type(type), pos(pos), dir(dir), moving(moving), hp(hp)
+   : Object(id), type(type), pos(pos), dir(dir), moving(moving), hp(hp)
 {
    alive = true;
    initGraphics();
@@ -119,32 +119,32 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
 
 void ObjectHolder::addPlayer(Player p)
 {
-   if (!checkObject(p.id, ObjectType::Player)) {
-      idToIndex[p.id] = IdType(players.size(), ObjectType::Player);
+   if (!checkObject(p.getId(), ObjectType::Player)) {
+      idToIndex[p.getId()] = IdType(players.size(), ObjectType::Player);
       players.push_back(p);
    }
 }
 
 void ObjectHolder::addMissile(Missile m)
 {
-   if (!checkObject(m.id, ObjectType::Missile)) {
-      idToIndex[m.id] = IdType(missiles.size(), ObjectType::Missile);   
+   if (!checkObject(m.getId(), ObjectType::Missile)) {
+      idToIndex[m.getId()] = IdType(missiles.size(), ObjectType::Missile);   
       missiles.push_back(m);
    }
 }
 
 void ObjectHolder::addItem(Item i)
 {
-   if (!checkObject(i.id, ObjectType::Item)) {
-      idToIndex[i.id] = IdType(items.size(), ObjectType::Item);
+   if (!checkObject(i.getId(), ObjectType::Item)) {
+      idToIndex[i.getId()] = IdType(items.size(), ObjectType::Item);
       items.push_back(i);
    }
 }
 
 void ObjectHolder::addNPC(NPC n)
 {
-   if (!checkObject(n.id, ObjectType::NPC)) {
-      idToIndex[n.id] = IdType(npcs.size(), ObjectType::NPC);
+   if (!checkObject(n.getId(), ObjectType::NPC)) {
+      idToIndex[n.getId()] = IdType(npcs.size(), ObjectType::NPC);
       npcs.push_back(n);
    }
 }
@@ -202,7 +202,7 @@ void removeTempl(map<int, ObjectHolder::IdType> &idToIndex, vector<T> &objs, int
    idToIndex.erase(id);
    if (objs.size() > 1) {
       objs[i] = objs.back();
-      idToIndex[objs[i].id].index = i;
+      idToIndex[objs[i].getId()].index = i;
    }
    objs.pop_back();
 }
@@ -232,7 +232,7 @@ void updateTempl(vector<T> &objs, ObjectHolder &o)
    for (unsigned i = 0; i < objs.size(); i++) {
       objs[i].update();
       if (!objs[i].alive) {
-         o.removeObject(objs[i].id);
+         o.removeObject(objs[i].getId());
          i--;
       }
    }

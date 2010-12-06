@@ -117,20 +117,27 @@ void ObjectManager::_move(Object *obj, vec2 &pos, vec2 &newPos)
    {
       rm->removeObject(obj->getId(), obj->getType());
       rm->addObject(obj, obj->getType(), regsNew);
-
-//debug version
+    
 /*
+//debug version
+      assert(regsNew.size() > 0 && regsOld.size() > 0
+         && std::equal(regsOld.begin(), regsOld.end(), regsNew.begin()));
       int count = rm->objectCount();
       std::vector<unsigned> regionIds(rm->getData(obj->getId())->regionIds);
       assert(rm->getData(obj->getId()));
       assert(rm->getData(obj->getId())->obj == obj);
-      assert(rm->getData(obj->getId())->regionIds.size() > 0);
+      assert(rm->getData(obj->getId())->regionIds.size() == regsOld.size());
       for(unsigned i = 0; i < regionIds.size(); i++) {
          assert(rm->getRegion(regionIds[i])->contains(obj->getId()));
          assert(rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
+         assert(!rm->getRegion(regionIds[i])->add(obj, obj->getType()));
+         assert(rm->getRegion(regionIds[i])->objectCount() > 0);
       }
+      assert(rm->getRegion(regionIds[i])->count(obj->getType()) > 0);
 
+      //remove
       assert(rm->removeObject(obj->getId(), obj->getType()));
+
       for(unsigned i = 0; i < regionIds.size(); i++) {
          assert(!rm->getRegion(regionIds[i])->contains(obj->getId()));
          assert(!rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
@@ -140,9 +147,8 @@ void ObjectManager::_move(Object *obj, vec2 &pos, vec2 &newPos)
       assert(!rm->removeObject(obj->getId(), obj->getType()));
       assert(count - 1 == rm->objectCount());
       assert(!rm->getData(obj->getId()));
-      RegionManager::iterator iter = rm->begin(ObjectType::NPC);
-      for(;iter != rm->end(ObjectType::NPC); iter++) {
-         assert((*iter)->getId() != obj->getId());
+      for(unsigned i = 0; i < (*rm)[ObjectType::NPC].size(); i++) {
+         assert((*rm)[ObjectType::NPC][i]->getId() != obj->getId());
       }
       //check Regions
       for(unsigned i = 0; i < rm->regionCount(); i++) {
@@ -156,13 +162,19 @@ void ObjectManager::_move(Object *obj, vec2 &pos, vec2 &newPos)
             assert((*iter)->getId() != obj->getId());
          }
       }
-      rm->addObject(obj, obj->getType(), regsNew);
+
+      //add
+      assert(rm->addObject(obj, obj->getType(), regsNew));
 
       assert(count == rm->objectCount());
+      assert(rm->getData(obj->getId()));
+      assert(rm->getData(obj->getId())->obj == obj);
+      assert(rm->getData(obj->getId())->regionIds.size() == regsNew.size());
       regionIds = rm->getData(obj->getId())->regionIds;
       for(unsigned i = 0; i < regionIds.size(); i++) {
          assert(rm->getRegion(regionIds[i])->contains(obj->getId()));
          assert(rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
+         assert(!rm->getRegion(regionIds[i])->add(obj, obj->getType()));
       }
 */
    }

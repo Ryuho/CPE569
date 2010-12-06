@@ -1,7 +1,6 @@
 #include "Objects.h"
 #include <assert.h>
 
-
 using namespace std;
 using namespace objmanager;
 
@@ -31,8 +30,7 @@ std::vector<Object *> &Region::getObjects(unsigned typeIndex)
 Object *Region::get(unsigned objectId, unsigned typeIndex) const
 {
    assert(typeIndex < typeCount());
-   //assert(objectId < 500000);
-
+ 
    std::map<unsigned, unsigned>::const_iterator iter
       = objectMap.find(objectId);
    if(iter == objectMap.end()) {
@@ -43,7 +41,6 @@ Object *Region::get(unsigned objectId, unsigned typeIndex) const
 
 bool Region::contains(unsigned objectId) const
 {
-   //assert(objectId < 500000);
    return objectMap.find(objectId) != objectMap.end();
 }
 
@@ -64,7 +61,6 @@ bool Region::add(Object *object, unsigned typeIndex)
 bool Region::remove(unsigned objectId, unsigned typeIndex)
 {
    assert(typeIndex < typeCount());
-   //assert(objectId < 500000);
 
    std::map<unsigned, unsigned>::iterator iter
       = objectMap.find(objectId);
@@ -119,7 +115,6 @@ RegionManager::RegionManager(unsigned regionCount, unsigned typeCount)
 Object *RegionManager::getObject(unsigned objectId)
 {
    std::map<unsigned, RegionManagerData>::iterator iter;
-   //assert(objectId < 500000);
 
    iter = objectToRegionsMap.find(objectId);
    if(iter == objectToRegionsMap.end()) {
@@ -137,16 +132,14 @@ Region *RegionManager::getRegion(unsigned regionIndex)
 bool RegionManager::addObject(Object *object, unsigned typeIndex,
       std::vector<unsigned> &regionIds)
 {
-   assert(typeIndex < typeCount()); //regions[18] -> id=120
-   //assert(object->getId() < 500000);
-
+   assert(typeIndex < typeCount());
+ 
    if(objectToRegionsMap.find(object->getId()) != objectToRegionsMap.end()) {
       return false; //already exists
    }
    //add to Regions
    for(unsigned i = 0; i < regionIds.size(); i++) {
-      assert(regionIds[i] < regions.size());
-      assert(regions[regionIds[i]].add(object, typeIndex));
+      regions[regionIds[i]].add(object, typeIndex);
    }
    //add to List
    objectList[typeIndex].push_back(object);
@@ -161,7 +154,6 @@ bool RegionManager::addObject(Object *object, unsigned typeIndex,
 Object *RegionManager::removeObject(unsigned objectId, unsigned typeIndex)
 {
    assert(typeIndex < typeCount());
-   //assert(objectId < 500000);
 
    std::map<unsigned, RegionManagerData>::iterator iter;
    iter = objectToRegionsMap.find(objectId);
@@ -172,8 +164,7 @@ Object *RegionManager::removeObject(unsigned objectId, unsigned typeIndex)
    //remove from Regions
    std::vector<unsigned> &regionIds = iter->second.regionIds;
    for(unsigned i = 0; i < regionIds.size(); i++) {
-      assert(regionIds[i] < regions.size());
-      assert(regions[regionIds[i]].remove(objectId, typeIndex));
+      regions[regionIds[i]].remove(objectId, typeIndex);
    }
    //remove from List
    unsigned currIndex = iter->second.objectListIndex;

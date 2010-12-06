@@ -5,11 +5,12 @@
 #include <map>
 #include "matrix.h"
 #include "Geometry.h"
+#include "Objects.h"
 
 using mat::vec2;
 
-struct Player {
-   Player() : id(0), moving(false), alive(true) {}
+struct Player : objmanager::Object {
+   Player() : Object(0), moving(false), alive(true) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
    void move(vec2 pos, vec2 dir, bool moving);
 
@@ -19,12 +20,11 @@ struct Player {
    vec2 dir, pos;
    float radius;
    bool moving, alive;
-   int id;
    int hp;
 };
 
 
-struct Missile {
+struct Missile : objmanager::Object {
    Missile(int id, int type, vec2 pos, vec2 dir);
    void update();
 
@@ -34,7 +34,7 @@ struct Missile {
    int id;
 };
 
-struct Item {
+struct Item : objmanager::Object {
    Item(int id, int type, vec2 pos);
    void update();
    bool isCollectable() const;
@@ -46,7 +46,7 @@ struct Item {
    int id;
 };
 
-struct NPC {
+struct NPC : objmanager::Object {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
    void update();
    

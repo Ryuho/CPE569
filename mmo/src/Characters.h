@@ -6,14 +6,15 @@
 #include "matrix.h"
 #include "Geometry.h"
 #include "Sprite.h"
+#include "Objects.h"
 
 using mat::vec2;
 struct Animation;
 
 void initCharacterResources();
 
-struct Player {
-   Player() : id(0), alive(false) {}
+struct Player : objmanager::Object {
+   Player() : Object(0), alive(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
 
    void move(vec2 pos, vec2 dir, bool moving);
@@ -24,12 +25,11 @@ struct Player {
    float radius;
    bool moving, alive;
    int animStart, lastUpdate;
-   int id;
    int hp, rupees, exp;
    bool pvp;
 };
 
-struct Missile {
+struct Missile : objmanager::Object {
    Missile(int id, int type, vec2 pos, vec2 dir);
 
    void move(vec2 pos, vec2 dir);
@@ -38,10 +38,10 @@ struct Missile {
 
    bool alive;
    vec2 pos, dir;
-   int id, type, lastUpdate;
+   int type, lastUpdate;
 };
 
-struct Item {
+struct Item : objmanager::Object {
    Item(int id, int type, vec2 pos);
 
    void move(vec2 pos);
@@ -51,12 +51,12 @@ struct Item {
    vec2 pos;
    bool alive;
    Animation *anim;
-   int id, type, lastUpdate;
+   int type, lastUpdate;
 private:
    void initGraphics();
 };
 
-struct NPC {
+struct NPC : objmanager::Object {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
 
    void move(vec2 pos, vec2 dir, bool moving);
@@ -67,7 +67,7 @@ struct NPC {
    vec2 pos, dir;
    bool alive, moving;
    Animation *anim;
-   int id, hp, type, lastUpdate;
+   int hp, type, lastUpdate;
 private:
    void initGraphics();
 };

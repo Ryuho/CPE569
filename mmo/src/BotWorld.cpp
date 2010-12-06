@@ -92,7 +92,7 @@ void BotWorldData::init(const char *host, int port)
    fightingId = 0;
    delay = 30;
 
-   printf("Connected to server successfully\nYour id is %d\n", player.id);
+   printf("Connected to server successfully\nYour id is %d\n", player.getId());
 }
 
 #ifdef WIN32
@@ -153,7 +153,8 @@ void BotWorldData::update(int ticks, float dt)
    if(looting) {
       updateLooting(ticks, dt);
    }
-   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
+   pack::Position(player.pos, player.dir, player.moving, 
+      player.getId()).makePacket().sendTo(conn);
    if(shooting) {
       shootArrow(mat::to(player.pos, fightNpc->pos).normalize());
    }
@@ -168,7 +169,8 @@ void BotWorldData::updateLooting(int ticks, float dt)
             && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
             && nextLoot < ticks) {
          player.moving = false;
-         pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
+         pack::Position(player.pos, player.dir, false, 
+            player.getId()).makePacket().sendTo(conn);
          nextLoot = ticks + botLootTickDelay;
          rightClick(objs.items[i].pos);
          printf("looting item %d\n", objs.items[i].id);
@@ -296,7 +298,7 @@ void BotWorldData::processPacket(pack::Packet p)
    
    if (p.type == PacketType::position) {
       Position pos(p);
-      if(pos.id == player.id) {
+      if(pos.id == player.getId()) {
          player.pos = pos.pos;
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
@@ -308,19 +310,23 @@ void BotWorldData::processPacket(pack::Packet p)
       } else if(objs.checkObject(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
          item->pos = pos.pos;
+      } else if(objs.checkObject(pos.id, ObjectType::Missile)) {
+         Missile *mis = objs.getMissile(pos.id);
+         mis->pos = pos.pos;
       }
       else
-         printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
+         printf("client %d: unable to process Pos packet id=%d\n", 
+            player.getId(), pos.id);
    }
    else if (p.type == PacketType::initialize) {
       Initialize i(p);
-      if (i.type == ObjectType::Player && i.id != player.id) {
+      if (i.type == ObjectType::Player && i.id != player.getId()) {
          objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
          //printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
       }
       else if (i.type == ObjectType::Missile) {
          objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
-      } 
+      }
       else if (i.type == ObjectType::NPC) {
          objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          //printf("Added NPC %d \n", i.id);
@@ -333,8 +339,9 @@ void BotWorldData::processPacket(pack::Packet p)
    else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
-         if(sig.val == this->player.id)
+         if(sig.val == this->player.getId()) {
             printf("\n\n!!! Disconnected from server !!!\n\n");
+         }
          else {
             objs.removeObject(sig.val);
             //printf("Object %d disconnected\n", sig.val);
@@ -345,12 +352,12 @@ void BotWorldData::processPacket(pack::Packet p)
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
    else if (p.type == PacketType::arrow) {
-	   Arrow ar(p);
-		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
+	   //Arrow ar(p);
+		//objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
    else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
-      if (hc.id == player.id) {
+      if (hc.id == player.getId()) {
          player.hp = hc.hp;
       } 
       else if (objs.checkObject(hc.id, ObjectType::Player)) {
@@ -370,17 +377,17 @@ void BotWorldData::processPacket(pack::Packet p)
 
 void BotWorldData::shootArrow(mat::vec2 dir)
 {
-	pack::Arrow ar(dir, player.id);	
+   pack::Arrow ar(dir, player.getId());	
 	ar.makePacket().sendTo(conn);
 }
 
 void BotWorldData::doSpecial()
 {
-	pack::Signal sig(pack::Signal::special, player.id);
+   pack::Signal sig(pack::Signal::special, player.getId());
    sig.makePacket().sendTo(conn);	
 }
 
 void BotWorldData::rightClick(vec2 mousePos)
 {
-   pack::Click(mousePos, player.id).makePacket().sendTo(conn);
+   pack::Click(mousePos, player.getId()).makePacket().sendTo(conn);
 }

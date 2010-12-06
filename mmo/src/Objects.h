@@ -11,7 +11,7 @@ namespace objmanager {
    {
       Object(unsigned id) 
          : id(id) {}
-      virtual unsigned getId() const { return id; }
+      unsigned getId() const { return id; }
    protected:
       unsigned id;
    };

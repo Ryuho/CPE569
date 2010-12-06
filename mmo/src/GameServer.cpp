@@ -1,12 +1,11 @@
 #include "GameServer.h"
+#include "Packets.h"
 #include "Constants.h"
 #include <cstdio>
-#include <time.h>
-#include "Packets.h"
 
 using namespace pack;
 
-GameServer *serverState;
+GameServer *serverState = 0;
 
 vec2 randPos(int minxy, int maxxy)
 {
@@ -74,15 +73,12 @@ void spawnStump(int id)
          stump->pos, vec2(), 0));
 }
 
-GameServer::GameServer(ConnectionManager &cm) : cm(cm)
+GameServer::GameServer(ConnectionManager &cm) 
+   : cm(cm), ticks(0), dt(0.0f)
 {
    serverState = this;
-   ticks = 0;
-   dt = 0;
-
    om.init((float)worldWidth, (float)worldHeight, (float)regionSize);
 
-   //spawnItem(newId());
    spawnStump(newId());
 }
 
@@ -92,7 +88,8 @@ void GameServer::newClientConnection(int id)
    
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
-   Player *newPlayer = new Player(id, getCM().ownServerId, pos, vec2(0,1), playerMaxHp);
+   Player *newPlayer 
+      = new Player(id, getCM().ownServerId, pos, vec2(0,1), playerMaxHp);
    om.add(newPlayer);
 
 	cm.clientSendPacket(Connect(id, constants::worldHeight, 
@@ -167,7 +164,6 @@ void collectItem(Player &pl, Item &item)
    getOM().remove(item.getId()); //only remove one item per click max
 }
 
-
 void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if (p.type == PacketType::position) {
@@ -195,7 +191,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             Player &play = *om.getPlayer(id);
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
-               int arrowID = newId();
                Missile *m = new Missile(newId(), cm.ownServerId, id, play.pos, 
                   vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
                om.add(m);
@@ -234,7 +229,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    else if (p.type == PacketType::click) {
       Click click(p);
       if(om.check(id, ObjectType::Player)) {
-         Geometry point = Point(click.pos);
+         Point point(click.pos);
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
 
@@ -321,7 +316,7 @@ void GameServer::update(int ticks)
    dt = (ticks - this->ticks)/1000.0f;
    this->ticks = ticks;
 
-   /*
+
    //if there is a player connected, spawn up to 150 NPCs, evenly distributed
    if(om.playerCount() > 0) {
       if(om.npcCount() < 150){
@@ -332,8 +327,8 @@ void GameServer::update(int ticks)
          }
       }
    }
-   */
 
+   /*
    while(om.npcCount() < 4) {
       int i = om.regionXSize/2-1;
       int j = om.regionYSize/2-1;
@@ -342,6 +337,7 @@ void GameServer::update(int ticks)
       //spawnNPC(i+1, j);
       spawnNPC(i+1, j+1);
    }
+   */
 
    updateMissiles(ticks, dt);
    updateNPCs(ticks, dt);
@@ -494,7 +490,7 @@ void GameServer::updatePlayers(int ticks, float dt)
          playersToRemove.push_back(&p);
          continue;
       } else {
-         Geometry areaOfInfluence(Circle(p.pos, areaOfInfluenceRadius));
+         Circle areaOfInfluence(p.pos, areaOfInfluenceRadius);
          std::vector<NPC *> aoinpcs;
          om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {

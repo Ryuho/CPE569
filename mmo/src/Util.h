@@ -133,21 +133,21 @@ namespace util {
 /////////////////// ASSERT ///////////////////
 //////////////////////////////////////////////
 #define ASSERT2(x,y) \
-	if(x != y) { \
+	if((x) != (y)) { \
 		std::stringstream ss; \
 		ss << __FILE__ << std::endl \
 			<< __FUNCTION__ << " (" << __LINE__ << ")" << std::endl \
-			<< "Got '" << x << "'. Expecting '" << y << "'."; \
+			<< "Got '" << (x) << "'. Expecting '" << (y) << "'."; \
 		std::cerr << ss.str().c_str(); \
 		throw ss.str().c_str(); \
 	}
 
 #define ASSERT(x) \
-   if(!x) { \
+   if(!(x)) { \
 		std::stringstream ss; \
 		ss << __FILE__ << std::endl \
 			<< __FUNCTION__ << " (" << __LINE__ << ")" << std::endl \
-			<< "Got '" << x << "'." \
+			<< "Got '" << (x) << "'."; \
 		std::cerr << ss.str().c_str(); \
 		throw ss.str().c_str(); \
 	}
@@ -157,7 +157,7 @@ namespace util {
 		std::stringstream ss; \
 		ss << __FILE__ << std::endl \
 			<< __FUNCTION__ << " (" << __LINE__ << ")" << std::endl \
-			<< "Got '" << x << "'. Expecting '" << y << "'."; \
+			<< "Got '" << (x) << "'. Expecting '" << (y) << "'."; \
 		std::cerr << ss.str().c_str(); \
 		throw ss.str().c_str(); \
 	}

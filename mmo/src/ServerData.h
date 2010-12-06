@@ -1,14 +1,14 @@
 #ifndef _SERVER_DATA_H_
 #define _SERVER_DATA_H_
 
-#include "Constants.h"
+#include "Objects.h"
 #include "matrix.h"
 #include "packet.h"
 #include "Geometry.h"
+#include "Constants.h"
 #include "Util.h"
 #include <vector>
 #include <map>
-#include "Objects.h"
 
 namespace server {
    using namespace std;

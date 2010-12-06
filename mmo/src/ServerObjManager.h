@@ -83,8 +83,13 @@ namespace server {
    {
       std::vector<unsigned> regionIds;
       getRegions(center, g, regionIds);
+      int counted = 0;
       for(unsigned i = 0; i < regionIds.size(); i++) {
          Region &region = *rm->getRegion(regionIds[i]);
+         //if(region.objectCount() > 0) {
+         //   counted++;
+         //   printf("<%d %d> ", regionIds[i], region.objectCount());
+         //}
          std::vector<objmanager::Object *> &objs
             = region.getObjects(ObjectTy);
          for(unsigned j = 0; j < objs.size(); j++) {
@@ -94,6 +99,8 @@ namespace server {
             }
          }
       }
+      //if(counted)
+      //   printf("\n");
       util::removeDuplicates(collided);
       return collided;
    }
