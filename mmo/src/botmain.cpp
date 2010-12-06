@@ -24,8 +24,6 @@ int main(int argc, char *argv[])
       port = atoi(argv[2]);
    }
 
-   app.init(address,port);
-
    srand((unsigned)time(0));
    app.init(address,port);
 
