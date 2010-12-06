@@ -210,6 +210,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Regions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Regions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\socket.cpp"
 				>
 			</File>
@@ -224,6 +232,10 @@
 		</Filter>
 		<File
 			RelativePath=".\src\GameServer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\GameServer.h"
 			>
 		</File>
 		<File
@@ -244,14 +256,6 @@
 		</File>
 		<File
 			RelativePath=".\src\ServerData.h"
-			>
-		</File>
-		<File
-			RelativePath=".\src\ServerObjManager.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\src\ServerObjManager.h"
 			>
 		</File>
 	</Files>

@@ -3,7 +3,7 @@
 
 #include "ServerConnManager.h"
 #include "ServerData.h"
-#include "ServerObjManager.h"
+#include "Objects.h"
 
 using namespace server;
 

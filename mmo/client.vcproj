@@ -254,6 +254,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Regions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Regions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\socket.cpp"
 				>
 			</File>

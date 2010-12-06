@@ -4,6 +4,8 @@
 #include "Characters.h"
 #include <boost/shared_ptr.hpp>
 
+using namespace client;
+
 struct WorldData;
 
 struct World {
@@ -28,6 +30,6 @@ protected:
 
 int getTicks();
 float getDt();
-Player &getPlayer(); // available only on client
+client::Player &getPlayer(); // available only on client
 
 #endif

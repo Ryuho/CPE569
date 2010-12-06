@@ -1,82 +1,143 @@
-#ifndef _BASE_OBJECTS_H_
-#define _BASE_OBJECTS_H_
+#ifndef _SERVER_OM_H_
+#define _SERVER_OM_H_
 
+#include "Regions.h"
+#include "Geometry.h"
+#include "matrix.h"
+#include "packet.h"
+#include "Util.h"
+#include "Constants.h"
 #include <vector>
 #include <map>
 
-namespace objmanager {
-   using namespace std;
+namespace objectManager {
+   //using namespace std;
+   using namespace mat;
+   using namespace constants;
+   using namespace geom;
+   using namespace regionManager;
 
-   struct Object 
-   {
-      Object(int id) : id(id) {}
-      int getId() const { return id; }
+   struct ObjectBase : RMObject {
+      ObjectBase(int id, vec2 pos)
+         : RMObject(id), pos(pos) {}
+      virtual int getType() const = 0;
+      virtual float getRadius() const = 0;
+      Geometry getGeom() const {
+         return Circle(pos, getRadius());
+      }
+      vec2 pos;
+   };
+
+   struct PlayerBase : ObjectBase {
+      PlayerBase(int id, vec2 pos) 
+         : ObjectBase(id, pos) {}
+      int getType() const;
+      float getRadius() const;
+   };
+
+   struct NPCBase : ObjectBase {
+      NPCBase(int id, int type, vec2 pos) 
+         : ObjectBase(id, pos), type(type) {}
+      int getType() const;
+      float getRadius() const;
+      int type;
+   };
+
+   struct ItemBase : ObjectBase {
+      ItemBase(int id, int type, vec2 pos) 
+         : ObjectBase(id, pos), type(type) {}
+      int getType() const;
+      float getRadius() const;
+      int type;
+   };
+
+   struct MissileBase : ObjectBase {
+      MissileBase(int id, int type, vec2 pos) 
+         : ObjectBase(id, pos), type(type) {}
+      int getType() const;
+      float getRadius() const;
+      int type;
+   };
+
+   struct ObjectManager {
+      ObjectManager();
+
+      bool inBounds(vec2 pos) const;
+      PlayerBase *getPlayer(int id);
+      MissileBase *getMissile(int id);
+      NPCBase *getNpc(int id);
+      ItemBase *getItem(int id);
+      
+      bool add(PlayerBase *p);
+      bool add(MissileBase *m);
+      bool add(NPCBase *n);
+      bool add(ItemBase *i);
+      
+      bool remove(int id);
+      bool check(int id, int type);
+      
+      void collidingPlayers(Geometry g, vec2 center, 
+         std::vector<PlayerBase *> &collided);
+      void collidingMissiles(Geometry g, vec2 center,
+         std::vector<MissileBase *> &collided);
+      void collidingNPCs(Geometry g, vec2 center,
+         std::vector<NPCBase *> &collided);
+      void collidingItems(Geometry g, vec2 center,
+         std::vector<ItemBase *> &collided);
+      
+      void move(PlayerBase *p, vec2 newPos);
+      void move(ItemBase *i, vec2 newPos);
+      void move(MissileBase *m, vec2 newPos);
+      void move(NPCBase *n, vec2 newPos);
+      
+      ObjectBase *get(int type, int index_Not_The_Id);
+      
+      unsigned itemCount() const;
+      unsigned playerCount() const;
+      unsigned npcCount() const;
+      unsigned missileCount() const;
+      
+      vec2 worldBotLeft;
+      
    protected:
-      int id;
+      void _move(ObjectBase *obj, vec2 &pos, vec2 &newPos);
+      ObjectBase *_get(int id, int type);
+      ObjectBase *_get(int id);
+      bool _add(ObjectBase *obj, vec2 pos, Geometry g);
+      template<typename Ty, int ObjectTy>
+      vector<Ty> &_colliding(Geometry g, const vec2 &center, 
+         std::vector<Ty> &collided);
+      vec2 toWorldPos(vec2 pos);
+      void getRegion(vec2 pos, int &x, int &y);
+      void getRegions(vec2 pos, Geometry g, std::vector<int> &regionIds);
+      Geometry getRegionGeom(int x, int y);
+      
+      RegionManager rm;
    };
 
-
-   struct Region 
+   template<typename Ty, int ObjectTy>
+   vector<Ty> &ObjectManager::_colliding(Geometry g, const vec2 &center, 
+      std::vector<Ty> &collided)
    {
-      Region(int id, unsigned typeCount);
-
-      int getId() const; //Region Id
-      std::vector<Object *> &getObjects(int typeIndex);
-      Object *get(int objectId, int typeIndex) const;
-      bool contains(int objectId) const;
-      bool add(Object *object, int typeIndex);
-      bool remove(int objectId, int typeIndex);
-      unsigned objectCount() const;
-      unsigned typeCount() const;
-      unsigned count(int typeIndex) const;
-
-   private:
-      int id;
-      //speeds up lookup/removal of a specific object
-      std::map<int, int> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
-      //allows iteration of each Type of object
-      std::vector<std::vector<Object *>> objectList; //objectList[typeIndex] -> list of Objects of given type
-   };
-
-
-   struct RegionManagerData
-   {
-      RegionManagerData() 
-         : obj(0), objectListIndex(0) {}
-      RegionManagerData(Object *obj, int objectListIndex, 
-         std::vector<int> &regionIds)
-         : obj(obj), objectListIndex(objectListIndex), regionIds(regionIds) {}
-
-      Object *obj; //could be removed for memory use efficiency
-      int objectListIndex;
       std::vector<int> regionIds;
-   };
+      getRegions(center, g, regionIds);
+      int counted = 0;
+      for(unsigned i = 0; i < regionIds.size(); i++) {
+         Region &region = *rm.getRegion(regionIds[i]);
+         std::vector<RMObject *> &objs
+            = region.getObjects(ObjectTy);
+         for(unsigned j = 0; j < objs.size(); j++) {
+            Ty obj = static_cast<Ty>(objs[j]);
+            if(obj->getGeom().collision(g)) {
+               collided.push_back(obj);
+            }
+         }
+      }
+      util::removeDuplicates(collided);
+      return collided;
+   }
 
+} // end server namespace
+  
 
-   struct RegionManager 
-   {
-      typedef std::vector<objmanager::Object *>::iterator iterator;
-      typedef std::vector<objmanager::Object *>::const_iterator const_iterator;
-
-      RegionManager(unsigned regionCount, unsigned typeCount);
-      Object *getObject(int objectId);
-      Region *getRegion(int regionIndex);
-      bool addObject(Object *object, int typeIndex, std::vector<int> &regionIds);
-      Object *removeObject(int objectId, int typeIndex);
-      const RegionManagerData *getData(int objectId) const;
-      unsigned regionCount() const;
-      unsigned objectCount() const;
-      unsigned typeCount() const;
-      unsigned count(int typeIndex) const;
-      std::vector<Object *> &operator[](int typeIndex);
-
-   private:
-      unsigned objectTotal;
-      std::map<int, RegionManagerData> objectToRegionsMap; //objectToRegionsMap[objectId] -> data
-      //redundant list of Region's objects for more simplistic traversal
-      std::vector<std::vector<Object *>> objectList; //objectList[typeIndex] -> list of Objects of given type
-      std::vector<Region> regions;
-   };
-}
-
-#endif // _BASE_OBJECTS_H_
+#endif

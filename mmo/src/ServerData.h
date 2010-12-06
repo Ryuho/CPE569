@@ -16,88 +16,72 @@ namespace server {
    using namespace constants;
    using namespace geom;
    using pack::Packet;
+   using namespace objectManager;
 
-   struct Object : objmanager::Object {
-      Object(int id) : objmanager::Object(id) {}
-      virtual int getType() const = 0;
-      //void lock() const;
-      //void unlock() const;
+   struct Serializable {
       virtual Packet serialize() const = 0;
-      virtual Geometry getGeom() const = 0;
       virtual void deserialize(Packet &serialized) = 0;
    };
 
-   struct Player : Object {
+   struct Player : PlayerBase, Serializable {
       Player(int id, int sid, vec2 pos, vec2 dir, int hp);
       Player(Packet &serialized);
       void move(vec2 pos, vec2 dir, bool moving = true);
       void takeDamage(int damage);
       void gainExp(int exp);
       void gainRupees(int rupees);
-      Geometry getGeom() const;
-      float getRadius() const;
-      int getType() const;
-      Packet serialize() const;
       void gainHp(int hp);
+      Packet serialize() const;
       void deserialize(Packet &serialized);
       
-      vec2 pos, dir;
+      vec2 dir;
       bool moving, alive, pvp;
       int sid, hp, exp, rupees;
       bool shotThisFrame;
    };
 
-   struct Missile : Object {
+   struct Missile : MissileBase, Serializable {
       Missile(int id, int sid, int owned, vec2 pos, vec2 dir, int type = MissileType::Arrow);
       Missile(Packet &serialized);
       void move(vec2 pos, vec2 dir);
       void update();
       int getDamage() const;
-      Geometry getGeom() const;
-      int getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 
-      vec2 pos, dir;
-      int sid, owned, type, spawnTime;
+      vec2 dir;
+      int sid, owned, spawnTime;
    };
 
-   struct NPC : Object {
+   struct NPC : NPCBase, Serializable {
       NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type = NPCType::Skeleton);
       NPC(Packet &serialized);
       void update();
       void takeDamage(int damage);
-      float getRadius() const;
-      Geometry getGeom() const;
       int getLoot();
       int getExp();
       void gainHp(int hp);
       void move(vec2 pos, vec2 dir, bool moving);
-      int getType() const;
+      int getAttackDelay() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
-      int getAttackDelay() const;
       
-      vec2 pos, dir, initPos;
+      vec2 dir, initPos;
       bool moving;
       int aiTicks, aiType, attackId, nextMissileTicks;
-      int sid, hp, type;
+      int sid, hp;
    };
 
-   struct Item : Object {
+   struct Item : ItemBase, Serializable {
       Item(int id, int sid, vec2 pos, int type = ItemType::GreenRupee);
       Item(Packet &serialized);
-      float getRadius() const;
-      Geometry getGeom() const;
       bool isCollectable() const;
       bool isCollidable() const; //cannot be walked onto? Stump
       void move(vec2 pos);
-      int getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 
-      vec2 pos;
-      int sid, type;
+      int sid;
    };
 
 } // end server namespace

@@ -169,16 +169,17 @@ void BotWorldData::update(int ticks, float dt)
 
 void BotWorldData::updateLooting(int ticks, float dt)
 {
-   for(unsigned i = 0; i < objs.items.size(); i++) {
-      if(objs.items[i].isCollectable() 
-            && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
+   for(unsigned i = 0; i < objs.itemCount(); i++) {
+      Item &item = *static_cast<Item *>(objs.get(ObjectType::Item, i));
+      if(item.isCollectable() 
+            && mat::dist(player.pos, item.pos) < maxBotItemGrab
             && nextLoot < ticks) {
          //player.moving = false;
          //pack::Position(player.pos, player.dir, false, 
          //   player.getId()).makePacket().sendTo(conn);
          nextLoot = ticks + botLootTickDelay;
-         rightClick(objs.items[i].pos);
-         printf("looting item %d\n", objs.items[i].getId());
+         rightClick(item.pos);
+         printf("looting item %d\n", item.getId());
       }
    }
 }
@@ -194,7 +195,7 @@ vec2 tangentVec(vec2 v, bool right) {
 void BotWorldData::updateFighting(int ticks, float dt)
 {
    //finish NPC
-   if(objs.checkObject(fightingId, ObjectType::NPC)) {
+   if(objs.check(fightingId, ObjectType::NPC)) {
       fightNpc = objs.getNPC(fightingId);
       float distance = abs(mat::dist(player.pos, fightNpc->pos));
       if(distance > botAggroRange + 5.0f 
@@ -248,10 +249,11 @@ void BotWorldData::updateFighting(int ticks, float dt)
 void BotWorldData::updateNotFighting(int ticks, float dt)
 {
    //check if NPC in range (turn on fighting)
-   for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
-      if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
-            && ticks - objs.npcs[i].lastUpdate < noDrawTicks) {
-         fightingId = objs.npcs[i].getId();
+   for(unsigned i = 0; i < objs.npcCount() && !fighting; i++) {
+      NPC &npc = *static_cast<NPC *>(objs.get(ObjectType::NPC, i));
+      if(mat::dist(player.pos, npc.pos) < botAggroRange
+            && ticks - npc.lastUpdate < noDrawTicks) {
+         fightingId = npc.getId();
          fighting = true;
          printf("fighting %d\n", fightingId);
       }
@@ -261,9 +263,10 @@ void BotWorldData::updateNotFighting(int ticks, float dt)
       if(ticks > nextDirChange) {
          nextDirChange = ticks + dirChangeDelay;
          if(homing) {
-            for(unsigned i = 0; i < objs.npcs.size(); i++) {
-               if(mat::dist(player.pos, objs.npcs[i].pos) < botHomingRange) {
-                  player.dir = mat::to(player.pos, objs.npcs[i].pos);
+            for(unsigned i = 0; i < objs.npcCount(); i++) {
+               NPC &npc = *static_cast<NPC *>(objs.get(ObjectType::NPC, i));
+               if(mat::dist(player.pos, npc.pos) < botHomingRange) {
+                  player.dir = mat::to(player.pos, npc.pos);
                }
             }
          } else {
@@ -303,17 +306,17 @@ void BotWorldData::processPacket(pack::Packet p)
       Position pos(p);
       if(pos.id == player.getId()) {
          player.pos = pos.pos;
-      } else if(objs.checkObject(pos.id, ObjectType::Player)) {
+      } else if(objs.check(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
-         NPC *npc = objs.getNPC(pos.id);
-         npc->pos = pos.pos;
-         npc->dir = pos.dir;
-         npc->moving = pos.moving != 0;
-      } else if(objs.checkObject(pos.id, ObjectType::Item)) {
+      } else if (objs.check(pos.id, ObjectType::NPC)) {
+         NPC &npc = *objs.getNPC(pos.id);
+         npc.pos = pos.pos;
+         npc.dir = pos.dir;
+         npc.moving = pos.moving != 0;
+      } else if(objs.check(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
          item->pos = pos.pos;
-      } else if(objs.checkObject(pos.id, ObjectType::Missile)) {
+      } else if(objs.check(pos.id, ObjectType::Missile)) {
          Missile *mis = objs.getMissile(pos.id);
          mis->pos = pos.pos;
       }
@@ -324,18 +327,18 @@ void BotWorldData::processPacket(pack::Packet p)
    else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.getId()) {
-         objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
+         objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
          //printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
+         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          //printf("Added NPC %d \n", i.id);
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(Item(i.id, i.subType, i.pos));
+         objs.addItem(new Item(i.id, i.subType, i.pos));
          //printf("Added Item %d \n", i.id);
       }
    }
@@ -346,7 +349,7 @@ void BotWorldData::processPacket(pack::Packet p)
             printf("\n\n!!! Disconnected from server !!!\n\n");
          }
          else {
-            objs.removeObject(sig.val);
+            objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
@@ -363,10 +366,10 @@ void BotWorldData::processPacket(pack::Packet p)
       if (hc.id == player.getId()) {
          player.hp = hc.hp;
       } 
-      else if (objs.checkObject(hc.id, ObjectType::Player)) {
+      else if (objs.check(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::NPC)) {
+      else if(objs.check(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else

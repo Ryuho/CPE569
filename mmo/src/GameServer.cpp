@@ -4,6 +4,7 @@
 #include <cstdio>
 
 using namespace pack;
+using namespace server;
 
 GameServer *serverState = 0;
 
@@ -44,7 +45,7 @@ void spawnNPC(int regionX, int regionY)
    vec2 pos(util::frand(botLeft.x, botLeft.x + regionSize),
       util::frand(botLeft.y, botLeft.y + regionSize));
 
-   NPC *n = new NPC(newId(), getCM().ownServerId, npcMaxHp, pos, 
+   server::NPC *n = new server::NPC(newId(), getCM().ownServerId, npcMaxHp, pos, 
       vec2(0,1), npcType(regionX, regionY));
 
    getOM().add(n);
@@ -77,7 +78,6 @@ GameServer::GameServer(ConnectionManager &cm)
    : cm(cm), ticks(0), dt(0.0f)
 {
    serverState = this;
-   om.init();
 
    spawnStump(newId());
 }
@@ -169,7 +169,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    if (p.type == PacketType::position) {
       Position pos(p);
       if(om.check(pos.id, ObjectType::Player)) {
-         Player &pl = *om.getPlayer(pos.id);
+         Player &pl = *static_cast<Player *>(om.getPlayer(pos.id));
          //printf("id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
          //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
          pl.move(pos.pos, pos.dir, pos.moving != 0);
@@ -189,7 +189,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 
       if (signal.sig == Signal::special) {
          if(om.check(id, ObjectType::Player)) {
-            Player &play = *om.getPlayer(id);
+            Player &play = *static_cast<Player *>(om.getPlayer(id));
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
                Missile *m = new Missile(newId(), cm.ownServerId, id, play.pos, 
@@ -205,9 +205,9 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       }
       else if (signal.sig == Signal::hurtme) {
          if(om.check(id, ObjectType::Player)) {
-            Player *p = om.getPlayer(id);
-            p->takeDamage(1);
-            cm.clientBroadcast(HealthChange(id, p->hp));
+            Player &p = *static_cast<Player *>(om.getPlayer(id));
+            p.takeDamage(1);
+            cm.clientBroadcast(HealthChange(id, p.hp));
          }
          else
             printf("Error: Packet Unknown Player id %d\n", id);
@@ -219,7 +219,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    else if (p.type == PacketType::arrow) {
       Arrow ar(p);
       if (om.check(id, ObjectType::Player)) {
-         Player &pl = *om.getPlayer(id);
+         Player &pl = *static_cast<Player *>(om.getPlayer(id));
          if(!pl.shotThisFrame) {
             pl.shotThisFrame = true;
             Missile *m = new Missile(newId(), cm.ownServerId,id, 
@@ -238,12 +238,12 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
 
-         std::vector<Item *> items;
+         std::vector<ItemBase *> items;
          om.collidingItems(point, click.pos, items);
          if(items.size() > 0) {
-            Player &pl = *om.getPlayer(click.id);
+            Player &pl = *static_cast<Player *>(om.getPlayer(click.id));
             for(unsigned i = 0; i < items.size(); i++) {
-               Item &item = *items[0];
+               Item &item = *static_cast<Item *>(items[i]);
                if(item.isCollectable()) {
                   collectItem(pl, item);
                }
@@ -256,7 +256,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    else if(p.type == PacketType::changePvp) {
       Pvp pvpPacket(p);
       if(om.check(pvpPacket.id, ObjectType::Player)) {
-         Player &play = *om.getPlayer(pvpPacket.id);
+         Player &play = *static_cast<Player *>(om.getPlayer(pvpPacket.id));
          play.pvp = pvpPacket.isPvpMode != 0;
          cm.clientBroadcast(pvpPacket.makePacket());
       }
@@ -357,10 +357,10 @@ void GameServer::updateNPCs(int ticks, float dt)
       bool removeNPC = false;
       //bool npcHit = false;
 
-      std::vector<Item *> collidedItems;
+      std::vector<ItemBase *> collidedItems;
       om.collidingItems(npc.getGeom(), npc.pos, collidedItems);
       for(unsigned j = 0; j < collidedItems.size(); j++) {
-         Item &item = *collidedItems[j];
+         Item &item = *static_cast<Item *>(collidedItems[j]);
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, npc.pos);
             if(pushDir.length() > 0.01) //no divide by zero!
@@ -374,15 +374,15 @@ void GameServer::updateNPCs(int ticks, float dt)
          }
       }
   
-      std::vector<Missile *> ms;
+      std::vector<MissileBase *> ms;
       om.collidingMissiles(npc.getGeom(), npc.pos, ms);
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
-         Missile &m = *ms[j];
+         Missile &m = *static_cast<Missile *>(ms[j]);
          if(m.owned != npc.getId() && om.check(m.owned, ObjectType::Player)) {
             npc.takeDamage(m.getDamage());
             if(npc.hp == 0) {
                if(om.check(m.owned, ObjectType::Player)) {
-                  Player &p = *om.getPlayer(m.owned);
+                  Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
                   p.gainExp(npc.getExp());
                   cm.clientSendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.getId());
                }
@@ -427,10 +427,11 @@ void GameServer::updateMissiles(int ticks, float dt)
       }
       else {
          m.update();
-         std::vector<Item *> collidedItems;
+         std::vector<ItemBase *> collidedItems;
          om.collidingItems(m.getGeom(), m.pos, collidedItems);
          for(unsigned j = 0; j < collidedItems.size(); j++) {
-            if(collidedItems[j]->isCollidable()) {
+            Item &item = *static_cast<Item *>(collidedItems[j]);
+            if(item.isCollidable()) {
                missilesToRemove.push_back(&m);
                break;
             }
@@ -453,10 +454,10 @@ void GameServer::updatePlayers(int ticks, float dt)
       p.shotThisFrame = false;
 
       p.gainHp(playerHpPerTick);
-      std::vector<Item *> collidedItems;
+      std::vector<ItemBase *> collidedItems;
       om.collidingItems(p.getGeom(), p.pos, collidedItems);
       for(unsigned j = 0; j < collidedItems.size(); j++) {
-         Item &item = *collidedItems[j];
+         Item &item = *static_cast<Item *>(collidedItems[j]);
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, p.pos);
             if(pushDir.length() > 0.0f) //no divide by zero!
@@ -472,14 +473,14 @@ void GameServer::updatePlayers(int ticks, float dt)
       }
 
       //if player is colliding with any missile that is not owned by it, they take dmg
-      std::vector<Missile *> collidedMis;
+      std::vector<MissileBase *> collidedMis;
       om.collidingMissiles(p.getGeom(), p.pos, collidedMis);
       //bool damaged = false;
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
-         Missile &m = *collidedMis[mdx];
+         Missile &m = *static_cast<Missile *>(collidedMis[mdx]);
          if(m.owned != p.getId()) {
             if(p.pvp && (om.check(m.owned, ObjectType::Player)
-                  && !om.getPlayer(m.owned)->pvp)) 
+                  && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) 
             {
                continue;
             }
@@ -495,18 +496,18 @@ void GameServer::updatePlayers(int ticks, float dt)
          continue;
       } else {
          Circle areaOfInfluence(p.pos, areaOfInfluenceRadius);
-         std::vector<NPC *> aoinpcs;
+         std::vector<NPCBase *> aoinpcs;
          om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
-            NPC &npc = *aoinpcs[i];
+            NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
             cm.clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
             cm.clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), p.getId());
             //printf("id=%d pos=%f %f\n", npc.getId(), npc.pos.x, npc.pos.y);
          }
-         std::vector<Player *> aoiplayers;
+         std::vector<PlayerBase *> aoiplayers;
          om.collidingPlayers(areaOfInfluence, p.pos, aoiplayers);
          for(unsigned i = 0; i < aoiplayers.size(); i++) {
-            Player &player = *aoiplayers[i];
+            Player &player = *static_cast<Player *>(aoiplayers[i]);
             cm.clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
             if(player.getId() != p.getId()) {
                //Sending pos packet to player can cause jittering

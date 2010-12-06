@@ -1,21 +1,28 @@
-#include "ServerData.h"
 #include "GameServer.h"
+#include "ServerData.h"
 #include "Geometry.h"
 #include "Util.h"
 #include "Packets.h"
 #include <cstdio>
 
-namespace server {
+using namespace server;
 using namespace mat;
 using namespace constants;
-
-// Player
-
+namespace server {
+/////////////////////////////////
+//////////// Player /////////////
+/////////////////////////////////
 Player::Player(int id, int sid, vec2 pos, vec2 dir, int hp)
-   : Object(id), sid(sid), pos(pos), dir(dir), moving(false), 
+   : PlayerBase(id, pos), sid(sid), dir(dir), moving(false), 
    hp(hp), rupees(0), exp(0), pvp(false), shotThisFrame(false)
 {
    
+}
+
+Player::Player(pack::Packet &serialized)
+   : PlayerBase(0, vec2())
+{
+   deserialize(serialized);
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
@@ -25,7 +32,7 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<PlayerBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
@@ -44,22 +51,6 @@ void Player::gainExp(int exp)
 void Player::gainRupees(int rupees)
 {
    this->rupees += rupees;
-}
-
-Geometry Player::getGeom() const
-{
-   return Circle(pos, (float)playerRadius);
-}
-
-int Player::getType() const
-{
-   return ObjectType::Player;
-}
-
-Player::Player(pack::Packet &serialized)
-   : Object(0)
-{
-   deserialize(serialized);
 }
 
 void Player::deserialize(pack::Packet &serialized)
@@ -97,12 +88,11 @@ void Player::gainHp(int hp)
    util::clamp(this->hp, 0, playerMaxHp);
 }
 
-
-// Missile
-
-Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, 
-   int type)
-   : Object(id), sid(sid), owned(owned), pos(pos), dir(dir), type(type)
+/////////////////////////////////
+//////////// Missile ////////////
+/////////////////////////////////
+Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int type)
+   : MissileBase(id, type, pos), sid(sid), owned(owned), dir(dir)
 {
    spawnTime = getTicks();
    this->dir = dir;
@@ -112,30 +102,20 @@ Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir,
       this->dir = vec2(1,0);
 }
 
+Missile::Missile(pack::Packet &serialized)
+   : MissileBase(0, 0, vec2())
+{
+   deserialize(serialized);
+}
+
 void Missile::update()
 {
    move(pos + dir * projectileSpeed * getDt(), dir);
 }
 
-Geometry Missile::getGeom() const
-{
-   return Circle(pos, arrowRadius);
-}
-
 int Missile::getDamage() const
 {
    return rand()%6 + 5;
-}
-
-int Missile::getType() const
-{
-   return ObjectType::Missile;
-}
-
-Missile::Missile(pack::Packet &serialized)
-   : Object(0)
-{
-   deserialize(serialized);
 }
 
 void Missile::deserialize(pack::Packet &serialized)
@@ -166,19 +146,26 @@ void Missile::move(vec2 pos, vec2 dir)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<MissileBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
 }
 
-// NPC
-
+/////////////////////////////////
+/////////////// NPC /////////////
+/////////////////////////////////
 NPC::NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type)
-   : Object(id), sid(sid), hp(hp), pos(pos), dir(dir), type(type), 
+   : NPCBase(id, type, pos), sid(sid), hp(hp), dir(dir),
    aiType(AIType::Stopped), aiTicks(0), attackId(0), initPos(pos), 
    moving(false), nextMissileTicks(0)
 {
 
+}
+
+NPC::NPC(pack::Packet &serialized)
+   : NPCBase(0, 0, vec2())
+{
+   deserialize(serialized);
 }
 
 int NPC::getAttackDelay() const
@@ -307,17 +294,17 @@ void NPC::update()
    }
 
    Geometry aggroCircle(Circle(pos, npcAggroRange));
-   std::vector<Player *> closePlayers;
+   std::vector<PlayerBase *> closePlayers;
    getOM().collidingPlayers(aggroCircle, pos, closePlayers);
    if(closePlayers.size() > 0) {
       aiType = AIType::Attacking;
-      p = closePlayers[0];
+      p = static_cast<Player *>(closePlayers[0]);
       attackId = p->getId();
       float dist = mat::dist(p->pos, pos);
       for(unsigned i = 1; i < closePlayers.size(); i++) {
          float dist2 = mat::dist(closePlayers[i]->pos, pos);
          if(dist2 < dist) {
-            p = closePlayers[i];
+            p = static_cast<Player *>(closePlayers[i]);
             attackId = p->getId();
          }
       }
@@ -366,47 +353,6 @@ void NPC::update()
    }
 }
 
-float NPC::getRadius() const
-{
-   switch(type) {
-      case NPCType::Fairy: //16x16
-      case NPCType::Bat:
-      case NPCType::Bird:
-         return 16*1.5f;
-         break;
-      case NPCType::Thief: //16x32
-      case NPCType::Squirrel: 
-      case NPCType::Princess:
-      case NPCType::Skeleton:
-      case NPCType::Cactus:
-      case NPCType::Wizard:
-      case NPCType::Goblin:
-         return 22*1.5f;
-         break;
-      case NPCType::Cyclops: //32x32
-      case NPCType::Chicken:
-      case NPCType::Vulture:
-      case NPCType::Bush:
-      case NPCType::BigFairy:
-      case NPCType::Ganon:
-         return 23.5f*1.5f;
-         break;
-      default:
-         printf("Error NPC::getRadius() - unknown NPC type %d\n", type);
-   }
-   return 0.0f;
-}
-
-Geometry NPC::getGeom() const
-{
-   return Circle(pos, getRadius());
-}
-
-void NPC::takeDamage(int damage)
-{
-   hp = max(0, hp-damage);
-}
-
 void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
    //this->pos = pos; Error to do this
@@ -414,21 +360,10 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<NPCBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
-}
-
-int NPC::getType() const
-{
-   return ObjectType::NPC;
-}
-
-NPC::NPC(pack::Packet &serialized)
-   : Object(0)
-{
-   deserialize(serialized);
 }
 
 void NPC::deserialize(pack::Packet &serialized)
@@ -466,12 +401,25 @@ void NPC::gainHp(int hp)
    util::clamp(this->hp, 0, npcMaxHp);
 }
 
-// Item
+void NPC::takeDamage(int damage)
+{
+   hp = max(0, hp-damage);
+}
 
+
+/////////////////////////////////
+////////////// Item /////////////
+/////////////////////////////////
 Item::Item(int id, int sid, vec2 pos, int type)
-   : Object(id), sid(sid),pos(pos), type(type)
+   : ItemBase(id, type, pos), sid(sid)
 {
 
+}
+
+Item::Item(pack::Packet &serialized)
+   : ItemBase(0, 0, vec2()), sid(0)
+{
+   deserialize(serialized);
 }
 
 void Item::move(vec2 pos)
@@ -481,7 +429,7 @@ void Item::move(vec2 pos)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<ItemBase *>(this), pos);
 }
 
 bool Item::isCollidable() const
@@ -515,45 +463,6 @@ bool Item::isCollectable() const
          printf("Error Item::isCollectable - Unknown item type %d\n", type);
    }
    return false;
-}
-
-float Item::getRadius() const
-{
-   switch (type) {
-      case ItemType::GreenRupee:
-      case ItemType::RedRupee:
-      case ItemType::BlueRupee:
-         return 12*1.5f;
-         break; //unreachable
-      case ItemType::Explosion:
-         return 55*1.5f;
-         break;
-      case ItemType::Stump:
-         return 32*1.5f;
-         break;
-      case ItemType::Heart:
-         return 13*1.5f;
-         break;
-      default:
-         printf("Error Item::getGeom - Unknown item type %d\n", type);
-   }
-   return 0.0f;
-}
-
-Geometry Item::getGeom() const
-{
-   return Circle(pos, getRadius());
-}
-
-int Item::getType() const
-{
-   return ObjectType::Item;
-}
-
-Item::Item(pack::Packet &serialized)
-   : Object(0)
-{
-   deserialize(serialized);
 }
 
 void Item::deserialize(pack::Packet &serialized)

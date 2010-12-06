@@ -8,9 +8,10 @@ using namespace geom;
 using namespace constants;
 using namespace botclient;
 
+namespace botclient {
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : Object(id), pos(pos), dir(dir), hp(hp), moving(false), alive(true)
+   : PlayerBase(id, pos), dir(dir), hp(hp), moving(false), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -28,7 +29,7 @@ void Player::update()
 }
 
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
-   : Object(id), type(type), pos(pos), alive(true)
+   : MissileBase(id, type, pos), alive(true)
 {
    this->dir = dir;
    if (this->dir.length() > 0.0f)
@@ -41,7 +42,7 @@ void Missile::update()
 }
 
 Item::Item(int id, int type, vec2 pos) 
-   : Object(id), type(type), pos(pos), alive(true)
+   : ItemBase(id, type, pos), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -69,7 +70,7 @@ bool Item::isCollectable() const
 }
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
-   : Object(id), type(type), hp(hp), pos(pos), dir(dir), moving(moving), alive(true)
+   : NPCBase(id, type, pos), hp(hp), dir(dir), moving(moving), alive(true)
 {
    lastUpdate = getTicks();
 }
@@ -83,131 +84,64 @@ void NPC::update()
 /////////// ObjectHolder ///////////
 ////////////////////////////////////
 
-void ObjectHolder::addPlayer(Player p)
+bool ObjectHolder::addPlayer(Player *obj)
 {
-   if (!checkObject(p.getId(), ObjectType::Player)) {
-      idToIndex[p.getId()] = IdType(players.size(), ObjectType::Player);
-      players.push_back(p);
-   }
+   return add(static_cast<PlayerBase *>(obj));
 }
 
-void ObjectHolder::addMissile(Missile m)
+bool ObjectHolder::addMissile(Missile *obj)
 {
-   if (!checkObject(m.getId(), ObjectType::Missile)) {
-      idToIndex[m.getId()] = IdType(missiles.size(), ObjectType::Missile);   
-      missiles.push_back(m);
-   }
+   return add(static_cast<MissileBase *>(obj));
 }
 
-void ObjectHolder::addItem(Item i)
+bool ObjectHolder::addItem(Item *obj)
 {
-   if (!checkObject(i.getId(), ObjectType::Item)) {
-      idToIndex[i.getId()] = IdType(items.size(), ObjectType::Item);
-      items.push_back(i);
-   }
+   return add(static_cast<ItemBase *>(obj));
 }
 
-void ObjectHolder::addNPC(NPC n)
+bool ObjectHolder::addNPC(NPC *obj)
 {
-   if (!checkObject(n.getId(), ObjectType::NPC)) {
-      idToIndex[n.getId()] = IdType(npcs.size(), ObjectType::NPC);
-      npcs.push_back(n);
-   }
+   return add(static_cast<NPCBase *>(obj));
 }
-
 
 Player *ObjectHolder::getPlayer(int id)
 {
-   if (!checkObject(id, ObjectType::Player)) {
-      printf("Attempting to access Player that doesn't exist!\n");
-      return 0;
-   }
-   return &players[idToIndex[id].index];
+   return static_cast<Player *>(rm.getObject(id));
 }
 
 Missile *ObjectHolder::getMissile(int id)
 {
-   if (!checkObject(id, ObjectType::Missile)) {
-      printf("Attempting to access Missile that doesn't exist!\n");
-      return 0;
-   }
-   return &missiles[idToIndex[id].index];
+   return static_cast<Missile *>(rm.getObject(id));
 }
 
 Item *ObjectHolder::getItem(int id)
 {
-   if (!checkObject(id, ObjectType::Item)) {
-      printf("Attempting to access Item that doesn't exist!\n");
-      return 0;
-   }
-   return &items[idToIndex[id].index];
+   return static_cast<Item *>(rm.getObject(id));
 }
 
 NPC *ObjectHolder::getNPC(int id)
 {
-   if (!checkObject(id, ObjectType::NPC)) {
-      printf("Attempting to access NPC that doesn't exist!\n");
-      return 0;
-   }
-   return &npcs[idToIndex[id].index];
-}
-
-// Checks to see if the object exists already
-bool ObjectHolder::checkObject(int id, int type)
-{
-   map<int,IdType>::iterator itr = idToIndex.find(id);
-   return itr != idToIndex.end() && itr->second.type == type;
-   //   printf("Object with id %id already exists with different type! existing=%d new=%d\n", id, type, itr->second.type);
-}
-
-template<typename T>
-void removeTempl(map<int, ObjectHolder::IdType> &idToIndex, vector<T> &objs, int id)
-{
-   int i = idToIndex[id].index;
-
-   idToIndex.erase(id);
-   if (objs.size() > 1) {
-      objs[i] = objs.back();
-      idToIndex[objs[i].getId()].index = i;
-   }
-   objs.pop_back();
-}
-
-void ObjectHolder::removeObject(int id)
-{
-   int i = idToIndex[id].index;
-
-   if (idToIndex[id].type == ObjectType::Player)
-      removeTempl(idToIndex, players, id);
-
-   else if (idToIndex[id].type == ObjectType::Missile)
-      removeTempl(idToIndex, missiles, id);
-
-   else if (idToIndex[id].type == ObjectType::Item)
-      removeTempl(idToIndex, items, id);
-
-   else if (idToIndex[id].type == ObjectType::NPC)
-      removeTempl(idToIndex, npcs, id);
-}
-
-// Didn't make this a member function because ugly
-// and nobody else needs to use it.
-template<typename T>
-void updateTempl(vector<T> &objs, ObjectHolder &o)
-{
-   for (unsigned i = 0; i < objs.size(); i++) {
-      objs[i].update();
-      if (!objs[i].alive) {
-         o.removeObject(objs[i].getId());
-         i--;
-      }
-   }
+   return static_cast<NPC *>(rm.getObject(id));
 }
 
 void ObjectHolder::updateAll()
 {
-   updateTempl(players, *this);
-   updateTempl(missiles, *this);
-   updateTempl(items, *this);
-   updateTempl(npcs, *this);
+   for(unsigned i = 0; i < playerCount(); i++) {
+      Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
+      obj.update();
+   }
+   for(unsigned i = 0; i < npcCount(); i++) {
+      NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
+      obj.update();
+   }
+   for(unsigned i = 0; i < itemCount(); i++) {
+      Item &obj = *static_cast<Item *>(get(ObjectType::Item, i));
+      obj.update();
+   }
+   for(unsigned i = 0; i < missileCount(); i++) {
+      Missile &obj = *static_cast<Missile *>(get(ObjectType::Missile, i));
+      obj.update();
+   }
+}
+
 }

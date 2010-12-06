@@ -187,12 +187,12 @@ void WorldData::processPacket(pack::Packet p)
       if(pos.id == player.getId()) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
-      } else if(objs.checkObject(pos.id, ObjectType::Player)) {
+      } else if(objs.check(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
+      } else if (objs.check(pos.id, ObjectType::NPC)) {
          objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
-      } else if(objs.checkObject(pos.id, ObjectType::Item)) {
+      } else if(objs.check(pos.id, ObjectType::Item)) {
          objs.getItem(pos.id)->move(pos.pos);
       }
       else
@@ -210,19 +210,19 @@ void WorldData::processPacket(pack::Packet p)
                i.id, i.pos.x, i.pos.y);
          } 
          else {
-            objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
+            objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
             printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
+         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(Item(i.id, i.subType, i.pos));
+         objs.addItem(new Item(i.id, i.subType, i.pos));
          printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else
@@ -234,6 +234,7 @@ void WorldData::processPacket(pack::Packet p)
          if(sig.val == this->player.getId())
             printf("\n\n!!! Disconnected from server !!!\n\n");
          else {
+            /*
             int type = objs.idToIndex[sig.val].type;
             if(type != ObjectType::Missile)
                printf("Removed %s %d %d\n", 
@@ -242,7 +243,8 @@ void WorldData::processPacket(pack::Packet p)
                   type == ObjectType::Player ? "Player" :
                   "Unknown",
                   sig.val, type);
-            objs.removeObject(sig.val);
+            */
+            objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
@@ -264,10 +266,10 @@ void WorldData::processPacket(pack::Packet p)
          player.hp = hc.hp;
          shadow.hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::Player)) {
+      else if(objs.check(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::NPC)) {
+      else if(objs.check(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else
@@ -282,7 +284,7 @@ void WorldData::processPacket(pack::Packet p)
          else
             printf("You are NOT in Pvp Mode\n");
       }
-      else if(objs.checkObject(pvpPacket.id, ObjectType::Player)) {
+      else if(objs.check(pvpPacket.id, ObjectType::Player)) {
          Player &play = *objs.getPlayer(pvpPacket.id);
          play.pvp = pvpPacket.isPvpMode != 0;
          if(play.pvp)
