@@ -190,24 +190,28 @@ void ObjectManager::move(NPC *obj, vec2 newPos)
 
 /////////// Colliding ////////////
 //////////////////////////////////
-vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
+void ObjectManager::collidingPlayers(Geometry g, vec2 center, 
+   std::vector<Player *> &collided)
 {
-   return _colliding<Player *, ObjectType::Player>(g, center);
+   _colliding<Player *, ObjectType::Player>(g, center, collided);
 }
 
-vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
+void ObjectManager::collidingMissiles(Geometry g, vec2 center,
+   std::vector<Missile *> &collided)
 {
-   return _colliding<Missile *, ObjectType::Missile>(g, center);
+   _colliding<Missile *, ObjectType::Missile>(g, center, collided);
 }
 
-vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
+void ObjectManager::collidingNPCs(Geometry g, vec2 center,
+   std::vector<NPC *> &collided)
 {
-   return _colliding<NPC *, ObjectType::NPC>(g, center);
+   _colliding<NPC *, ObjectType::NPC>(g, center, collided);
 }
 
-vector<Item *> ObjectManager::collidingItems(Geometry g, vec2 center)
+void ObjectManager::collidingItems(Geometry g, vec2 center,
+   std::vector<Item *> &collided)
 {
-   return _colliding<Item *, ObjectType::Item>(g, center);
+   _colliding<Item *, ObjectType::Item>(g, center, collided);
 }
 
 ///////////// Others /////////////

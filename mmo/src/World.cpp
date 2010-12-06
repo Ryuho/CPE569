@@ -182,6 +182,7 @@ void WorldData::processPacket(pack::Packet p)
    
    if (p.type == PacketType::position) {
       Position pos(p);
+      //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
@@ -392,7 +393,7 @@ void World::spawnItem()
 
 }
 
-void World::spawnNPC()
+void World::hurtMe()
 {
    pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
 }

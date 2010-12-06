@@ -66,7 +66,7 @@ void SDLApp::update()
       world.spawnItem();
    }
    if (inputMgr.keyPressed(SDLK_r)) {
-      world.spawnNPC();
+      world.hurtMe();
    }
    if (inputMgr.keyPressed(SDLK_p)) {
       world.togglePvp();

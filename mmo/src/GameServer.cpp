@@ -237,12 +237,17 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          Geometry point = Point(click.pos);
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
-         std::vector<Item *> items = om.collidingItems(point, click.pos);
+
+         std::vector<Item *> items;
+         om.collidingItems(point, click.pos, items);
          if(items.size() > 0) {
             Player &pl = *om.getPlayer(click.id);
-            Item &item = *items[0];
-            if(item.isCollectable()) {
-               collectItem(pl, item);
+            for(unsigned i = 0; i < items.size(); i++) {
+               Player &pl = *om.getPlayer(click.id);
+               Item &item = *items[0];
+               if(item.isCollectable()) {
+                  collectItem(pl, item);
+               }
             }
          }
       }
@@ -352,9 +357,10 @@ void GameServer::updateNPCs(int ticks, float dt)
       bool removeNPC = false;
       //bool npcHit = false;
 
-      std::vector<Item *> collidedItems = om.collidingItems(npc.getGeom(), npc.pos);
-      if(collidedItems.size() > 0) {
-         Item &item = *collidedItems[0];
+      std::vector<Item *> collidedItems;
+      om.collidingItems(npc.getGeom(), npc.pos, collidedItems);
+      for(unsigned j = 0; j < collidedItems.size(); j++) {
+         Item &item = *collidedItems[j];
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, npc.pos);
             if(pushDir.length() > 0.01) //no divide by zero!
@@ -367,8 +373,9 @@ void GameServer::updateNPCs(int ticks, float dt)
             //cm.sendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
          }
       }
-
-      std::vector<Missile *> ms = om.collidingMissiles(npc.getGeom(), npc.pos);
+  
+      std::vector<Missile *> ms;
+      om.collidingMissiles(npc.getGeom(), npc.pos, ms);
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
          Missile &m = *ms[j];
          if(m.owned != npc.getId() && om.check(m.owned, ObjectType::Player)) {
@@ -387,7 +394,6 @@ void GameServer::updateNPCs(int ticks, float dt)
       }
       if(!removeNPC) {
          npc.update();
-         //printf("id=%d pos=%f %f\n", npc.getId(), npc.pos.x, npc.pos.y);
       }
       else
          npcsToRemove.push_back(&npc);
@@ -421,7 +427,8 @@ void GameServer::updateMissiles(int ticks, float dt)
       }
       else {
          m.update();
-         std::vector<Item *> collidedItems = om.collidingItems(m.getGeom(), m.pos);
+         std::vector<Item *> collidedItems;
+         om.collidingItems(m.getGeom(), m.pos, collidedItems);
          for(unsigned j = 0; j < collidedItems.size(); j++) {
             if(collidedItems[j]->isCollidable()) {
                missilesToRemove.push_back(&m);
@@ -446,9 +453,10 @@ void GameServer::updatePlayers(int ticks, float dt)
       p.shotThisFrame = false;
 
       p.gainHp(playerHpPerTick);
-      std::vector<Item *> collidedItems = om.collidingItems(p.getGeom(), p.pos);
-      if(collidedItems.size() > 0) {
-         Item &item = *collidedItems[0];
+      std::vector<Item *> collidedItems;
+      om.collidingItems(p.getGeom(), p.pos, collidedItems);
+      for(unsigned j = 0; j < collidedItems.size(); j++) {
+         Item &item = *collidedItems[j];
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, p.pos);
             if(pushDir.length() > 0.0f) //no divide by zero!
@@ -464,7 +472,8 @@ void GameServer::updatePlayers(int ticks, float dt)
       }
 
       //if player is colliding with any missile that is not owned by it, they take dmg
-      std::vector<Missile *> collidedMis = om.collidingMissiles(p.getGeom(), p.pos);
+      std::vector<Missile *> collidedMis;
+      om.collidingMissiles(p.getGeom(), p.pos, collidedMis);
       //bool damaged = false;
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *collidedMis[mdx];
@@ -486,14 +495,16 @@ void GameServer::updatePlayers(int ticks, float dt)
          continue;
       } else {
          Geometry areaOfInfluence(Circle(p.pos, areaOfInfluenceRadius));
-         std::vector<NPC *> aoinpcs = om.collidingNPCs(areaOfInfluence, p.pos);
+         std::vector<NPC *> aoinpcs;
+         om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
             NPC &npc = *aoinpcs[i];
             cm.clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
             cm.clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), p.getId());
             //printf("id=%d pos=%f %f\n", npc.getId(), npc.pos.x, npc.pos.y);
          }
-         std::vector<Player *> aoiplayers = om.collidingPlayers(areaOfInfluence, p.pos);
+         std::vector<Player *> aoiplayers;
+         om.collidingPlayers(areaOfInfluence, p.pos, aoiplayers);
          for(unsigned i = 0; i < aoiplayers.size(); i++) {
             Player &player = *aoiplayers[i];
             cm.clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());

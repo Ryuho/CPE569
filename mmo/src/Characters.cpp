@@ -91,6 +91,7 @@ NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
 {
    alive = true;
    initGraphics();
+   lastUpdate = getTicks();
 }
 
 void NPC::update()

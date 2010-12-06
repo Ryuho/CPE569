@@ -18,7 +18,7 @@ struct World {
    void shootArrow(mat::vec2 dir);
    void doSpecial();
    void spawnItem();
-   void spawnNPC();
+   void hurtMe();
    void togglePvp();
    void rightClick(vec2 mousePos);
 

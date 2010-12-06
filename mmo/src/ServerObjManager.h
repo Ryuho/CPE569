@@ -36,10 +36,14 @@ namespace server {
       bool remove(int id);
       bool check(int id, unsigned type);
       
-      std::vector<Player *> collidingPlayers(Geometry g, vec2 center);
-      std::vector<Missile *> collidingMissiles(Geometry g, vec2 center);
-      std::vector<NPC *> collidingNPCs(Geometry g, vec2 center);
-      std::vector<Item *> collidingItems(Geometry g, vec2 center);
+      void collidingPlayers(Geometry g, vec2 center, 
+         std::vector<Player *> &collided);
+      void collidingMissiles(Geometry g, vec2 center,
+         std::vector<Missile *> &collided);
+      void collidingNPCs(Geometry g, vec2 center,
+         std::vector<NPC *> &collided);
+      void collidingItems(Geometry g, vec2 center,
+         std::vector<Item *> &collided);
       
       void move(Player *p, vec2 newPos);
       void move(Item *i, vec2 newPos);
@@ -63,7 +67,8 @@ namespace server {
       server::Object *_get(int id) const;
       bool _add(Object *obj, vec2 pos, Geometry g);
       template<typename Ty, unsigned ObjectTy>
-      vector<Ty> _colliding(Geometry g, const vec2 &center);
+      vector<Ty> &_colliding(Geometry g, const vec2 &center, 
+         std::vector<Ty> &collided);
       vec2 toWorldPos(vec2 pos);
       void getRegion(vec2 pos, int &x, int &y);
       void getRegions(vec2 pos, Geometry g, std::vector<unsigned> &regionIds);
@@ -73,9 +78,9 @@ namespace server {
    };
 
    template<typename Ty, unsigned ObjectTy>
-   vector<Ty> ObjectManager::_colliding(Geometry g, const vec2 &center)
+   vector<Ty> &ObjectManager::_colliding(Geometry g, const vec2 &center, 
+      std::vector<Ty> &collided)
    {
-      std::vector<Ty> ret;
       std::vector<unsigned> regionIds;
       getRegions(center, g, regionIds);
       for(unsigned i = 0; i < regionIds.size(); i++) {
@@ -85,12 +90,12 @@ namespace server {
          for(unsigned j = 0; j < objs.size(); j++) {
             Ty obj = static_cast<Ty>(objs[j]);
             if(obj->getGeom().collision(g)) {
-               ret.push_back(obj);
+               collided.push_back(obj);
             }
          }
       }
-      util::removeDuplicates(ret);
-      return ret;
+      util::removeDuplicates(collided);
+      return collided;
    }
 
 } // end server namespace
