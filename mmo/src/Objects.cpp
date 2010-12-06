@@ -1,5 +1,4 @@
 #include "Objects.h"
-#include <assert.h>
 
 using namespace std;
 using namespace objmanager;
@@ -8,7 +7,7 @@ using namespace objmanager;
 ///////////////////////////////////////
 //////////////// Region ///////////////
 ///////////////////////////////////////
-Region::Region(unsigned id, unsigned typeCount)
+Region::Region(int id, unsigned typeCount)
    : id(id)
 {
    for(unsigned i = 0; i < typeCount; i++) {
@@ -16,40 +15,33 @@ Region::Region(unsigned id, unsigned typeCount)
    }
 }
 
-unsigned Region::getId() const
+int Region::getId() const
 {
    return id;
 }
 
-std::vector<Object *> &Region::getObjects(unsigned typeIndex)
+std::vector<Object *> &Region::getObjects(int typeIndex)
 {
-   assert(typeIndex < typeCount());
    return objectList[typeIndex];
 }
 
-Object *Region::get(unsigned objectId, unsigned typeIndex) const
+Object *Region::get(int objectId, int typeIndex) const
 {
-   assert(typeIndex < typeCount());
- 
-   std::map<unsigned, unsigned>::const_iterator iter
-      = objectMap.find(objectId);
+   std::map<int, int>::const_iterator iter = objectMap.find(objectId);
    if(iter == objectMap.end()) {
       return 0; //not found
    }
    return objectList[typeIndex][iter->second];
 }
 
-bool Region::contains(unsigned objectId) const
+bool Region::contains(int objectId) const
 {
    return objectMap.find(objectId) != objectMap.end();
 }
 
-bool Region::add(Object *object, unsigned typeIndex)
+bool Region::add(Object *object, int typeIndex)
 {
-   assert(typeIndex < typeCount());
-
-   std::map<unsigned, unsigned>::iterator iter
-      = objectMap.find(object->getId());
+   std::map<int, int>::iterator iter = objectMap.find(object->getId());
    if(iter != objectMap.end()) {
       return false; //already exists
    }
@@ -58,19 +50,16 @@ bool Region::add(Object *object, unsigned typeIndex)
    return true;
 }
 
-bool Region::remove(unsigned objectId, unsigned typeIndex)
+bool Region::remove(int objectId, int typeIndex)
 {
-   assert(typeIndex < typeCount());
-
-   std::map<unsigned, unsigned>::iterator iter
-      = objectMap.find(objectId);
+   std::map<int, int>::iterator iter = objectMap.find(objectId);
    if(iter == objectMap.end()) {
       return false; //doesn't exist
    }
    //1. swap in list with end of list
    //2. replace old end of list's mapped index
    //3. remove object from map AND list
-   unsigned index = objectMap[objectId];
+   int index = objectMap[objectId];
    //swap removed with end of list
    Object *replacement = objectList[typeIndex][objectList[typeIndex].size() - 1];
    objectList[typeIndex][index] = replacement;
@@ -92,9 +81,8 @@ unsigned Region::typeCount() const
    return objectList.size();
 }
 
-unsigned Region::count(unsigned typeIndex) const
+unsigned Region::count(int typeIndex) const
 {
-   assert(typeIndex < typeCount());
    return objectList[typeIndex].size();
 }
 
@@ -112,9 +100,9 @@ RegionManager::RegionManager(unsigned regionCount, unsigned typeCount)
    }
 }
 
-Object *RegionManager::getObject(unsigned objectId)
+Object *RegionManager::getObject(int objectId)
 {
-   std::map<unsigned, RegionManagerData>::iterator iter;
+   std::map<int, RegionManagerData>::iterator iter;
 
    iter = objectToRegionsMap.find(objectId);
    if(iter == objectToRegionsMap.end()) {
@@ -123,17 +111,14 @@ Object *RegionManager::getObject(unsigned objectId)
    return iter->second.obj;
 }
 
-Region *RegionManager::getRegion(unsigned regionIndex)
+Region *RegionManager::getRegion(int regionIndex)
 {
-   assert(regionIndex < regionCount());
    return &regions[regionIndex];
 }
 
-bool RegionManager::addObject(Object *object, unsigned typeIndex,
-      std::vector<unsigned> &regionIds)
+bool RegionManager::addObject(Object *object, int typeIndex,
+   std::vector<int> &regionIds)
 {
-   assert(typeIndex < typeCount());
- 
    if(objectToRegionsMap.find(object->getId()) != objectToRegionsMap.end()) {
       return false; //already exists
    }
@@ -151,23 +136,21 @@ bool RegionManager::addObject(Object *object, unsigned typeIndex,
    return true;
 }
 
-Object *RegionManager::removeObject(unsigned objectId, unsigned typeIndex)
+Object *RegionManager::removeObject(int objectId, int typeIndex)
 {
-   assert(typeIndex < typeCount());
-
-   std::map<unsigned, RegionManagerData>::iterator iter;
+   std::map<int, RegionManagerData>::iterator iter;
    iter = objectToRegionsMap.find(objectId);
    if(iter == objectToRegionsMap.end()) {
       return 0; //doesn't exists
    }
    Object *obj = iter->second.obj;
    //remove from Regions
-   std::vector<unsigned> &regionIds = iter->second.regionIds;
+   std::vector<int> &regionIds = iter->second.regionIds;
    for(unsigned i = 0; i < regionIds.size(); i++) {
       regions[regionIds[i]].remove(objectId, typeIndex);
    }
    //remove from List
-   unsigned currIndex = iter->second.objectListIndex;
+   int currIndex = iter->second.objectListIndex;
    int replacementIndex = objectList[typeIndex].size()-1;
    Object *replacement = objectList[typeIndex][replacementIndex];
    objectList[typeIndex][currIndex] = replacement;
@@ -180,9 +163,9 @@ Object *RegionManager::removeObject(unsigned objectId, unsigned typeIndex)
    return obj;
 }
 
-const RegionManagerData *RegionManager::getData(unsigned objectId) const
+const RegionManagerData *RegionManager::getData(int objectId) const
 {
-   std::map<unsigned, RegionManagerData>::const_iterator iter
+   std::map<int, RegionManagerData>::const_iterator iter
       = objectToRegionsMap.find(objectId);
    if(iter == objectToRegionsMap.end())
       return 0;
@@ -205,14 +188,12 @@ unsigned RegionManager::typeCount() const
    return objectList.size();
 }
 
-unsigned RegionManager::count(unsigned typeIndex) const
+unsigned RegionManager::count(int typeIndex) const
 {
-   assert(typeIndex < objectList.size());
    return objectList[typeIndex].size();
 }
 
-std::vector<Object *> &RegionManager::operator[](unsigned typeIndex)
+std::vector<Object *> &RegionManager::operator[](int typeIndex)
 {
-   assert(typeIndex < objectList.size());
    return objectList[typeIndex];
 }

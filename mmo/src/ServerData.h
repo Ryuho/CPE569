@@ -18,8 +18,8 @@ namespace server {
    using pack::Packet;
 
    struct Object : objmanager::Object {
-      Object(unsigned id) : objmanager::Object(id) {}
-      virtual unsigned getType() const = 0;
+      Object(int id) : objmanager::Object(id) {}
+      virtual int getType() const = 0;
       //void lock() const;
       //void unlock() const;
       virtual Packet serialize() const = 0;
@@ -36,7 +36,7 @@ namespace server {
       void gainRupees(int rupees);
       Geometry getGeom() const;
       float getRadius() const;
-      unsigned getType() const;
+      int getType() const;
       Packet serialize() const;
       void gainHp(int hp);
       void deserialize(Packet &serialized);
@@ -54,7 +54,7 @@ namespace server {
       void update();
       int getDamage() const;
       Geometry getGeom() const;
-      unsigned getType() const;
+      int getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 
@@ -73,7 +73,7 @@ namespace server {
       int getExp();
       void gainHp(int hp);
       void move(vec2 pos, vec2 dir, bool moving);
-      unsigned getType() const;
+      int getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
       int getAttackDelay() const;
@@ -92,7 +92,7 @@ namespace server {
       bool isCollectable() const;
       bool isCollidable() const; //cannot be walked onto? Stump
       void move(vec2 pos);
-      unsigned getType() const;
+      int getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 

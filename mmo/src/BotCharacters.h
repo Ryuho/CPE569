@@ -9,6 +9,8 @@
 
 using mat::vec2;
 
+namespace botclient {
+
 struct Player : objmanager::Object {
    Player() : Object(0), moving(false), alive(true) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
@@ -31,7 +33,6 @@ struct Missile : objmanager::Object {
    int type;
    bool alive;
    vec2 pos, dir;
-   int id;
 };
 
 struct Item : objmanager::Object {
@@ -43,7 +44,6 @@ struct Item : objmanager::Object {
    bool alive;
    int type;
    vec2 pos;
-   int id;
 };
 
 struct NPC : objmanager::Object {
@@ -54,7 +54,7 @@ struct NPC : objmanager::Object {
    bool moving, alive;
    int type;
    vec2 pos, dir;
-   int id, hp;
+   int hp;
 };
 
 struct ObjectHolder {
@@ -86,12 +86,31 @@ struct ObjectHolder {
    void updateAll();
 };
 
+/*
+struct ObjectHolder {
+   ObjectHolder() 
+      : rm(constants::totalRegions, constants::ObjectType::ObjectTypeCount) {}
+   void addPlayer(Player p);
+   void addMissile(Missile m);
+   void addItem(Item i);
+   void addNPC(NPC n);
 
-namespace game {
-   int getTicks();
-   float getDt();
-   Player &getPlayer(); // available only on client
+   Player *getPlayer(int id);
+   Missile *getMissile(int id);
+   Item *getItem(int id);
+   NPC *getNPC(int id);
+
+   bool checkObject(int id, int type);
+   void removeObject(int id);
+   
+   void updateAll();
+
+private:
+   objmanager::RegionManager rm;
 };
+*/
+
+}
 
 
 

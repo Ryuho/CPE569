@@ -9,32 +9,31 @@ namespace objmanager {
 
    struct Object 
    {
-      Object(unsigned id) 
-         : id(id) {}
-      unsigned getId() const { return id; }
+      Object(int id) : id(id) {}
+      int getId() const { return id; }
    protected:
-      unsigned id;
+      int id;
    };
 
 
    struct Region 
    {
-      Region(unsigned id, unsigned typeCount);
+      Region(int id, unsigned typeCount);
 
-      unsigned getId() const; //Region Id
-      std::vector<Object *> &getObjects(unsigned typeIndex);
-      Object *get(unsigned objectId, unsigned typeIndex) const;
-      bool contains(unsigned objectId) const;
-      bool add(Object *object, unsigned typeIndex);
-      bool remove(unsigned objectId, unsigned typeIndex);
+      int getId() const; //Region Id
+      std::vector<Object *> &getObjects(int typeIndex);
+      Object *get(int objectId, int typeIndex) const;
+      bool contains(int objectId) const;
+      bool add(Object *object, int typeIndex);
+      bool remove(int objectId, int typeIndex);
       unsigned objectCount() const;
       unsigned typeCount() const;
-      unsigned count(unsigned typeIndex) const;
+      unsigned count(int typeIndex) const;
 
    private:
-      unsigned id;
+      int id;
       //speeds up lookup/removal of a specific object
-      std::map<unsigned, unsigned> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
+      std::map<int, int> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
       //allows iteration of each Type of object
       std::vector<std::vector<Object *>> objectList; //objectList[typeIndex] -> list of Objects of given type
    };
@@ -44,13 +43,13 @@ namespace objmanager {
    {
       RegionManagerData() 
          : obj(0), objectListIndex(0) {}
-      RegionManagerData(Object *obj, unsigned objectListIndex, 
-         std::vector<unsigned> &regionIds)
+      RegionManagerData(Object *obj, int objectListIndex, 
+         std::vector<int> &regionIds)
          : obj(obj), objectListIndex(objectListIndex), regionIds(regionIds) {}
 
       Object *obj; //could be removed for memory use efficiency
-      unsigned objectListIndex;
-      std::vector<unsigned> regionIds;
+      int objectListIndex;
+      std::vector<int> regionIds;
    };
 
 
@@ -60,20 +59,20 @@ namespace objmanager {
       typedef std::vector<objmanager::Object *>::const_iterator const_iterator;
 
       RegionManager(unsigned regionCount, unsigned typeCount);
-      Object *getObject(unsigned objectId);
-      Region *getRegion(unsigned regionIndex);
-      bool addObject(Object *object, unsigned typeIndex, std::vector<unsigned> &regionIds);
-      Object *removeObject(unsigned objectId, unsigned typeIndex);
-      const RegionManagerData *getData(unsigned objectId) const;
+      Object *getObject(int objectId);
+      Region *getRegion(int regionIndex);
+      bool addObject(Object *object, int typeIndex, std::vector<int> &regionIds);
+      Object *removeObject(int objectId, int typeIndex);
+      const RegionManagerData *getData(int objectId) const;
       unsigned regionCount() const;
       unsigned objectCount() const;
       unsigned typeCount() const;
-      unsigned count(unsigned typeIndex) const;
-      std::vector<Object *> &operator[](unsigned typeIndex);
+      unsigned count(int typeIndex) const;
+      std::vector<Object *> &operator[](int typeIndex);
 
    private:
       unsigned objectTotal;
-      std::map<unsigned, RegionManagerData> objectToRegionsMap; //objectToRegionsMap[objectId] -> data
+      std::map<int, RegionManagerData> objectToRegionsMap; //objectToRegionsMap[objectId] -> data
       //redundant list of Region's objects for more simplistic traversal
       std::vector<std::vector<Object *>> objectList; //objectList[typeIndex] -> list of Objects of given type
       std::vector<Region> regions;

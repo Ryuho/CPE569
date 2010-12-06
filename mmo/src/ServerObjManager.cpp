@@ -4,21 +4,21 @@
 
 namespace server {
 
-inline unsigned omToRm(int x, int y, int regionXSize)
+inline int omToRm(int x, int y, int regionXSize)
 {
    return x + y*regionXSize;
 }
 
 ///////////// Vectors ////////////
 //////////////////////////////////
-Object *ObjectManager::get(unsigned type, int index_Not_The_Id)
+Object *ObjectManager::get(int type, int index_Not_The_Id)
 {
    return static_cast<Object *>((*rm)[type][index_Not_The_Id]);
 }
 
 ///////////// Getters ////////////
 //////////////////////////////////
-server::Object *ObjectManager::_get(int id, unsigned type) const
+server::Object *ObjectManager::_get(int id, int type) const
 {
    server::Object *obj = static_cast<server::Object *>(rm->getObject(id));
    if(obj && obj->getType() == type)
@@ -77,7 +77,7 @@ unsigned ObjectManager::missileCount() const
 //////////////////////////////////
 bool ObjectManager::_add(Object *obj, vec2 pos, Geometry g) 
 {
-   std::vector<unsigned> regionIds;
+   std::vector<int> regionIds;
    getRegions(pos, g, regionIds);
    return regionIds.size() != 0 
       && rm->addObject(obj, obj->getType(), regionIds);
@@ -108,8 +108,8 @@ bool ObjectManager::add(Item *obj)
 void ObjectManager::_move(Object *obj, vec2 &pos, vec2 &newPos)
 {
    assert(rm->getObject(obj->getId()));
-   std::vector<unsigned> regsNew;
-   const std::vector<unsigned> &regsOld = rm->getData(obj->getId())->regionIds;
+   std::vector<int> regsNew;
+   const std::vector<int> &regsOld = rm->getData(obj->getId())->regionIds;
    pos = toWorldPos(newPos);
    getRegions(newPos, obj->getGeom(), regsNew);
    if(regsNew.size() != regsOld.size()
@@ -228,24 +228,15 @@ void ObjectManager::collidingItems(Geometry g, vec2 center,
 
 ///////////// Others /////////////
 //////////////////////////////////
-void ObjectManager::init(float width, float height, float regionWidth)
+void ObjectManager::init()
 {
    assert(!rm); //only initialize once
 
-   width = width;
-   height = height;
-   this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
-   this->regionSize = constants::regionSize;
-   regionXSize = ((int)(width / regionSize));
-   regionYSize = ((int)(height / regionSize));
-   if(regionXSize * regionSize != width)
-      regionXSize++;
-   if(regionYSize * regionSize != height)
-      regionYSize++;
+   this->worldBotLeft = vec2(-worldWidth/2.0f, -worldHeight/2.0f);
 
-   rm = new RegionManager(regionXSize*regionYSize, ObjectType::ObjectTypeCount);
+   rm = new RegionManager(totalRegions, ObjectType::ObjectTypeCount);
    printf("Initialized ObjectManager <%d by %d> total=%d\n", regionXSize, 
-      regionYSize, regionXSize*regionYSize);
+      regionYSize, totalRegions);
 }
 
 bool ObjectManager::inBounds(vec2 pos) const
@@ -268,7 +259,7 @@ bool ObjectManager::remove(int id)
    return true;
 }
 
-bool ObjectManager::check(int id, unsigned type)
+bool ObjectManager::check(int id, int type)
 {
    Object *obj = _get(id);
    return obj && obj->getType() == type;
@@ -288,11 +279,11 @@ Geometry ObjectManager::getRegionGeom(int x, int y)
 {
    return Rectangle(
       vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
-      regionSize, regionSize);
+      (float)regionSize, (float)regionSize);
 }
 
 void ObjectManager::getRegions(vec2 pos, Geometry g, 
-   std::vector<unsigned> &regionIds)
+   std::vector<int> &regionIds)
 {
    regionIds.clear();
    int x, y;

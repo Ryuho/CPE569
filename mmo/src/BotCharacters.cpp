@@ -1,3 +1,4 @@
+#include "BotWorld.h"
 #include "BotCharacters.h"
 #include "Constants.h"
 #include <cstdio>
@@ -5,7 +6,8 @@
 using namespace std;
 using namespace geom;
 using namespace constants;
-using namespace game;
+using namespace botclient;
+
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
    : Object(id), pos(pos), dir(dir), hp(hp), moving(false), alive(true)
@@ -77,6 +79,9 @@ void NPC::update()
    lastUpdate = getTicks();
 }
 
+////////////////////////////////////
+/////////// ObjectHolder ///////////
+////////////////////////////////////
 
 void ObjectHolder::addPlayer(Player p)
 {
@@ -88,24 +93,24 @@ void ObjectHolder::addPlayer(Player p)
 
 void ObjectHolder::addMissile(Missile m)
 {
-   if (!checkObject(m.id, ObjectType::Missile)) {
-      idToIndex[m.id] = IdType(missiles.size(), ObjectType::Missile);   
+   if (!checkObject(m.getId(), ObjectType::Missile)) {
+      idToIndex[m.getId()] = IdType(missiles.size(), ObjectType::Missile);   
       missiles.push_back(m);
    }
 }
 
 void ObjectHolder::addItem(Item i)
 {
-   if (!checkObject(i.id, ObjectType::Item)) {
-      idToIndex[i.id] = IdType(items.size(), ObjectType::Item);
+   if (!checkObject(i.getId(), ObjectType::Item)) {
+      idToIndex[i.getId()] = IdType(items.size(), ObjectType::Item);
       items.push_back(i);
    }
 }
 
 void ObjectHolder::addNPC(NPC n)
 {
-   if (!checkObject(n.id, ObjectType::NPC)) {
-      idToIndex[n.id] = IdType(npcs.size(), ObjectType::NPC);
+   if (!checkObject(n.getId(), ObjectType::NPC)) {
+      idToIndex[n.getId()] = IdType(npcs.size(), ObjectType::NPC);
       npcs.push_back(n);
    }
 }
@@ -206,9 +211,3 @@ void ObjectHolder::updateAll()
    updateTempl(items, *this);
    updateTempl(npcs, *this);
 }
-
-Player p;
-
-int game::getTicks() { return 0; }
-float game::getDt() { return 0.0f; }
-Player &game::getPlayer() { return p; }

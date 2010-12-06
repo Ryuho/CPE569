@@ -5,8 +5,13 @@
 #include "BotCharacters.h"
 #include <cstdio>
 
+using namespace botclient;
+
 struct BotWorldData {
-   BotWorldData() {};
+   BotWorldData() : ticks(0), dt(0) {}
+
+   int ticks;
+   float dt;
 
    ObjectHolder objs;
    Player player;
@@ -69,5 +74,9 @@ struct BotWorld {
 
    BotWorldData data;
 };
+
+int getTicks();
+float getDt();
+Player &getPlayer();
 
 #endif //_BOTWORLD_H_

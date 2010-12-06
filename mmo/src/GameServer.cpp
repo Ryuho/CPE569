@@ -25,8 +25,8 @@ int npcType(int regionX, int regionY)
 {
    //assumes regionX and regionY are valid
    int maxType = (int) NPCType::Goblin;
-   int rows = getOM().regionXSize;
-   int cols = getOM().regionYSize;
+   int rows = regionXSize;
+   int cols = regionYSize;
    int difficulty = abs(std::max(regionX - rows/2, regionY - cols/2));
    //float difficultyScalar = ((float)rows) / (2*maxType);
    float difficultyScalar = ((float)maxType*2) / rows;
@@ -36,8 +36,8 @@ int npcType(int regionX, int regionY)
 
 void spawnNPC(int regionX, int regionY)
 {
-   util::clamp(regionX, 0, (int)getOM().regionXSize-1);
-   util::clamp(regionY, 0,  (int)getOM().regionYSize-1);
+   util::clamp(regionX, 0, (int)regionXSize-1);
+   util::clamp(regionY, 0,  (int)regionYSize-1);
 
    vec2 botLeft(getOM().worldBotLeft.x + regionSize*regionX,
       getOM().worldBotLeft.y + regionSize*regionY);
@@ -77,7 +77,7 @@ GameServer::GameServer(ConnectionManager &cm)
    : cm(cm), ticks(0), dt(0.0f)
 {
    serverState = this;
-   om.init((float)worldWidth, (float)worldHeight, (float)regionSize);
+   om.init();
 
    spawnStump(newId());
 }
@@ -168,20 +168,21 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if (p.type == PacketType::position) {
       Position pos(p);
-      if(om.check(id, ObjectType::Player)) {
-         Player &pl = *om.getPlayer(id);
+      if(om.check(pos.id, ObjectType::Player)) {
+         Player &pl = *om.getPlayer(pos.id);
          //printf("id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
          //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
          pl.move(pos.pos, pos.dir, pos.moving != 0);
          //player went out of bounds or invalid positon?
          if(pos.pos.x != pl.pos.x || pos.pos.y != pl.pos.y) {
-            printf("Invalid Position: id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
-               pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
+            //printf("Invalid Position: id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
+            //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
             cm.clientSendPacket(Position(pl.pos, pl.dir, pl.moving, pl.getId()), pl.getId());
          }
       } 
-      else
+      else {
          printf("Accessing unknown Player %d\n", pos.id);
+      }
    }
    else if (p.type == PacketType::signal) {
       Signal signal(p);
@@ -217,19 +218,23 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == PacketType::arrow) {
       Arrow ar(p);
-      if (!om.getPlayer(id)->shotThisFrame) {
-         om.getPlayer(id)->shotThisFrame = true;
-         Missile *m = new Missile(newId(), cm.ownServerId,id, 
-            om.getPlayer(id)->pos, ar.direction);
-         om.add(m);
-         Initialize init(m->getId(), ObjectType::Missile, m->type, m->pos, m->dir, 0);
-         cm.clientBroadcast(init);
+      if (om.check(id, ObjectType::Player)) {
+         Player &pl = *om.getPlayer(id);
+         if(!pl.shotThisFrame) {
+            pl.shotThisFrame = true;
+            Missile *m = new Missile(newId(), cm.ownServerId,id, 
+               pl.pos, ar.direction);
+            om.add(m);
+            Initialize init(m->getId(), ObjectType::Missile, m->type, 
+               m->pos, m->dir, 0);
+            cm.clientBroadcast(init);
+         }
       }
    }
    else if (p.type == PacketType::click) {
       Click click(p);
-      if(om.check(id, ObjectType::Player)) {
-         Point point(click.pos);
+      if(om.check(click.id, ObjectType::Player)) {
+         Geometry point(Point(click.pos));
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
 
@@ -238,7 +243,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          if(items.size() > 0) {
             Player &pl = *om.getPlayer(click.id);
             for(unsigned i = 0; i < items.size(); i++) {
-               Player &pl = *om.getPlayer(click.id);
                Item &item = *items[0];
                if(item.isCollectable()) {
                   collectItem(pl, item);
@@ -320,8 +324,8 @@ void GameServer::update(int ticks)
    //if there is a player connected, spawn up to 150 NPCs, evenly distributed
    if(om.playerCount() > 0) {
       if(om.npcCount() < 150){
-         for(unsigned i = 0; i < om.regionXSize; i++) {
-            for(unsigned j = 0; j < om.regionYSize; j++) {
+         for(unsigned i = 0; i < regionXSize; i++) {
+            for(unsigned j = 0; j < regionYSize; j++) {
                spawnNPC(i, j);
             }
          }
@@ -330,8 +334,8 @@ void GameServer::update(int ticks)
 
    /*
    while(om.npcCount() < 4) {
-      int i = om.regionXSize/2-1;
-      int j = om.regionYSize/2-1;
+      int i = regionXSize/2-1;
+      int j = regionYSize/2-1;
       //spawnNPC(i, j);
       //spawnNPC(i, j+1);
       //spawnNPC(i+1, j);

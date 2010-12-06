@@ -5,6 +5,8 @@
 
 using namespace constants;
 
+BotWorldData *clientState;
+
 const float BotWorldData::botHomingRange = 1200.0f;
 const float BotWorldData::botBackupRange = 200.0f;
 const float BotWorldData::botDodgeRange = 450.0f;
@@ -34,6 +36,7 @@ void BotWorld::update(int ticks, float dt) {
 
 void BotWorldData::init(const char *host, int port)
 {
+   clientState = this;
    sock::setupSockets();
 
    // Maybe ask for a hostname here, along with other info (name, class etc.)
@@ -113,6 +116,8 @@ void sleepms(int ms)
 
 void BotWorldData::update(int ticks, float dt)
 {
+   this->ticks = ticks;
+   this->dt = dt;
    //handle packets
    while (conn.select()) {
       if (conn) {
@@ -168,12 +173,12 @@ void BotWorldData::updateLooting(int ticks, float dt)
       if(objs.items[i].isCollectable() 
             && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
             && nextLoot < ticks) {
-         player.moving = false;
-         pack::Position(player.pos, player.dir, false, 
-            player.getId()).makePacket().sendTo(conn);
+         //player.moving = false;
+         //pack::Position(player.pos, player.dir, false, 
+         //   player.getId()).makePacket().sendTo(conn);
          nextLoot = ticks + botLootTickDelay;
          rightClick(objs.items[i].pos);
-         printf("looting item %d\n", objs.items[i].id);
+         printf("looting item %d\n", objs.items[i].getId());
       }
    }
 }
@@ -193,8 +198,7 @@ void BotWorldData::updateFighting(int ticks, float dt)
       fightNpc = objs.getNPC(fightingId);
       float distance = abs(mat::dist(player.pos, fightNpc->pos));
       if(distance > botAggroRange + 5.0f 
-//            || ticks - fightNpc->lastUpdate >= noDrawTicks
-            ) {
+            || ticks - fightNpc->lastUpdate >= noDrawTicks) {
          fighting = false;
       } 
       else {
@@ -246,9 +250,8 @@ void BotWorldData::updateNotFighting(int ticks, float dt)
    //check if NPC in range (turn on fighting)
    for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
       if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
-//            && ticks - objs.npcs[i].lastUpdate < noDrawTicks
-            ) {
-         fightingId = objs.npcs[i].id;
+            && ticks - objs.npcs[i].lastUpdate < noDrawTicks) {
+         fightingId = objs.npcs[i].getId();
          fighting = true;
          printf("fighting %d\n", fightingId);
       }
@@ -390,4 +393,20 @@ void BotWorldData::doSpecial()
 void BotWorldData::rightClick(vec2 mousePos)
 {
    pack::Click(mousePos, player.getId()).makePacket().sendTo(conn);
+}
+
+
+int getTicks()
+{
+   return clientState->ticks;
+}
+
+float getDt()
+{
+   return clientState->dt;
+}
+
+Player &getPlayer()
+{
+   return clientState->player;
 }

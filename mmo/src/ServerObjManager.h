@@ -19,8 +19,8 @@ namespace server {
    using namespace objmanager;
 
    struct ObjectManager {
-      ObjectManager() : rm(0), regionSize(0), regionXSize(0), regionYSize(0) {}
-      void init(float width, float height, float regionWidth);
+      ObjectManager() : rm(0) {}
+      void init();
       bool inBounds(vec2 pos) const;
 
       Player *getPlayer(int id);
@@ -34,7 +34,7 @@ namespace server {
       bool add(Item *i);
       
       bool remove(int id);
-      bool check(int id, unsigned type);
+      bool check(int id, int type);
       
       void collidingPlayers(Geometry g, vec2 center, 
          std::vector<Player *> &collided);
@@ -50,7 +50,7 @@ namespace server {
       void move(Missile *m, vec2 newPos);
       void move(NPC *n, vec2 newPos);
       
-      Object *get(unsigned type, int index_Not_The_Id);
+      Object *get(int type, int index_Not_The_Id);
       
       unsigned itemCount() const;
       unsigned playerCount() const;
@@ -58,30 +58,28 @@ namespace server {
       unsigned missileCount() const;
       
       vec2 worldBotLeft;
-      float regionSize;
-      unsigned regionXSize, regionYSize;
       
    protected:
       void _move(Object *obj, vec2 &pos, vec2 &newPos);
-      server::Object *_get(int id, unsigned type) const;
+      server::Object *_get(int id, int type) const;
       server::Object *_get(int id) const;
       bool _add(Object *obj, vec2 pos, Geometry g);
-      template<typename Ty, unsigned ObjectTy>
+      template<typename Ty, int ObjectTy>
       vector<Ty> &_colliding(Geometry g, const vec2 &center, 
          std::vector<Ty> &collided);
       vec2 toWorldPos(vec2 pos);
       void getRegion(vec2 pos, int &x, int &y);
-      void getRegions(vec2 pos, Geometry g, std::vector<unsigned> &regionIds);
+      void getRegions(vec2 pos, Geometry g, std::vector<int> &regionIds);
       Geometry getRegionGeom(int x, int y);
       
       objmanager::RegionManager *rm;
    };
 
-   template<typename Ty, unsigned ObjectTy>
+   template<typename Ty, int ObjectTy>
    vector<Ty> &ObjectManager::_colliding(Geometry g, const vec2 &center, 
       std::vector<Ty> &collided)
    {
-      std::vector<unsigned> regionIds;
+      std::vector<int> regionIds;
       getRegions(center, g, regionIds);
       int counted = 0;
       for(unsigned i = 0; i < regionIds.size(); i++) {
