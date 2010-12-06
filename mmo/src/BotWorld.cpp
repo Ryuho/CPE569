@@ -6,6 +6,8 @@
 using namespace constants;
 
 const float BotWorldData::botHomingRange = 1200.0f;
+const float BotWorldData::botBackupRange = 200.0f;
+const float BotWorldData::botDodgeRange = 450.0f;
 const float BotWorldData::botAggroRange = 650.0f;
 const float BotWorldData::botFightRange = 300.0f;
 const float BotWorldData::maxBotItemGrab = botAggroRange;
@@ -16,7 +18,7 @@ const float BotWorldData::returnWalkDistance
 
 //Near zero means not really dodging
 //Large numbers will mean pretty much only dodging instead of heading towards the target
-const float BotWorldData::botDodgeRatio = 2.0f; 
+const float BotWorldData::botDodgeRatio = 1.5f; 
 
 // This pointer points to the current 
 
@@ -82,6 +84,7 @@ void BotWorldData::init(const char *host, int port)
    dodging = true;
    looting = true;
    shooting = false;
+   backup = true;
    returnsAllWayToStart = false;
    nextLoot = 0;
    nextDirChange = 0;
@@ -175,11 +178,10 @@ void BotWorldData::updateLooting(int ticks, float dt)
 
 vec2 tangentVec(vec2 v, bool right) {
    v.normalize();
-   float angle = asin(v.y);
-   angle += 90.0f * ((float)PI / 180.0f);
    if(right)
-      angle = -angle;
-   return vec2(cos(angle), sin(angle));
+      return vec2(-v.y, v.x);
+   else
+      return vec2(v.y, -v.x);
 }
 
 void BotWorldData::updateFighting(int ticks, float dt)
@@ -187,29 +189,41 @@ void BotWorldData::updateFighting(int ticks, float dt)
    //finish NPC
    if(objs.checkObject(fightingId, ObjectType::NPC)) {
       fightNpc = objs.getNPC(fightingId);
-      if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f
-            || fightNpc->lastUpdate > noDrawTicks)
+      float distance = abs(mat::dist(player.pos, fightNpc->pos));
+      if(distance > botAggroRange + 5.0f 
+//            || ticks - fightNpc->lastUpdate >= noDrawTicks
+            ) {
          fighting = false;
+      } 
       else {
-         if(homing) {
-            if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
+         vec2 towardNpc(mat::to(player.pos, fightNpc->pos));
+         if(towardNpc.length() != 0)
+            towardNpc.normalize();
+         if(backup && distance < botBackupRange) {
+            player.dir = vec2(-towardNpc.x, -towardNpc.y);
+         }
+         else if(homing) {
+            if(distance < botFightRange)
                player.moving = false;
-            player.dir = mat::to(player.pos, fightNpc->pos);
+            player.dir = towardNpc;
          }
          else if (dodging) {
-            vec2 towardNpc = mat::to(player.pos, fightNpc->pos);
-            towardNpc.normalize();
-            if(ticks > nextDodgeChange) {
-               dodgeDir = tangentVec(towardNpc, randomizeLeftRightDodge
-                  && util::irand(0,1) == 0);
-               nextDodgeChange = ticks + dodgeChangeDelay;
-               //printf("%0.2f %0.2f tangent(%0.2f %0.2f)\n", towardNpc.x, towardNpc.y, dodgeDir.x, dodgeDir.y);
+            if(distance > botDodgeRange) {
+               player.dir = towardNpc;
             }
-            //if(mat::dist(player.pos, fightNpc->pos) < botFightRange) {
-            //   towardNpc = vec2(0,0) - towardNpc * 2*botDodgeRatio;
-            //}
-            player.dir = towardNpc + dodgeDir * botDodgeRatio;
-            //will be normalized later
+            else {
+               if(ticks > nextDodgeChange) {
+                  dodgeDir = tangentVec(towardNpc, randomizeLeftRightDodge
+                     && util::irand(0, 1) == 0);
+                  if(dodgeDir.length() != 0)
+                     dodgeDir.normalize();
+                  nextDodgeChange = ticks + dodgeChangeDelay;
+                  player.dir = towardNpc + botDodgeRatio*dodgeDir;
+                  if(player.dir.length() != 0)
+                     player.dir.normalize();
+                  //printf("%0.2f %0.2f tangent(%0.2f %0.2f)\n", towardNpc.x, towardNpc.y, dodgeDir.x, dodgeDir.y);
+               }
+            }
          }
          else if(ticks > nextDirChange) {
             nextDirChange = ticks + dirChangeDelay;
@@ -220,6 +234,9 @@ void BotWorldData::updateFighting(int ticks, float dt)
       }
    } else
       fighting = false;
+
+   //player.dir.normalize();
+   //will be normalized later
 }
 
 void BotWorldData::updateNotFighting(int ticks, float dt)
@@ -227,7 +244,8 @@ void BotWorldData::updateNotFighting(int ticks, float dt)
    //check if NPC in range (turn on fighting)
    for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
       if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
-            && objs.npcs[i].lastUpdate < noDrawTicks) {
+//            && ticks - objs.npcs[i].lastUpdate < noDrawTicks
+            ) {
          fightingId = objs.npcs[i].id;
          fighting = true;
          printf("fighting %d\n", fightingId);
@@ -279,6 +297,7 @@ void BotWorldData::processPacket(pack::Packet p)
    if (p.type == PacketType::position) {
       Position pos(p);
       if(pos.id == player.id) {
+         player.pos = pos.pos;
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {

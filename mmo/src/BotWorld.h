@@ -30,6 +30,7 @@ struct BotWorldData {
    bool dodging; // goes left/right from target (probably can't use homing and this)
    //if neither dodging/homing then it randomly changes direction every dirChangeDelay
    bool looting; //able to loot objects
+   bool backup; //able to back up if too close to enemy
 
    bool fighting; //in aggro range
    bool shooting; //within firing range
@@ -50,6 +51,8 @@ struct BotWorldData {
    static const bool randomizeLeftRightDodge = true;
 
    static const float botDodgeRatio;
+   static const float botBackupRange;
+   static const float botDodgeRange;
    static const float botHomingRange;
    static const float botAggroRange;
    static const float botFightRange;
