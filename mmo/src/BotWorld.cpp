@@ -1,5 +1,5 @@
 #include "BotWorld.h"
-#include "packet.h"
+#include "Packets.h"
 #include "Constants.h"
 #include "Util.h"
 
@@ -48,7 +48,7 @@ void BotWorldData::init(const char *host, int port)
    }
 
    pack::Packet p = pack::readPacket(conn);
-   if (p.type != pack::connect) {
+   if (p.type != PacketType::connect) {
       printf("Expected connect packet for handshake, got: %d\n", p.type);
       exit(-1);
    }
@@ -61,7 +61,7 @@ void BotWorldData::init(const char *host, int port)
    }
    
    p = pack::readPacket(conn);
-   if (p.type != pack::initialize) {
+   if (p.type != PacketType::initialize) {
       printf("Expecting initalize, got %d\n", p.type);
       exit(-1);
    }
@@ -276,7 +276,7 @@ void BotWorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == position) {
+   if (p.type == PacketType::position) {
       Position pos(p);
       if(pos.id == player.id) {
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
@@ -293,7 +293,7 @@ void BotWorldData::processPacket(pack::Packet p)
       else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    }
-   else if (p.type == initialize) {
+   else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.id) {
          objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
@@ -311,7 +311,7 @@ void BotWorldData::processPacket(pack::Packet p)
          //printf("Added Item %d \n", i.id);
       }
    }
-   else if (p.type == signal) {
+   else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
          if(sig.val == this->player.id)
@@ -325,11 +325,11 @@ void BotWorldData::processPacket(pack::Packet p)
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == arrow) {
+   else if (p.type == PacketType::arrow) {
 	   Arrow ar(p);
 		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
-   else if (p.type == healthChange) {
+   else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
       if (hc.id == player.id) {
          player.hp = hc.hp;
@@ -343,7 +343,7 @@ void BotWorldData::processPacket(pack::Packet p)
       else
          printf("Error: Health change on id %d\n", hc.id);
    }
-   else if(p.type == pack::changePvp) {
+   else if(p.type == PacketType::changePvp) {
    }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());

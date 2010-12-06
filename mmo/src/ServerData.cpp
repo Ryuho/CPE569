@@ -2,6 +2,7 @@
 #include "GameServer.h"
 #include "Geometry.h"
 #include "Util.h"
+#include "Packets.h"
 #include <cstdio>
 
 namespace server {
@@ -11,8 +12,8 @@ using namespace constants;
 // Player
 
 Player::Player(int id, int sid, vec2 pos, vec2 dir, int hp)
-   : id(id), sid(sid), pos(pos), dir(dir), moving(false), hp(hp), 
-   rupees(0), exp(0), pvp(false), shotThisFrame(false)
+   : Object(id), sid(sid), pos(pos), dir(dir), moving(false), 
+   hp(hp), rupees(0), exp(0), pvp(false), shotThisFrame(false)
 {
    
 }
@@ -50,12 +51,13 @@ Geometry Player::getGeom() const
    return Circle(pos, (float)playerRadius);
 }
 
-int Player::getObjectType() const
+unsigned Player::getType() const
 {
    return ObjectType::Player;
 }
 
 Player::Player(pack::Packet &serialized)
+   : Object(0)
 {
    deserialize(serialized);
 }
@@ -63,9 +65,9 @@ Player::Player(pack::Packet &serialized)
 void Player::deserialize(pack::Packet &serialized)
 {
    //printf("Error Player::deserialize untested - update with members!");
-   if(serialized.type == pack::serialPlayer) {
+   if(serialized.type == PacketType::serialPlayer) {
       int ipvp, ialive, imoving;
-      serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(exp).readInt(rupees)
+      serialized.data.readUInt(id).readInt(sid).readInt(hp).readInt(exp).readInt(rupees)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .readInt(imoving).readInt(ialive).readInt(ipvp).reset();
       pvp = ipvp != 0; //warningless cast to bool
@@ -79,11 +81,11 @@ void Player::deserialize(pack::Packet &serialized)
 pack::Packet Player::serialize() const
 {
    //printf("Error Player::serialize untested - update with members!");
-   pack::Packet p(pack::serialPlayer);
+   pack::Packet p(PacketType::serialPlayer);
    int ipvp = (int)pvp;
    int ialive = (int)alive;
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(exp).writeInt(rupees)
+   p.data.writeUInt(id).writeInt(sid).writeInt(hp).writeInt(exp).writeInt(rupees)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeInt(imoving).writeInt(ialive).writeInt(ipvp);
    return p;
@@ -98,8 +100,9 @@ void Player::gainHp(int hp)
 
 // Missile
 
-Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int type)
-   : id(id), sid(sid), owned(owned), pos(pos), dir(dir), type(type)
+Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, 
+   int type)
+   : Object(id), sid(sid), owned(owned), pos(pos), dir(dir), type(type)
 {
    spawnTime = getTicks();
    this->dir = dir;
@@ -124,12 +127,13 @@ int Missile::getDamage() const
    return rand()%6 + 5;
 }
 
-int Missile::getObjectType() const
+unsigned Missile::getType() const
 {
    return ObjectType::Missile;
 }
 
 Missile::Missile(pack::Packet &serialized)
+   : Object(0)
 {
    deserialize(serialized);
 }
@@ -137,8 +141,8 @@ Missile::Missile(pack::Packet &serialized)
 void Missile::deserialize(pack::Packet &serialized)
 {
    //printf("Error Missile::deserialize untested - update with members!");
-   if(serialized.type == pack::serialMissile) {
-      serialized.data.readInt(id).readInt(sid).readInt(owned).readInt(type).readInt(spawnTime)
+   if(serialized.type == PacketType::serialMissile) {
+      serialized.data.readUInt(id).readInt(sid).readInt(owned).readInt(type).readInt(spawnTime)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .reset();
    } 
@@ -149,8 +153,8 @@ void Missile::deserialize(pack::Packet &serialized)
 pack::Packet Missile::serialize() const
 {
    //printf("Error Missile::serialize untested - update with members!");
-   pack::Packet p(pack::serialMissile);
-   p.data.writeInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
+   pack::Packet p(PacketType::serialMissile);
+   p.data.writeUInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
    return p;
 }
@@ -170,8 +174,9 @@ void Missile::move(vec2 pos, vec2 dir)
 // NPC
 
 NPC::NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type)
-   : id(id), sid(sid), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
-   aiTicks(0), attackId(0), initPos(pos), moving(false), nextMissileTicks(0)
+   : Object(id), sid(sid), hp(hp), pos(pos), dir(dir), type(type), 
+   aiType(AIType::Stopped), aiTicks(0), attackId(0), initPos(pos), 
+   moving(false), nextMissileTicks(0)
 {
 
 }
@@ -293,7 +298,7 @@ int NPC::getLoot()
 void NPC::update() 
 {
    Player *p = 0;
-   this->moving = false;
+   moving = false;
    if(mat::dist(pos, initPos) > maxNpcMoveDist) {
       aiType = AIType::Walking;
       dir = mat::to(pos, initPos);
@@ -307,13 +312,13 @@ void NPC::update()
    if(closePlayers.size() > 0) {
       aiType = AIType::Attacking;
       p = closePlayers[0];
-      attackId = p->id;
+      attackId = p->getId();
       float dist = mat::dist(p->pos, pos);
       for(unsigned i = 1; i < closePlayers.size(); i++) {
          float dist2 = mat::dist(closePlayers[i]->pos, pos);
          if(dist2 < dist) {
             p = closePlayers[i];
-            attackId = p->id;
+            attackId = p->getId();
          }
       }
    }
@@ -348,13 +353,13 @@ void NPC::update()
          Missile *m = new Missile(newId(), id, sid, pos, 
             mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
          getOM().add(m);
-         getCM().clientBroadcast(pack::Initialize(m->id, 
+         getCM().clientBroadcast(pack::Initialize(m->getId(), 
             ObjectType::Missile, m->type, m->pos, 
             m->dir, 0));
       }
    }
    else {
-      this->gainHp(npcOutOfCombatHpPerTick);
+      gainHp(npcOutOfCombatHpPerTick);
       if(aiType == AIType::Walking) {
          move(pos + dir * getDt() * npcWalkSpeed, dir, true);
       }
@@ -415,12 +420,13 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
    this->moving = moving;
 }
 
-int NPC::getObjectType() const
+unsigned NPC::getType() const
 {
    return ObjectType::NPC;
 }
 
 NPC::NPC(pack::Packet &serialized)
+   : Object(0)
 {
    deserialize(serialized);
 }
@@ -428,9 +434,9 @@ NPC::NPC(pack::Packet &serialized)
 void NPC::deserialize(pack::Packet &serialized)
 {
    //printf("Error NPC::deserialize untested - update with members!");
-   if(serialized.type == pack::serialNPC) {
+   if(serialized.type == PacketType::serialNPC) {
       int imoving;
-      serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(type)
+      serialized.data.readUInt(id).readInt(sid).readInt(hp).readInt(type)
          .readInt(aiTicks).readInt(aiType).readInt(attackId)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .readFloat(initPos.x).readFloat(initPos.y).readInt(nextMissileTicks)
@@ -444,9 +450,9 @@ void NPC::deserialize(pack::Packet &serialized)
 pack::Packet NPC::serialize() const
 {
    //printf("Error NPC::serialize untested - update with members!");
-   pack::Packet p(pack::serialNPC);
+   pack::Packet p(PacketType::serialNPC);
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(type)
+   p.data.writeUInt(id).writeInt(sid).writeInt(hp).writeInt(type)
       .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeFloat(initPos.x).writeFloat(initPos.y).writeInt(nextMissileTicks)
@@ -463,7 +469,7 @@ void NPC::gainHp(int hp)
 // Item
 
 Item::Item(int id, int sid, vec2 pos, int type)
-   : id(id), sid(sid),pos(pos), type(type)
+   : Object(id), sid(sid),pos(pos), type(type)
 {
 
 }
@@ -539,12 +545,13 @@ Geometry Item::getGeom() const
    return Circle(pos, getRadius());
 }
 
-int Item::getObjectType() const
+unsigned Item::getType() const
 {
    return ObjectType::Item;
 }
 
 Item::Item(pack::Packet &serialized)
+   : Object(0)
 {
    deserialize(serialized);
 }
@@ -552,8 +559,8 @@ Item::Item(pack::Packet &serialized)
 void Item::deserialize(pack::Packet &serialized)
 {
    //printf("Error Item::deserialize untested - update with members!");
-   if(serialized.type == pack::serialItem) {
-      serialized.data.readInt(id).readInt(sid).readInt(type)
+   if(serialized.type == PacketType::serialItem) {
+      serialized.data.readUInt(id).readInt(sid).readInt(type)
          .readFloat(pos.x).readFloat(pos.y)
          .reset();
    } 
@@ -564,8 +571,8 @@ void Item::deserialize(pack::Packet &serialized)
 pack::Packet Item::serialize() const
 {
    //printf("Error Item::serialize untested - update with members!");
-   pack::Packet p(pack::serialItem);
-   p.data.writeInt(id).writeInt(sid).writeInt(type)
+   pack::Packet p(PacketType::serialItem);
+   p.data.writeUInt(id).writeInt(sid).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
 }

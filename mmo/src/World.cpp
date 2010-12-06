@@ -1,7 +1,7 @@
 #include "World.h"
 #include "Characters.h"
 #include "Texture.h"
-#include "packet.h"
+#include "Packets.h"
 #include "Constants.h"
 #include "GLUtil.h"
 #include "Sprite.h"
@@ -91,7 +91,7 @@ void WorldData::init(const char *host, int port)
    }
 
    pack::Packet p = pack::readPacket(conn);
-   if (p.type != pack::connect) {
+   if (p.type != PacketType::connect) {
       printf("Expected connect packet for handshake, got: %d\n", p.type);
       exit(-1);
    }
@@ -106,7 +106,7 @@ void WorldData::init(const char *host, int port)
    }
    
    p = pack::readPacket(conn);
-   if (p.type != pack::initialize) {
+   if (p.type != PacketType::initialize) {
       printf("Expecting initalize, got %d\n", p.type);
       exit(-1);
    }
@@ -181,25 +181,23 @@ void WorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == position) {
+   if (p.type == PacketType::position) {
       Position pos(p);
       if(pos.id == player.id) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.checkObject(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("Accessing unknown Player %d\n", pos.id);
       } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
          objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("Accessing unknown NPC %d\n", pos.id);
+         //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
       } else if(objs.checkObject(pos.id, ObjectType::Item)) {
          objs.getItem(pos.id)->move(pos.pos);
-         //printf("Accessing unknown Item %d\n", pos.id);
       }
       else
          printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
    }
-   else if (p.type == initialize) {
+   else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player) {
          if(i.id == player.id) {
@@ -228,7 +226,7 @@ void WorldData::processPacket(pack::Packet p)
       else
          printf("Error: Unknown initialize type %d\n", i.type);
    } 
-   else if (p.type == signal) {
+   else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
          if(sig.val == this->player.id)
@@ -254,11 +252,11 @@ void WorldData::processPacket(pack::Packet p)
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == arrow) {
+   else if (p.type == PacketType::arrow) {
 	   Arrow ar(p);
 		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
-   else if (p.type == healthChange) {
+   else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
       if (hc.id == player.id) {
          player.hp = hc.hp;
@@ -273,7 +271,7 @@ void WorldData::processPacket(pack::Packet p)
       else
          printf("Error: Health change on id %d\n", hc.id);
    }
-   else if(p.type == pack::changePvp) {
+   else if(p.type == PacketType::changePvp) {
       Pvp pvpPacket(p);
       if(pvpPacket.id == getPlayer().id) {
          getPlayer().pvp = pvpPacket.isPvpMode != 0;

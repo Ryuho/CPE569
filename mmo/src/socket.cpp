@@ -559,6 +559,11 @@ Packet &Packet::writeInt(int i)
    return *this;
 }
 
+Packet &Packet::writeUInt(unsigned i)
+{
+   return writeInt(i);
+}
+
 Packet &Packet::writeLong(unsigned long l)
 {
    u_long in = htonl(l);
@@ -647,6 +652,20 @@ Packet &Packet::readShort(unsigned short &s)
 }
 
 Packet &Packet::readInt(int &i)
+{
+   u_char *p = (u_char*)&i;
+   
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   *p++ = at(cursor++);
+   i = ntohl(i);
+
+   bitCursor = 0;
+   return *this;
+}
+
+Packet &Packet::readUInt(unsigned &i)
 {
    u_char *p = (u_char*)&i;
    

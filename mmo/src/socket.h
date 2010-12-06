@@ -37,6 +37,7 @@ namespace sock {
       Packet &writeBit(bool b);
       Packet &writeByte(unsigned char b);
       Packet &writeShort(unsigned short s);
+      Packet &writeUInt(unsigned i);
       Packet &writeInt(int i);
       Packet &writeLong(unsigned long l);
       Packet &writeFloat(float f);
@@ -47,6 +48,7 @@ namespace sock {
       Packet &readBit(bool &b);
       Packet &readByte(unsigned char &b);
       Packet &readShort(unsigned short &s);
+      Packet &readUInt(unsigned &i);
       Packet &readInt(int &i);
       Packet &readLong(unsigned long &l);
       Packet &readFloat(float &f);

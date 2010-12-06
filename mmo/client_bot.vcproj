@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(ConfigurationName)\i$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="2"
 			>
@@ -89,8 +89,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(ConfigurationName)\i$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
@@ -166,6 +166,46 @@
 	<References>
 	</References>
 	<Files>
+		<Filter
+			Name="Shared"
+			>
+			<File
+				RelativePath=".\src\Constants.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\matrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Numbers.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Objects.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Objects.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\packet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\socket.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\socket.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Util.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\src\BotApp.cpp"
 			>
@@ -195,10 +235,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\src\Constants.h"
-			>
-		</File>
-		<File
 			RelativePath=".\src\Geometry.cpp"
 			>
 		</File>
@@ -207,27 +243,7 @@
 			>
 		</File>
 		<File
-			RelativePath=".\src\matrix.h"
-			>
-		</File>
-		<File
-			RelativePath=".\src\Numbers.h"
-			>
-		</File>
-		<File
-			RelativePath=".\src\packet.h"
-			>
-		</File>
-		<File
-			RelativePath=".\src\socket.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\src\socket.h"
-			>
-		</File>
-		<File
-			RelativePath=".\src\Util.h"
+			RelativePath=".\src\Packets.h"
 			>
 		</File>
 	</Files>

@@ -8,6 +8,7 @@
 #include "Util.h"
 #include <vector>
 #include <map>
+#include "Objects.h"
 
 namespace server {
    using namespace std;
@@ -16,9 +17,9 @@ namespace server {
    using namespace geom;
    using pack::Packet;
 
-   struct Object {
-      Object() {}
-      virtual int getObjectType() const = 0;
+   struct Object : objmanager::Object {
+      Object(unsigned id) : objmanager::Object(id) {}
+      virtual unsigned getType() const = 0;
       //void lock() const;
       //void unlock() const;
       virtual Packet serialize() const = 0;
@@ -35,14 +36,14 @@ namespace server {
       void gainRupees(int rupees);
       Geometry getGeom() const;
       float getRadius() const;
-      int getObjectType() const;
+      unsigned getType() const;
       Packet serialize() const;
       void gainHp(int hp);
       void deserialize(Packet &serialized);
       
       vec2 pos, dir;
       bool moving, alive, pvp;
-      int id, sid, hp, exp, rupees;
+      int sid, hp, exp, rupees;
       bool shotThisFrame;
    };
 
@@ -53,12 +54,12 @@ namespace server {
       void update();
       int getDamage() const;
       Geometry getGeom() const;
-      int getObjectType() const;
+      unsigned getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 
       vec2 pos, dir;
-      int id, sid, owned, type, spawnTime;
+      int sid, owned, type, spawnTime;
    };
 
    struct NPC : Object {
@@ -72,7 +73,7 @@ namespace server {
       int getExp();
       void gainHp(int hp);
       void move(vec2 pos, vec2 dir, bool moving);
-      int getObjectType() const;
+      unsigned getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
       int getAttackDelay() const;
@@ -80,7 +81,7 @@ namespace server {
       vec2 pos, dir, initPos;
       bool moving;
       int aiTicks, aiType, attackId, nextMissileTicks;
-      int id, sid, hp, type;
+      int sid, hp, type;
    };
 
    struct Item : Object {
@@ -91,12 +92,12 @@ namespace server {
       bool isCollectable() const;
       bool isCollidable() const; //cannot be walked onto? Stump
       void move(vec2 pos);
-      int getObjectType() const;
+      unsigned getType() const;
       Packet serialize() const;
       void deserialize(Packet &serialized);
 
       vec2 pos;
-      int id, sid, type;
+      int sid, type;
    };
 
 } // end server namespace

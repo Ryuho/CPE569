@@ -1,198 +1,271 @@
 #include "ServerObjManager.h"
 #include "Util.h"
+#include <vector>
 
 namespace server {
 
-template <typename T>
-void omAddTemplate(T *val, std::vector<T *> &vec, int type, ObjectManager &om)
+inline unsigned omToRm(int x, int y, int regionXSize)
 {
-   om.oldTypes[val->id] = type;
-
-   //Add to Index map
-   om.idToIndex[val->id] = ObjectManager::Index(vec.size(), type);
-   //Add to OM's vector
-   vec.push_back(val);
-   //Add to regions
-   std::vector<Region *> regs;
-   om.getRegions(val->pos, val->getGeom(), regs);
-   for(unsigned i = 0; i < regs.size(); i++) {
-      regs[i]->add(val);
-   }
+   return x + y*regionXSize;
 }
 
-void ObjectManager::add(Player *p)
+///////////// Vectors ////////////
+//////////////////////////////////
+Object *ObjectManager::get(unsigned type, int index_Not_The_Id)
 {
-   omAddTemplate(p, players, ObjectType::Player, *this);
+   return static_cast<Object *>((*rm)[type][index_Not_The_Id]);
 }
 
-void ObjectManager::add(Missile *m)
+///////////// Getters ////////////
+//////////////////////////////////
+server::Object *ObjectManager::_get(int id, unsigned type) const
 {
-   omAddTemplate(m, missiles, ObjectType::Missile, *this);
+   server::Object *obj = static_cast<server::Object *>(rm->getObject(id));
+   if(obj && obj->getType() == type)
+      return obj;
+   return 0;
 }
 
-void ObjectManager::add(NPC *n)
+server::Object *ObjectManager::_get(int id) const
 {
-   omAddTemplate(n, npcs, ObjectType::NPC, *this);
-}
-
-void ObjectManager::add(Item *i)
-{
-   omAddTemplate(i, items, ObjectType::Item, *this);
+   return static_cast<server::Object *>(rm->getObject(id));
 }
 
 Player *ObjectManager::getPlayer(int id)
 {
-   return players[idToIndex[id].index];
+   return static_cast<Player *>(_get(id, ObjectType::Player));
 }
 
 Missile *ObjectManager::getMissile(int id)
 {
-   return missiles[idToIndex[id].index];
+   return static_cast<Missile *>(_get(id, ObjectType::Missile));
 }
 
 NPC *ObjectManager::getNpc(int id)
 {
-   return npcs[idToIndex[id].index];
+   return static_cast<NPC *>(_get(id, ObjectType::NPC));
 }
 
 Item *ObjectManager::getItem(int id)
 {
-   return items[idToIndex[id].index];
+   return static_cast<Item *>(_get(id, ObjectType::Item));
 }
 
-template<typename T>
-void omRemoveTempl(map<int, ObjectManager::Index> &idToIndex, 
-   vector<T*> &objs, int id, ObjectManager &om)
+////////////// Count /////////////
+//////////////////////////////////
+unsigned ObjectManager::itemCount() const
 {
-   int i = idToIndex[id].index;
+   return rm->count(ObjectType::Item);
+}
 
-   std::vector<Region *> regs;
-   om.getRegions(objs[i]->pos, objs[i]->getGeom(), regs);
-   for(unsigned j = 0; j < regs.size(); j++) {
-      regs[j]->remove(objs[i]);
-   }
+unsigned ObjectManager::playerCount() const
+{
+   return rm->count(ObjectType::Player);
+}
 
+unsigned ObjectManager::npcCount() const
+{
+   return rm->count(ObjectType::NPC);
+}
 
-   //HUGE AMOUNT OF DEBUG CODE!!
+unsigned ObjectManager::missileCount() const
+{
+   return rm->count(ObjectType::Missile);
+}
+
+/////////////// Add //////////////
+//////////////////////////////////
+bool ObjectManager::_add(Object *obj, vec2 pos, Geometry g) 
+{
+   std::vector<unsigned> regionIds;
+   getRegions(pos, g, regionIds);
+   return regionIds.size() != 0 
+      && rm->addObject(obj, obj->getType(), regionIds);
+}
+
+bool ObjectManager::add(Player *obj)
+{
+   return _add(obj, obj->pos, obj->getGeom());
+}
+
+bool ObjectManager::add(Missile *obj)
+{
+   return _add(obj, obj->pos, obj->getGeom());
+}
+
+bool ObjectManager::add(NPC *obj)
+{
+   return _add(obj, obj->pos, obj->getGeom());
+}
+
+bool ObjectManager::add(Item *obj)
+{
+   return _add(obj, obj->pos, obj->getGeom());
+}
+
+////////////// Move //////////////
+//////////////////////////////////
+void ObjectManager::_move(Object *obj, vec2 &pos, vec2 &newPos)
+{
+   assert(rm->getObject(obj->getId()));
+   std::vector<unsigned> regsNew;
+   const std::vector<unsigned> &regsOld = rm->getData(obj->getId())->regionIds;
+   pos = toWorldPos(newPos);
+   getRegions(newPos, obj->getGeom(), regsNew);
+   if(regsNew.size() != regsOld.size()
+      || !std::equal(regsOld.begin(), regsOld.end(), regsNew.begin())) 
+   {
+      rm->removeObject(obj->getId(), obj->getType());
+      rm->addObject(obj, obj->getType(), regsNew);
+
+//debug version
 /*
-   int c = 0;
-   for(unsigned x = 0; x < om.regions.size(); x++) {
-      for(unsigned y = 0; y < om.regions[x].size(); y++) {
-         int isize = om.regions[x][y].items.size();
-         int msize = om.regions[x][y].missiles.size();
-         int psize = om.regions[x][y].players.size();
-         int nsize = om.regions[x][y].npcs.size();
-         if(om.regions[x][y].contains(objs[i])) {
-            om.regions[x][y].remove(objs[i]);
-            if(om.regions[x][y].items.size() 
-               + om.regions[x][y].missiles.size() 
-               + om.regions[x][y].players.size()
-               + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
-               printf("Error 1\n");
-            om.regions[x][y].remove(objs[i]);
-            if(om.regions[x][y].items.size() 
-               + om.regions[x][y].missiles.size() 
-               + om.regions[x][y].players.size()
-               + om.regions[x][y].npcs.size() != isize + msize + psize + nsize - 1)
-               printf("Error 2\n");
-            c++;
-            //printf("%d=<%d,%d> ", c, x, y);
-         }
-         om.regions[x][y].remove(objs[i]);
-         if(om.regions[x][y].items.size() 
-            + om.regions[x][y].missiles.size() 
-            + om.regions[x][y].players.size()
-            + om.regions[x][y].npcs.size() != isize + msize + psize + nsize)
-            printf("Error 3\n");
-         om.regions[x][y].remove(objs[i]);
-         if(om.regions[x][y].items.size() 
-            + om.regions[x][y].missiles.size() 
-            + om.regions[x][y].players.size()
-            + om.regions[x][y].npcs.size() != isize + msize + psize + nsize)
-            printf("Error 4\n");
+      int count = rm->objectCount();
+      std::vector<unsigned> regionIds(rm->getData(obj->getId())->regionIds);
+      assert(rm->getData(obj->getId()));
+      assert(rm->getData(obj->getId())->obj == obj);
+      assert(rm->getData(obj->getId())->regionIds.size() > 0);
+      for(unsigned i = 0; i < regionIds.size(); i++) {
+         assert(rm->getRegion(regionIds[i])->contains(obj->getId()));
+         assert(rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
       }
-   }
-   if(c != 0) {
-      printf("Error 5: remove %d failed %d times\n", objs[i]->id, c);
-      exit(1);
-   }
+
+      assert(rm->removeObject(obj->getId(), obj->getType()));
+      for(unsigned i = 0; i < regionIds.size(); i++) {
+         assert(!rm->getRegion(regionIds[i])->contains(obj->getId()));
+         assert(!rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
+      }
+
+      //check RM
+      assert(!rm->removeObject(obj->getId(), obj->getType()));
+      assert(count - 1 == rm->objectCount());
+      assert(!rm->getData(obj->getId()));
+      RegionManager::iterator iter = rm->begin(ObjectType::NPC);
+      for(;iter != rm->end(ObjectType::NPC); iter++) {
+         assert((*iter)->getId() != obj->getId());
+      }
+      //check Regions
+      for(unsigned i = 0; i < rm->regionCount(); i++) {
+         Region &region = *rm->getRegion(i);
+         assert(!region.contains(obj->getId()));
+         assert(!region.get(obj->getId(), ObjectType::NPC));
+         std::vector<objmanager::Object *> &vec 
+            = region.getObjects(ObjectType::NPC);
+         std::vector<objmanager::Object *>::iterator iter;
+         for(iter = vec.begin(); iter != vec.end(); iter++) {
+            assert((*iter)->getId() != obj->getId());
+         }
+      }
+      rm->addObject(obj, obj->getType(), regsNew);
+
+      assert(count == rm->objectCount());
+      regionIds = rm->getData(obj->getId())->regionIds;
+      for(unsigned i = 0; i < regionIds.size(); i++) {
+         assert(rm->getRegion(regionIds[i])->contains(obj->getId()));
+         assert(rm->getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
+      }
 */
-
-   delete objs[i];
-   idToIndex.erase(id);
-   if (objs.size() > 1) {
-      objs[i] = objs.back();
-      idToIndex[objs[i]->id].index = i;
    }
-   objs.pop_back();
 }
 
-void ObjectManager::remove(int id)
-{   
-   if (idToIndex.find(id) == idToIndex.end()) {
-      printf("Tried to remove an object %d with no idToIndex value type %d\n", 
-         id, oldTypes[id]);
-      return;
-   }
-
-   int i = idToIndex[id].index;
-
-   if (idToIndex[id].type == ObjectType::Player)
-      omRemoveTempl(idToIndex, players, id, *this);
-   else if (idToIndex[id].type == ObjectType::Missile)
-      omRemoveTempl(idToIndex, missiles, id, *this);
-   else if (idToIndex[id].type == ObjectType::NPC)
-      omRemoveTempl(idToIndex, npcs, id, *this);
-   else if (idToIndex[id].type == ObjectType::Item)
-      omRemoveTempl(idToIndex, items, id, *this);
-   else
-      printf("object %d had unknown type: %d\n", id, idToIndex[id].type);
-}
-
-bool ObjectManager::check(int id, int type)
+void ObjectManager::move(Player *obj, vec2 newPos)
 {
-   map<int, Index>::iterator itr = idToIndex.find(id);
-   return itr != idToIndex.end() && itr->second.type == type;
+   _move(obj, obj->pos, newPos);
 }
 
-void ObjectManager::init(float width, float height, float regionSize)
+void ObjectManager::move(Item *obj, vec2 newPos)
 {
+   _move(obj, obj->pos, newPos);
+}
+
+void ObjectManager::move(Missile *obj, vec2 newPos)
+{
+   _move(obj, obj->pos, newPos);
+}
+
+void ObjectManager::move(NPC *obj, vec2 newPos)
+{
+   _move(obj, obj->pos, newPos);
+}
+
+/////////// Colliding ////////////
+//////////////////////////////////
+vector<Player *> ObjectManager::collidingPlayers(Geometry g, vec2 center)
+{
+   return _colliding<Player *, ObjectType::Player>(g, center);
+}
+
+vector<Missile *> ObjectManager::collidingMissiles(Geometry g, vec2 center)
+{
+   return _colliding<Missile *, ObjectType::Missile>(g, center);
+}
+
+vector<NPC *> ObjectManager::collidingNPCs(Geometry g, vec2 center)
+{
+   return _colliding<NPC *, ObjectType::NPC>(g, center);
+}
+
+vector<Item *> ObjectManager::collidingItems(Geometry g, vec2 center)
+{
+   return _colliding<Item *, ObjectType::Item>(g, center);
+}
+
+///////////// Others /////////////
+//////////////////////////////////
+void ObjectManager::init(float width, float height, float regionWidth)
+{
+   assert(!rm); //only initialize once
+
    width = width;
    height = height;
    this->worldBotLeft = vec2(-width/2.0f, -height/2.0f);
-   this->regionSize = regionSize;
-   unsigned xBuckets = ((int)(width / regionSize));
-   unsigned yBuckets = ((int)(height / regionSize));
-   if(xBuckets * regionSize != width)
-      xBuckets++;
-   if(yBuckets * regionSize != height)
-      yBuckets++;
+   this->regionSize = constants::regionSize;
+   regionXSize = ((int)(width / regionSize));
+   regionYSize = ((int)(height / regionSize));
+   if(regionXSize * regionSize != width)
+      regionXSize++;
+   if(regionYSize * regionSize != height)
+      regionYSize++;
 
-   if(regions.size() > 0) {
-      printf("Error: Reinitializing Object Manager\n");
-      regions.clear();
-   }
-   for(unsigned x = 0; x < xBuckets; x++) {
-      regions.push_back(vector<Region>());
-      for(unsigned y = 0; y < yBuckets; y++) {
-         regions[x].push_back(Region());
-      }
-   }
-   printf("Initialized ObjectManager <%d by %d> total=%d\n", xBuckets, yBuckets, xBuckets*yBuckets);
+   rm = new RegionManager(regionXSize*regionYSize, ObjectType::ObjectTypeCount);
+   printf("Initialized ObjectManager <%d by %d> total=%d\n", regionXSize, 
+      regionYSize, regionXSize*regionYSize);
 }
 
+bool ObjectManager::inBounds(vec2 pos) const
+{
+   return pos.x >= worldBotLeft.x && pos.x <= worldBotLeft.x+worldWidth
+      && pos.y >= worldBotLeft.y && pos.y <= worldBotLeft.y+worldHeight;
+}
+
+bool ObjectManager::remove(int id)
+{
+   Object *obj = _get(id);
+   if(!obj || !rm->removeObject(id, obj->getType())) {
+      printf("Error: Failed to remove Object id=%d", id);
+      if(obj)
+         printf(" type=%d\n", obj->getType());
+      printf("\n");
+      return false;
+   }
+   delete obj;
+   return true;
+}
+
+bool ObjectManager::check(int id, unsigned type)
+{
+   Object *obj = _get(id);
+   return obj && obj->getType() == type;
+}
+
+/////////// Protected ////////////
+//////////////////////////////////
 void ObjectManager::getRegion(vec2 pos, int &x, int &y)
 {
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
-   //clamp
-   util::clamp(x, 0, (int)regions.size()-1);
-   util::clamp(y, 0, (int)regions[0].size()-1);
-   //int tempx = x;
-   //int tempy = y;
-   //if(tempx != x || tempy != y) {
-   //   printf("Error getRegion() <%d, %d> -> <%d, %d>\n", tempx, tempy, x, y);
-   //}
+   util::clamp(x, 0, (int) regionXSize-1);
+   util::clamp(y, 0, (int) regionYSize-1);
 }
 
 Geometry ObjectManager::getRegionGeom(int x, int y)
@@ -202,215 +275,36 @@ Geometry ObjectManager::getRegionGeom(int x, int y)
       regionSize, regionSize);
 }
 
-void ObjectManager::getRegions(vec2 pos, Geometry g, std::vector<Region *> &regs)
+void ObjectManager::getRegions(vec2 pos, Geometry g, 
+   std::vector<unsigned> &regionIds)
 {
+   regionIds.clear();
    int x, y;
    getRegion(pos, x, y);
-   unsigned minX, maxX, minY, maxY;
-   minX = max(0, x-deltaRegion);
-   maxX = min((int)regions.size()-1, x+deltaRegion);
-   minY = max(0, y-deltaRegion);
-   maxY = min((int)regions[x].size()-1, y+deltaRegion);
-   regs.clear();
-   for(unsigned i = minX; i <= maxX; i++) {
-      for(unsigned j = minY; j <= maxY; j++) {
-         if(getRegionGeom(i,j).collision(g))
-            regs.push_back(&regions[i][j]);
+   int minX = std::max<int>(0, x-deltaRegion);
+   int maxX = std::min<int>(regionXSize-1, x+deltaRegion);
+   int minY = std::max<int>(0, y-deltaRegion);
+   int maxY = std::min<int>(regionYSize-1, y+deltaRegion);
+   for(int i = minX; i <= maxX; i++) {
+      for(int j = minY; j <= maxY; j++) {
+         if(getRegionGeom(i,j).collision(g)) {
+            regionIds.push_back(omToRm(i, j, regionXSize));
+         }
       }
    }
-   if(regs.size() == 0) {
-      //if((x == 0 || x == (int)regions.size()-1) 
-      //      && (y == 0 || y == (int)regions[0].size()-1)) {
-      //   printf("Error3: getRegions() xy<%d %d> pos<%0.1f %0.1f>\n", x, y, pos.x, pos.y);
-      //}
-      regs.push_back(&regions[x][y]);
-   } 
-   //else if (regs.size() > 4) {
-   //   printf("Error: regs.size = %d (4 should be max?)\n", regs.size());
-   //}
+   if(regionIds.size() == 0)
+      regionIds.push_back(omToRm(x, y, regionXSize));
 }
 
-bool ObjectManager::inBounds(vec2 pos) const
+vec2 ObjectManager::toWorldPos(vec2 pos)
 {
-   return pos.x >= worldBotLeft.x && pos.x <= worldBotLeft.x+worldWidth
-      && pos.y >= worldBotLeft.y && pos.y <= worldBotLeft.y+worldHeight;
-}
-
-template <typename T>
-void omMoveTemplate(T *p, const vec2 &newPos, ObjectManager &om)
-{
-   std::vector<Region *> regsOld, regsNew;
-
-   vec2 newPos2(newPos);
-
-   if(!om.inBounds(newPos2)) {
-      if(om.inBounds(p->pos))
-         return;
+   if(!inBounds(pos)) {
       int x, y;
-      om.getRegion(newPos2, x, y);
-      newPos2 = vec2(om.worldBotLeft.x + regionSize*(x+0.5f), 
-         om.worldBotLeft.y + regionSize*(y+0.5f));
+      getRegion(pos, x, y);
+      return vec2(worldBotLeft.x + regionXSize*(x+0.5f), 
+         worldBotLeft.y + regionYSize*(y+0.5f));
    }
-
-   om.getRegions(p->pos, p->getGeom(), regsOld);
-   p->pos = newPos2;
-   om.getRegions(p->pos, p->getGeom(), regsNew);
-   bool same = regsOld.size() == regsNew.size() &&
-      std::equal(regsOld.begin(), regsOld.end(), regsNew.begin());
-   if(!same) {
-      //remove old regions
-      for(unsigned i = 0; i < regsOld.size(); i++) {
-         regsOld[i]->remove(p);
-      }
-      //add new regions
-      for(unsigned i = 0; i < regsNew.size(); i++) {
-         regsNew[i]->add(p);
-      }
-      //int x, y;
-      //om.getRegion(newPos, x, y);
-      //printf("Moved %d to region <%d %d> (removed %d)(added %d)\n", 
-      //   p->id, x, y, regsOld.size(), regsNew.size());
-   }
-}
-
-void ObjectManager::move(Player *p, const vec2 &newPos)
-{
-   omMoveTemplate(p, newPos, *this);
-}
-
-void ObjectManager::move(Item *i, const vec2 &newPos)
-{
-   omMoveTemplate(i, newPos, *this);
-}
-
-void ObjectManager::move(Missile *m, const vec2 &newPos)
-{
-   omMoveTemplate(m, newPos, *this);
-}
-
-void ObjectManager::move(NPC *n, const vec2 &newPos)
-{
-   omMoveTemplate(n, newPos, *this);
-}
-
-vector<Player *> ObjectManager::collidingPlayers(Geometry g, const vec2 &center)
-{
-   std::vector<Player *> ret;
-   std::vector<Region *> regs;
-   getRegions(center, g, regs);
-   for(unsigned i = 0; i < regs.size(); i++) {
-      std::vector<Player *> &regPlayers = regs[i]->players;
-      for(unsigned j = 0; j < regPlayers.size(); j++) {
-         if(regPlayers[j]->getGeom().collision(g)) {
-            ret.push_back(regPlayers[j]);
-         }
-      }
-   }
-   util::removeDuplicates(ret);
-   return ret;
-}
-
-vector<Missile *> ObjectManager::collidingMissiles(Geometry g, const vec2 &center)
-{
-   std::vector<Missile *> ret;
-   std::vector<Region *> regs;
-   getRegions(center, g, regs);
-   for(unsigned i = 0; i < regs.size(); i++) {
-      std::vector<Missile *> &regMissiles = regs[i]->missiles;
-      for(unsigned j = 0; j < regMissiles.size(); j++) {
-         if(regMissiles[j]->getGeom().collision(g)) {
-            ret.push_back(regMissiles[j]);
-         }
-      }
-   }
-   util::removeDuplicates(ret);
-   return ret;
-}
-
-vector<NPC *> ObjectManager::collidingNPCs(Geometry g, const vec2 &center)
-{
-   std::vector<NPC *> ret;
-   std::vector<Region *> regs;
-   getRegions(center, g, regs);
-
-   for(unsigned i = 0; i < regs.size(); i++) {
-      std::vector<NPC *> &regNPCs = regs[i]->npcs;
-      for(unsigned j = 0; j < regNPCs.size(); j++) {
-         if(regNPCs[j]->getGeom().collision(g)) {
-            ret.push_back(regNPCs[j]);
-         }
-      }
-   }
-   util::removeDuplicates(ret);
-   return ret;
-}
-
-vector<Item *> ObjectManager::collidingItems(Geometry g, const vec2 &center)
-{
-   std::vector<Item *> ret;
-   std::vector<Region *> regs;
-   getRegions(center, g, regs);
-
-   for(unsigned i = 0; i < regs.size(); i++) {
-      std::vector<Item *> &regItems = regs[i]->items;
-      for(unsigned j = 0; j < regItems.size(); j++) {
-         if(regItems[j]->getGeom().collision(g)) {
-            ret.push_back(regItems[j]);
-         }
-      }
-   }
-   util::removeDuplicates(ret);
-   return ret;
-}
-
-//add
-void Region::add(Player *t) {
-   players.push_back(t);
-}
-
-void Region::add(NPC *t) {
-   npcs.push_back(t);
-}
-
-void Region::add(Item *t) {
-   items.push_back(t);
-}
-
-void Region::add(Missile *t) {
-   missiles.push_back(t);
-}
-
-//remove
-void Region::remove(Player *p) {
-   util::remove(p, players);
-}
-
-void Region::remove(Missile *m) {
-   util::remove(m, missiles);
-}
-
-void Region::remove(NPC *n) {
-   util::remove(n, npcs);
-}
-
-void Region::remove(Item *i) {
-   util::remove(i, items);
-}
-
-bool Region::contains(Player *p) {
-   return util::contains(p, players);
-}
-
-bool Region::contains(NPC *n) {
-   return util::contains(n, npcs);
-}
-
-bool Region::contains(Missile *m) {
-   return util::contains(m, missiles);
-}
-
-bool Region::contains(Item *i) {
-   return util::contains(i, items);
+   return pos;
 }
 
 } //end namespace server
