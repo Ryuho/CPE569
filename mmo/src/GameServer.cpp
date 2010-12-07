@@ -203,7 +203,7 @@ void GameServer::update(int ticks)
 
    //if there is a player connected, spawn up to 50 NPCs, evenly distributed
    if(om.playerCount() > 0) {
-      if(om.npcCount() < 50){
+      if(om.npcCount() < 300){
          for(unsigned i = 0; i < regionXSize; i++) {
             for(unsigned j = 0; j < regionYSize; j++) {
                NPC *npc = spawnNPC(i, j);

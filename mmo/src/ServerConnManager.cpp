@@ -116,44 +116,21 @@ void ConnectionManager::removeClientConnection(int id)
 void ConnectionManager::removeClientAt(int i)
 {
 	int cID = clientConnections[i].id;
-	/**for(unsigned int j = 0; j < clientConnections.size(); j++)
-	{
-		if(clientConnections[j].id == cID && j != i)
-		{
-			printf("Duplicate client connections!!!!\n");
-		}
-	}**/
-
-
 
 	if (clientConnections[i].conn)
       clientConnections[i].conn.close();
    else
-	   printf("tried to remove connection at %d that had no connection \n",i);
+	   printf("Tried to remove connection at %d that had no connection \n",i);
 
-   //idToClientIndex.erase(clientConnections[i].id);
    if (clientConnections.size() > 1) {
       clientConnections[i] = clientConnections.back();
       idToClientIndex[clientConnections[i].id] = i;
    }
    clientConnections.pop_back();
    idToClientIndex.erase(cID);
-
-	/**for(unsigned int j = 0; j < clientConnections.size(); j++)
-	{
-		if(clientConnections[j].id == cID)
-		{
-			printf("connection ID was NOT removed!!!!\n");
-		}
-	}
-	if(idToClientIndex.find(cID) != idToClientIndex.end())
-	{
-		printf("Still exists in map!!!\n");
-	}**/
 }
 
 // server -> server connection functions
-
 void ConnectionManager::addServerConnection(Connection conn, int id, int clientPort, int serverPort)
 {
    map<int,int>::iterator itr = idToServerIndex.find(id);
