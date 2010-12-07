@@ -1,13 +1,13 @@
 
 all: client server client_bot
 
-server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o obj/ServerObjManager.o  obj/ServerConnManager.o
+server: obj/server.o obj/socket.o obj/GameServer.o obj/ServerData.o obj/Geometry.o obj/ServerConnManager.o obj/Objects.o obj/Regions.o
 	g++ -o server $^ -lrt
 
-client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o obj/FreeType.o
+client: obj/Characters.o obj/GLUtil.o obj/InputManager.o obj/client.o obj/SDLApp.o obj/Shader.o obj/Sprite.o obj/Texture.o obj/World.o obj/socket.o obj/CharacterGraphics.o obj/FreeType.o obj/Regions.o obj/Geometry.o obj/Objects.o
 	g++ -o client $^ libGLEW.a -lglut -lSDL -lGLU -lfreetype
 
-client_bot: obj/botmain.o obj/BotApp.o obj/BotWorld.o obj/BotCharacters.o obj/socket.o
+client_bot: obj/botmain.o obj/BotApp.o obj/BotWorld.o obj/BotCharacters.o obj/socket.o obj/Objects.o obj/Regions.o obj/Geometry.o
 	g++ -o client_bot $^ libGLEW.a -lglut -lSDL -lGLU
 
 obj/FreeType.o: src/FreeType.h src/FreeType.cpp
@@ -19,11 +19,11 @@ obj/CharacterGraphics.o: src/CharacterGraphics.cpp src/Characters.h
 obj/GameServer.o: src/GameServer.cpp src/GameServer.h src/packet.h src/ServerConnManager.h
 	g++ -c -o obj/GameServer.o src/GameServer.cpp
 
+obj/Regions.o: src/Regions.cpp src/Regions.h
+	g++ -c -o obj/Regions.o src/Regions.cpp
+
 obj/ServerData.o: src/ServerData.h src/ServerData.cpp
 	g++ -c -o obj/ServerData.o src/ServerData.cpp
-
-obj/ServerObjManager.o: src/ServerObjManager.h src/ServerObjManager.cpp
-	g++ -c -o obj/ServerObjManager.o src/ServerObjManager.cpp
 
 obj/ServerConnManager.o: src/ServerConnManager.h src/ServerConnManager.cpp src/packet.h
 	g++ -c -o obj/ServerConnManager.o src/ServerConnManager.cpp
@@ -75,6 +75,9 @@ obj/BotWorld.o: src/BotWorld.cpp src/BotWorld.h src/BotCharacters.cpp src/BotCha
 
 obj/Geometry.o: src/Geometry.cpp src/Geometry.h
 	g++ -c -o obj/Geometry.o src/Geometry.cpp
+
+obj/Objects.o: src/Objects.cpp src/Objects.h src/Util.h src/packet.h src/Regions.cpp src/Geometry.cpp src/Geometry.h
+	g++ -c -o obj/Objects.o src/Objects.cpp 
 
 clean:
 	rm obj/*.o client client_bot server
