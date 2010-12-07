@@ -10,14 +10,19 @@ using namespace botclient;
 
 namespace botclient {
 
+////////////////// PLAYER //////////////////
+////////////////////////////////////////////
+
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : PlayerBase(id, pos), dir(dir), hp(hp), moving(false), alive(true)
+   : PlayerBase(id, pos), dir(dir), moving(false), hp(hp),
+   rupees(0), exp(0), pvp(false)
 {
    lastUpdate = getTicks();
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
+   lastUpdate = getTicks();
    this->pos = pos;
    this->dir = dir;
    this->moving = moving;
@@ -25,14 +30,23 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
 
 void Player::update()
 {
-   lastUpdate = getTicks();
+   if (moving && getTicks() - lastUpdate < predictTicks) {
+      pos = pos + dir * getDt() * playerSpeed;
+   } 
+   else {
+      moving = false;
+   }
 }
 
+////////////////// MISSILE //////////////////
+/////////////////////////////////////////////
+
 Missile::Missile(int id, int type, vec2 pos, vec2 dir)
-   : MissileBase(id, type, pos), alive(true)
+   : MissileBase(id, type, pos)
 {
+   lastUpdate = getTicks();
    this->dir = dir;
-   if (this->dir.length() > 0.0f)
+   if (this->dir.length() > 0.0)
       this->dir = normalize(this->dir);
 }
 
@@ -40,6 +54,16 @@ void Missile::update()
 {
    pos = pos + dir * projectileSpeed * getDt();
 }
+
+void Missile::move(vec2 pos, vec2 dir)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+   this->dir = dir;
+}
+
+////////////////// ITEM //////////////////
+//////////////////////////////////////////
 
 Item::Item(int id, int type, vec2 pos) 
    : ItemBase(id, type, pos), alive(true)
@@ -49,7 +73,7 @@ Item::Item(int id, int type, vec2 pos)
 
 void Item::update()
 {
-   lastUpdate = getTicks();
+
 }
 
 bool Item::isCollectable() const
@@ -69,20 +93,41 @@ bool Item::isCollectable() const
    return false;
 }
 
+void Item::move(vec2 pos)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+}
+
+////////////////// NPC //////////////////
+/////////////////////////////////////////
+
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
-   : NPCBase(id, type, pos), hp(hp), dir(dir), moving(moving), alive(true)
+   : NPCBase(id, type, pos), dir(dir), moving(moving), hp(hp)
 {
    lastUpdate = getTicks();
 }
 
 void NPC::update()
 {
-   lastUpdate = getTicks();
+   if (moving && getTicks() - lastUpdate < predictTicks) {
+      pos = pos + dir * getDt() * npcWalkSpeed;
+   } 
+   else {
+      moving = false;
+   }
 }
 
-////////////////////////////////////
-/////////// ObjectHolder ///////////
-////////////////////////////////////
+void NPC::move(vec2 pos, vec2 dir, bool moving)
+{
+   this->lastUpdate = getTicks();
+   this->pos = pos;
+   this->dir = dir;
+   this->moving = moving;
+}
+
+////////////////// OBJECTHOLDER //////////////////
+//////////////////////////////////////////////////
 
 bool ObjectHolder::addPlayer(Player *obj)
 {

@@ -15,7 +15,7 @@ void GameServer::newServerConnection(int id)
    printf("Forcing disconnect to remote server.\n");
    std::map<int, int>::iterator iter = cm.idToServerIndex.find(id);
    if(iter != cm.idToServerIndex.end())
-      cm.removeServerAt(cm.idToServerIndex.find(id)->second);
+      cm.removeServerAt(iter->second);
    else
       exit(EXIT_FAILURE); 
 }

@@ -28,11 +28,6 @@ Player::Player(pack::Packet &serialized)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   //this->pos = pos; Error to do this
-   //omMoveTemplate will get the wrong regions
-   //Even changing it after om.move() will be wrong 
-   //since if the move function doesn't like the positon
-
    getOM().move(static_cast<PlayerBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
@@ -142,11 +137,6 @@ pack::Packet Missile::serialize() const
 
 void Missile::move(vec2 pos, vec2 dir)
 {
-   //this->pos = pos; Error to do this
-   //omMoveTemplate will get the wrong regions
-   //Even changing it after om.move() will be wrong 
-   //since if the move function doesn't like the positon
-
    getOM().move(static_cast<MissileBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
@@ -356,11 +346,6 @@ void NPC::update()
 
 void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
-   //this->pos = pos; Error to do this
-   //omMoveTemplate will get the wrong regions
-   //Even changing it after om.move() will be wrong 
-   //since if the move function doesn't like the positon
-
    getOM().move(static_cast<NPCBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
@@ -425,11 +410,6 @@ Item::Item(pack::Packet &serialized)
 
 void Item::move(vec2 pos)
 {
-   //this->pos = pos; Error to do this
-   //omMoveTemplate will get the wrong regions
-   //Even changing it after om.move() will be wrong 
-   //since if the move function doesn't like the positon
-
    getOM().move(static_cast<ItemBase *>(this), pos);
 }
 

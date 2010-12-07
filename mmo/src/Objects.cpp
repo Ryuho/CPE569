@@ -407,8 +407,11 @@ void ObjectManager::getRegions(vec2 pos, Geometry g,
          }
       }
    }
-   if(regionIds.size() == 0)
+   if(regionIds.size() == 0) {
+      if(inBounds(pos))
+         printf("Error getRegions\n");
       regionIds.push_back(omToRm(x, y, regionXSize));
+   }
 }
 
 vec2 ObjectManager::toWorldPos(vec2 pos)

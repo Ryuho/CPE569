@@ -13,12 +13,10 @@ namespace client {
 using mat::vec2;
 using namespace objectManager;
 
-//struct Animation;
-
 void initCharacterResources();
 
 struct Player : PlayerBase {
-   Player() : PlayerBase(0, vec2()), alive(false) {}
+   Player() : PlayerBase(0, vec2()), alive(false), moving(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
 
    void move(vec2 pos, vec2 dir, bool moving);
@@ -26,7 +24,6 @@ struct Player : PlayerBase {
    void draw();
 
    vec2 dir;
-   float radius;
    bool moving, alive;
    int animStart, lastUpdate;
    int hp, rupees, exp;
@@ -76,7 +73,7 @@ private:
 };
 
 struct ObjectHolder : ObjectManager {
-   ObjectHolder() : ObjectManager() {}
+   ObjectHolder();
 
    bool addPlayer(Player *obj);
    bool addNPC(NPC *obj);
@@ -89,9 +86,10 @@ struct ObjectHolder : ObjectManager {
    Missile *getMissile(int id);
 
    void updateAll();
-   void drawAll();
+   void drawAll(vec2 pos);
 
-   std::vector<Item> border;
+   std::vector<Item> border[4];
+   vec2 corners[4];
 };
 
 } //end namespace

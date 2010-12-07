@@ -32,9 +32,9 @@ struct WorldData {
 };
 
 // This pointer points to the current 
-WorldData* clientState;
-int wHeight;
-int wWidth;
+WorldData* clientState = 0;
+int wHeight = 0;
+int wWidth = 0;
 GLfloat boarderWidth = .05;
 
 // Interface stubs
@@ -55,17 +55,17 @@ void setUpBoarder()
 {
 	for(int i = 0, j = 0; i < wHeight+41; i = i + 41, j++)
 	{
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, i)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(wWidth, -i)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, i)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, -i)));
+		clientState->objs.border[Direction::Right].push_back(Item(0, ItemType::Teleportor, vec2(wWidth, i)));
+		clientState->objs.border[Direction::Right].push_back(Item(0, ItemType::Teleportor, vec2(wWidth, -i)));
+		clientState->objs.border[Direction::Left].push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, i)));
+		clientState->objs.border[Direction::Left].push_back(Item(0, ItemType::Teleportor, vec2(-wWidth, -i)));
 	}
 	for(int i = 0, j = wWidth / 10 + 1; i < wWidth+41; i = i + 41, j++)
 	{
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(i, wHeight)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-i, wHeight)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(i, -wHeight)));
-		clientState->objs.border.push_back(Item(0, ItemType::Teleportor, vec2(-i, -wHeight)));
+		clientState->objs.border[Direction::Up].push_back(Item(0, ItemType::Teleportor, vec2(i, wHeight)));
+		clientState->objs.border[Direction::Up].push_back(Item(0, ItemType::Teleportor, vec2(-i, wHeight)));
+		clientState->objs.border[Direction::Down].push_back(Item(0, ItemType::Teleportor, vec2(i, -wHeight)));
+		clientState->objs.border[Direction::Down].push_back(Item(0, ItemType::Teleportor, vec2(-i, -wHeight)));
 	}
 }
 void WorldData::init(const char *host, int port)
@@ -341,7 +341,7 @@ void WorldData::draw()
    glColor4ub(255,255,255,255);*/
 	glColor3ub(255, 255, 255);
 
-   objs.drawAll();
+   objs.drawAll(player.pos);
    
    player.draw();
    

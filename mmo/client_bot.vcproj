@@ -58,7 +58,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SDL.lib SDLmain.lib wsock32.lib"
+				AdditionalDependencies="wsock32.lib"
 				OutputFile="$(ProjectName)_debug.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -132,7 +132,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SDL.lib SDLmain.lib wsock32.lib"
+				AdditionalDependencies="wsock32.lib"
 				OutputFile="$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"

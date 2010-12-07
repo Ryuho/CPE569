@@ -115,19 +115,18 @@ void ConnectionManager::removeClientConnection(int id)
 
 void ConnectionManager::removeClientAt(int i)
 {
-	int cID = clientConnections[i].id;
-
 	if (clientConnections[i].conn)
       clientConnections[i].conn.close();
-   else
-	   printf("Tried to remove connection at %d that had no connection \n",i);
+   //else
+	//   printf("Tried to remove connection at %d that had no connection \n",i);
 
+   int cID = clientConnections[i].id;
    if (clientConnections.size() > 1) {
       clientConnections[i] = clientConnections.back();
       idToClientIndex[clientConnections[i].id] = i;
    }
-   clientConnections.pop_back();
    idToClientIndex.erase(cID);
+   clientConnections.pop_back();
 }
 
 // server -> server connection functions
@@ -158,11 +157,12 @@ void ConnectionManager::removeServerAt(int i)
    if (serverConnections[i].conn)
       serverConnections[i].conn.close();
 
-   idToServerIndex.erase(serverConnections[i].id);
+   int sID = serverConnections[i].id;
    if (serverConnections.size() > 1) {
       serverConnections[i] = serverConnections.back();
       idToServerIndex[serverConnections[i].id] = i;
    }
+   idToServerIndex.erase(sID);
    serverConnections.pop_back();
 }
 

@@ -77,6 +77,9 @@ struct BotWorld {
    BotWorldData data;
 };
 
+void sleepms(int ms);
+int currentTicks();
+
 int getTicks();
 float getDt();
 Player &getPlayer();

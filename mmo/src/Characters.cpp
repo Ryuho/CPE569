@@ -13,7 +13,8 @@ int stopAfterTicks = 100;
 ////////////////////////////////////////////
 
 Player::Player(int id, vec2 pos, vec2 dir, int hp)
-   : PlayerBase(id, pos), dir(dir), moving(false), alive(true), hp(hp), pvp(false)
+   : PlayerBase(id, pos), dir(dir), moving(false), alive(true), hp(hp),
+   rupees(0), exp(0), pvp(false)
 {
    lastUpdate = getTicks();
 }
@@ -87,9 +88,8 @@ void Item::move(vec2 pos)
 /////////////////////////////////////////
 
 NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
-   : NPCBase(id, type, pos), dir(dir), moving(moving), hp(hp)
+   : NPCBase(id, type, pos), dir(dir), moving(moving), hp(hp), alive(true)
 {
-   alive = true;
    initGraphics();
    lastUpdate = getTicks();
 }
@@ -177,30 +177,60 @@ void ObjectHolder::updateAll()
    }
 }
 
-void ObjectHolder::drawAll()
+ObjectHolder::ObjectHolder() : ObjectManager()
+{
+   const float width(constants::worldWidth/2);
+   const float height(constants::worldHeight/2);
+   //const float width = constants::worldWidth;
+   //const float height = constants::worldHeight;
+   corners[Direction::Up] = vec2(-width, height);
+   corners[Direction::Right] = vec2(width, height);
+   corners[Direction::Down] = vec2(width, -height);
+   corners[Direction::Left] = vec2(-width, -height);
+}
+
+void ObjectHolder::drawAll(vec2 pos)
 {
    int ticks = getTicks();
-   for (unsigned i = 0; i < playerCount(); i++) {
-      Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
+   Geometry aoi(Circle(pos, constants::areaOfInfluenceRadius));
+
+   std::vector<PlayerBase *> players;
+   collidingPlayers(aoi, pos, players);
+   for (unsigned i = 0; i < players.size(); i++) {
+      Player &obj = *static_cast<Player *>(players[i]);
       if(ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
-   for (unsigned i = 0; i < npcCount(); i++) {
-      NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
+   std::vector<NPCBase *> npcs;
+   collidingNPCs(aoi, pos, npcs);
+   for (unsigned i = 0; i < npcs.size(); i++) {
+      NPC &obj = *static_cast<NPC *>(npcs[i]);
       if(ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
+      else if(mat::dist(obj.pos, pos) < constants::areaOfInfluenceRadius/2)
+         printf("Error drawAll() %d\n", obj.getId());
    }
-   for (unsigned i = 0; i < itemCount(); i++) {
-      Item &obj = *static_cast<Item *>(get(ObjectType::Item, i));
+   std::vector<ItemBase *> items;
+   collidingItems(aoi, pos, items);
+   for (unsigned i = 0; i < items.size(); i++) {
+      Item &obj = *static_cast<Item *>(items[i]);
       obj.draw();
    }
-   for (unsigned i = 0; i < missileCount(); i++) {
-      Missile &obj = *static_cast<Missile *>(get(ObjectType::Missile, i));
+   std::vector<MissileBase *> missiles;
+   collidingMissiles(aoi, pos, missiles);
+   for (unsigned i = 0; i < missiles.size(); i++) {
+      Missile &obj = *static_cast<Missile *>(missiles[i]);
       obj.draw();
    }
-   for (unsigned i = 0; i < border.size(); i++) {
-      border[i].draw();
+
+   for(unsigned i = 0; i < 4; i++) {
+      Geometry lineBorder(Plane(corners[i], corners[(i+1)%4], 1.0f));
+      if(aoi.collision(lineBorder)) {
+         for(unsigned j = 0; j < border[i].size(); j++) {
+            border[i][j].draw();
+         }
+      }
    }
 }
