@@ -1,35 +1,39 @@
 #ifndef _CHARACTERS_H_
 #define _CHARACTERS_H_
 
-#include <vector>
-#include <map>
+#include "Sprite.h"
+#include "Objects.h"
 #include "matrix.h"
 #include "Geometry.h"
-#include "Sprite.h"
+#include <vector>
+#include <map>
+
+namespace client {
 
 using mat::vec2;
-struct Animation;
+using namespace objectManager;
+
+//struct Animation;
 
 void initCharacterResources();
 
-struct Player {
-   Player() : id(0), alive(false) {}
+struct Player : PlayerBase {
+   Player() : PlayerBase(0, vec2()), alive(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
 
    void move(vec2 pos, vec2 dir, bool moving);
    void update();
    void draw();
 
-   vec2 dir, pos;
+   vec2 dir;
    float radius;
    bool moving, alive;
    int animStart, lastUpdate;
-   int id;
    int hp, rupees, exp;
    bool pvp;
 };
 
-struct Missile {
+struct Missile : MissileBase {
    Missile(int id, int type, vec2 pos, vec2 dir);
 
    void move(vec2 pos, vec2 dir);
@@ -37,26 +41,25 @@ struct Missile {
    void draw();
 
    bool alive;
-   vec2 pos, dir;
-   int id, type, lastUpdate;
+   vec2 dir;
+   int lastUpdate;
 };
 
-struct Item {
+struct Item : ItemBase {
    Item(int id, int type, vec2 pos);
 
    void move(vec2 pos);
    void update();
    void draw();
    
-   vec2 pos;
    bool alive;
    Animation *anim;
-   int id, type, lastUpdate;
+   int lastUpdate;
 private:
    void initGraphics();
 };
 
-struct NPC {
+struct NPC : NPCBase {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
 
    void move(vec2 pos, vec2 dir, bool moving);
@@ -64,49 +67,39 @@ struct NPC {
    void update();
    void draw();
    
-   vec2 pos, dir;
+   vec2 dir;
    bool alive, moving;
    Animation *anim;
-   int id, hp, type, lastUpdate;
+   int hp, lastUpdate;
 private:
    void initGraphics();
 };
 
-struct ObjectHolder {
-   struct IdType {
-      IdType() {}
-      IdType(int index, int type) : index(index), type(type) {}
-      int index, type;
-   };
+struct ObjectHolder : ObjectManager {
+   ObjectHolder() : ObjectManager() {}
 
-   std::vector<Player> players;
-   std::vector<Missile> missiles;
-   std::vector<Item> items;
-   std::vector<NPC> npcs;
-   std::map<int, IdType> idToIndex;
-   std::vector<Item> border;
-
-   void addPlayer(Player p);
-   void addMissile(Missile m);
-   void addItem(Item i);
-   void addNPC(NPC n);
+   bool addPlayer(Player *obj);
+   bool addNPC(NPC *obj);
+   bool addItem(Item *obj);
+   bool addMissile(Missile *obj);
 
    Player *getPlayer(int id);
-   Missile *getMissile(int id);
-   Item *getItem(int id);
    NPC *getNPC(int id);
-
-   bool checkObject(int id, int type);
-   void removeObject(int id);
+   Item *getItem(int id);
+   Missile *getMissile(int id);
 
    void updateAll();
    void drawAll();
+
+   std::vector<Item> border;
 };
 
-namespace game {
-   int getTicks();
-   float getDt();
-   Player &getPlayer(); // available only on client
-};
+} //end namespace
+
+//namespace game {
+//   int getTicks();
+//   float getDt();
+//   client::Player &getPlayer(); // available only on client
+//};
 
 #endif

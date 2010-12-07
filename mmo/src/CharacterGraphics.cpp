@@ -273,9 +273,7 @@ void NPC::draw()
    }
 }
 
-
-
-void initCharacterResources()
+void client::initCharacterResources()
 {
    if (!initalized) {
       TexOptions opt;

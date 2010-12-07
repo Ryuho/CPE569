@@ -4,6 +4,8 @@
 #include "Characters.h"
 #include <boost/shared_ptr.hpp>
 
+using namespace client;
+
 struct WorldData;
 
 struct World {
@@ -18,7 +20,7 @@ struct World {
    void shootArrow(mat::vec2 dir);
    void doSpecial();
    void spawnItem();
-   void spawnNPC();
+   void hurtMe();
    void togglePvp();
    void rightClick(vec2 mousePos);
 
@@ -28,6 +30,6 @@ protected:
 
 int getTicks();
 float getDt();
-Player &getPlayer(); // available only on client
+client::Player &getPlayer(); // available only on client
 
 #endif

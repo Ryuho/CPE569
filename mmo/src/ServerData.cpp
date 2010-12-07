@@ -1,20 +1,28 @@
-#include "ServerData.h"
 #include "GameServer.h"
+#include "ServerData.h"
 #include "Geometry.h"
 #include "Util.h"
+#include "Packets.h"
 #include <cstdio>
 
-namespace server {
+using namespace server;
 using namespace mat;
 using namespace constants;
-
-// Player
-
+namespace server {
+/////////////////////////////////
+//////////// Player /////////////
+/////////////////////////////////
 Player::Player(int id, int sid, vec2 pos, vec2 dir, int hp)
-   : id(id), sid(sid), pos(pos), dir(dir), moving(false), hp(hp), 
-   rupees(0), exp(0), pvp(false), shotThisFrame(false)
+   : PlayerBase(id, pos), sid(sid), dir(dir), moving(false), 
+   hp(hp), rupees(0), exp(0), pvp(false), shotThisFrame(false)
 {
    
+}
+
+Player::Player(pack::Packet &serialized)
+   : PlayerBase(0, vec2())
+{
+   deserialize(serialized);
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
@@ -24,7 +32,7 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<PlayerBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
@@ -45,25 +53,10 @@ void Player::gainRupees(int rupees)
    this->rupees += rupees;
 }
 
-Geometry Player::getGeom() const
-{
-   return Circle(pos, (float)playerRadius);
-}
-
-int Player::getObjectType() const
-{
-   return ObjectType::Player;
-}
-
-Player::Player(pack::Packet &serialized)
-{
-   deserialize(serialized);
-}
-
 void Player::deserialize(pack::Packet &serialized)
 {
    //printf("Error Player::deserialize untested - update with members!");
-   if(serialized.type == pack::serialPlayer) {
+   if(serialized.type == PacketType::serialPlayer) {
       int ipvp, ialive, imoving;
       serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(exp).readInt(rupees)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
@@ -79,11 +72,11 @@ void Player::deserialize(pack::Packet &serialized)
 pack::Packet Player::serialize() const
 {
    //printf("Error Player::serialize untested - update with members!");
-   pack::Packet p(pack::serialPlayer);
+   pack::Packet p(PacketType::serialPlayer);
    int ipvp = (int)pvp;
    int ialive = (int)alive;
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(exp).writeInt(rupees)
+   p.data.writeUInt(id).writeInt(sid).writeInt(hp).writeInt(exp).writeInt(rupees)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeInt(imoving).writeInt(ialive).writeInt(ipvp);
    return p;
@@ -95,11 +88,11 @@ void Player::gainHp(int hp)
    util::clamp(this->hp, 0, playerMaxHp);
 }
 
-
-// Missile
-
+/////////////////////////////////
+//////////// Missile ////////////
+/////////////////////////////////
 Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int type)
-   : id(id), sid(sid), owned(owned), pos(pos), dir(dir), type(type)
+   : MissileBase(id, type, pos), sid(sid), owned(owned), dir(dir)
 {
    spawnTime = getTicks();
    this->dir = dir;
@@ -109,14 +102,15 @@ Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int t
       this->dir = vec2(1,0);
 }
 
+Missile::Missile(pack::Packet &serialized)
+   : MissileBase(0, 0, vec2())
+{
+   deserialize(serialized);
+}
+
 void Missile::update()
 {
    move(pos + dir * projectileSpeed * getDt(), dir);
-}
-
-Geometry Missile::getGeom() const
-{
-   return Circle(pos, arrowRadius);
 }
 
 int Missile::getDamage() const
@@ -124,20 +118,10 @@ int Missile::getDamage() const
    return rand()%6 + 5;
 }
 
-int Missile::getObjectType() const
-{
-   return ObjectType::Missile;
-}
-
-Missile::Missile(pack::Packet &serialized)
-{
-   deserialize(serialized);
-}
-
 void Missile::deserialize(pack::Packet &serialized)
 {
    //printf("Error Missile::deserialize untested - update with members!");
-   if(serialized.type == pack::serialMissile) {
+   if(serialized.type == PacketType::serialMissile) {
       serialized.data.readInt(id).readInt(sid).readInt(owned).readInt(type).readInt(spawnTime)
          .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x).readFloat(dir.y)
          .reset();
@@ -149,8 +133,8 @@ void Missile::deserialize(pack::Packet &serialized)
 pack::Packet Missile::serialize() const
 {
    //printf("Error Missile::serialize untested - update with members!");
-   pack::Packet p(pack::serialMissile);
-   p.data.writeInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
+   pack::Packet p(PacketType::serialMissile);
+   p.data.writeUInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
    return p;
 }
@@ -162,18 +146,26 @@ void Missile::move(vec2 pos, vec2 dir)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<MissileBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
 }
 
-// NPC
-
+/////////////////////////////////
+/////////////// NPC /////////////
+/////////////////////////////////
 NPC::NPC(int id, int sid, int hp, vec2 pos, vec2 dir, int type)
-   : id(id), sid(sid), hp(hp), pos(pos), dir(dir), type(type), aiType(AIType::Stopped),
-   aiTicks(0), attackId(0), initPos(pos), moving(false), nextMissileTicks(0)
+   : NPCBase(id, type, pos), sid(sid), hp(hp), dir(dir),
+   aiType(AIType::Stopped), aiTicks(0), attackId(0), initPos(pos), 
+   moving(false), nextMissileTicks(0)
 {
 
+}
+
+NPC::NPC(pack::Packet &serialized)
+   : NPCBase(0, 0, vec2())
+{
+   deserialize(serialized);
 }
 
 int NPC::getAttackDelay() const
@@ -293,7 +285,7 @@ int NPC::getLoot()
 void NPC::update() 
 {
    Player *p = 0;
-   this->moving = false;
+   moving = false;
    if(mat::dist(pos, initPos) > maxNpcMoveDist) {
       aiType = AIType::Walking;
       dir = mat::to(pos, initPos);
@@ -302,18 +294,18 @@ void NPC::update()
    }
 
    Geometry aggroCircle(Circle(pos, npcAggroRange));
-   std::vector<Player *> closePlayers 
-      = getOM().collidingPlayers(aggroCircle, pos);
+   std::vector<PlayerBase *> closePlayers;
+   getOM().collidingPlayers(aggroCircle, pos, closePlayers);
    if(closePlayers.size() > 0) {
       aiType = AIType::Attacking;
-      p = closePlayers[0];
-      attackId = p->id;
+      p = static_cast<Player *>(closePlayers[0]);
+      attackId = p->getId();
       float dist = mat::dist(p->pos, pos);
       for(unsigned i = 1; i < closePlayers.size(); i++) {
          float dist2 = mat::dist(closePlayers[i]->pos, pos);
          if(dist2 < dist) {
-            p = closePlayers[i];
-            attackId = p->id;
+            p = static_cast<Player *>(closePlayers[i]);
+            attackId = p->getId();
          }
       }
    }
@@ -348,58 +340,17 @@ void NPC::update()
          Missile *m = new Missile(newId(), id, sid, pos, 
             mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
          getOM().add(m);
-         getCM().clientBroadcast(pack::Initialize(m->id, 
+         getCM().clientBroadcast(pack::Initialize(m->getId(), 
             ObjectType::Missile, m->type, m->pos, 
             m->dir, 0));
       }
    }
    else {
-      this->gainHp(npcOutOfCombatHpPerTick);
+      gainHp(npcOutOfCombatHpPerTick);
       if(aiType == AIType::Walking) {
          move(pos + dir * getDt() * npcWalkSpeed, dir, true);
       }
    }
-}
-
-float NPC::getRadius() const
-{
-   switch(type) {
-      case NPCType::Fairy: //16x16
-      case NPCType::Bat:
-      case NPCType::Bird:
-         return 16*1.5f;
-         break;
-      case NPCType::Thief: //16x32
-      case NPCType::Squirrel: 
-      case NPCType::Princess:
-      case NPCType::Skeleton:
-      case NPCType::Cactus:
-      case NPCType::Wizard:
-      case NPCType::Goblin:
-         return 22*1.5f;
-         break;
-      case NPCType::Cyclops: //32x32
-      case NPCType::Chicken:
-      case NPCType::Vulture:
-      case NPCType::Bush:
-      case NPCType::BigFairy:
-      case NPCType::Ganon:
-         return 23.5f*1.5f;
-         break;
-      default:
-         printf("Error NPC::getRadius() - unknown NPC type %d\n", type);
-   }
-   return 0.0f;
-}
-
-Geometry NPC::getGeom() const
-{
-   return Circle(pos, getRadius());
-}
-
-void NPC::takeDamage(int damage)
-{
-   hp = max(0, hp-damage);
 }
 
 void NPC::move(vec2 pos, vec2 dir, bool moving)
@@ -409,26 +360,16 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<NPCBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
 }
 
-int NPC::getObjectType() const
-{
-   return ObjectType::NPC;
-}
-
-NPC::NPC(pack::Packet &serialized)
-{
-   deserialize(serialized);
-}
-
 void NPC::deserialize(pack::Packet &serialized)
 {
    //printf("Error NPC::deserialize untested - update with members!");
-   if(serialized.type == pack::serialNPC) {
+   if(serialized.type == PacketType::serialNPC) {
       int imoving;
       serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(type)
          .readInt(aiTicks).readInt(aiType).readInt(attackId)
@@ -444,9 +385,9 @@ void NPC::deserialize(pack::Packet &serialized)
 pack::Packet NPC::serialize() const
 {
    //printf("Error NPC::serialize untested - update with members!");
-   pack::Packet p(pack::serialNPC);
+   pack::Packet p(PacketType::serialNPC);
    int imoving = (int)moving;
-   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(type)
+   p.data.writeUInt(id).writeInt(sid).writeInt(hp).writeInt(type)
       .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeFloat(initPos.x).writeFloat(initPos.y).writeInt(nextMissileTicks)
@@ -460,12 +401,25 @@ void NPC::gainHp(int hp)
    util::clamp(this->hp, 0, npcMaxHp);
 }
 
-// Item
+void NPC::takeDamage(int damage)
+{
+   hp = max(0, hp-damage);
+}
 
+
+/////////////////////////////////
+////////////// Item /////////////
+/////////////////////////////////
 Item::Item(int id, int sid, vec2 pos, int type)
-   : id(id), sid(sid),pos(pos), type(type)
+   : ItemBase(id, type, pos), sid(sid)
 {
 
+}
+
+Item::Item(pack::Packet &serialized)
+   : ItemBase(0, 0, vec2()), sid(0)
+{
+   deserialize(serialized);
 }
 
 void Item::move(vec2 pos)
@@ -475,7 +429,7 @@ void Item::move(vec2 pos)
    //Even changing it after om.move() will be wrong 
    //since if the move function doesn't like the positon
 
-   getOM().move(this, pos);
+   getOM().move(static_cast<ItemBase *>(this), pos);
 }
 
 bool Item::isCollidable() const
@@ -511,48 +465,10 @@ bool Item::isCollectable() const
    return false;
 }
 
-float Item::getRadius() const
-{
-   switch (type) {
-      case ItemType::GreenRupee:
-      case ItemType::RedRupee:
-      case ItemType::BlueRupee:
-         return 12*1.5f;
-         break; //unreachable
-      case ItemType::Explosion:
-         return 55*1.5f;
-         break;
-      case ItemType::Stump:
-         return 32*1.5f;
-         break;
-      case ItemType::Heart:
-         return 13*1.5f;
-         break;
-      default:
-         printf("Error Item::getGeom - Unknown item type %d\n", type);
-   }
-   return 0.0f;
-}
-
-Geometry Item::getGeom() const
-{
-   return Circle(pos, getRadius());
-}
-
-int Item::getObjectType() const
-{
-   return ObjectType::Item;
-}
-
-Item::Item(pack::Packet &serialized)
-{
-   deserialize(serialized);
-}
-
 void Item::deserialize(pack::Packet &serialized)
 {
    //printf("Error Item::deserialize untested - update with members!");
-   if(serialized.type == pack::serialItem) {
+   if(serialized.type == PacketType::serialItem) {
       serialized.data.readInt(id).readInt(sid).readInt(type)
          .readFloat(pos.x).readFloat(pos.y)
          .reset();
@@ -564,8 +480,8 @@ void Item::deserialize(pack::Packet &serialized)
 pack::Packet Item::serialize() const
 {
    //printf("Error Item::serialize untested - update with members!");
-   pack::Packet p(pack::serialItem);
-   p.data.writeInt(id).writeInt(sid).writeInt(type)
+   pack::Packet p(PacketType::serialItem);
+   p.data.writeUInt(id).writeInt(sid).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
 }

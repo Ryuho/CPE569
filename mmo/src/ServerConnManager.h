@@ -10,7 +10,7 @@ int currentTicks();
 int newId();
 
 namespace ServerOps { enum {
-   request = 1, anounce, good, bad, ready
+   request = 1, anounce=2, good=3, bad=4, ready=5
 };}
 
 
@@ -28,6 +28,7 @@ struct ServerConnectionInfo {
 };
 
 struct ConnectionManager {
+   ConnectionManager() : ownServerId(-1) {}
    void clientSendPacket(pack::Packet p, int id);
    void clientBroadcast(pack::Packet p);
    void serverSendPacket(pack::Packet p, int id);

@@ -4,10 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "client.vcproj", "{DD972599-77B6-492C-8AD2-1958B0D0E320}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "server.vcproj", "{78ED208A-2DFA-426E-83E0-11EA6FFE10C2}"
-	ProjectSection(ProjectDependencies) = postProject
-		{6A42AA0A-06E7-484A-A38C-B3EA85F95D03} = {6A42AA0A-06E7-484A-A38C-B3EA85F95D03}
-		{DD972599-77B6-492C-8AD2-1958B0D0E320} = {DD972599-77B6-492C-8AD2-1958B0D0E320}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client_bot", "client_bot.vcproj", "{6A42AA0A-06E7-484A-A38C-B3EA85F95D03}"
 EndProject

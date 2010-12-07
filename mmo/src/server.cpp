@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "Packets.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -44,8 +45,8 @@ void displayBandwidth()
 
    if (ticks - lastDisplay > refreshTime) {
       lastDisplay = ticks;
-      float skb = sock::getBytesSent() / 1000.0;
-      float rkb = sock::getBytesRead() / 1000.0;
+      float skb = sock::getBytesSent() / 1000.0f;
+      float rkb = sock::getBytesRead() / 1000.0f;
 
       printf("s=%2.2fkb|r=%2.2fkb ", skb, rkb);
       displayCM->printPackStat();

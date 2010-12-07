@@ -1,97 +1,78 @@
 #ifndef _BOTCHARACTERS_H_
 #define _BOTCHARACTERS_H_
 
-#include <vector>
-#include <map>
+#include "Objects.h"
 #include "matrix.h"
 #include "Geometry.h"
+#include "Constants.h"
+#include <vector>
+#include <map>
+
+
+namespace botclient {
 
 using mat::vec2;
+using namespace constants;
+using namespace objectManager;
 
-struct Player {
-   Player() : id(0), moving(false), alive(true) {}
+struct Player : PlayerBase {
+   Player() : PlayerBase(0, vec2()), moving(false), alive(true) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
    void move(vec2 pos, vec2 dir, bool moving);
 
    void update();
 
    int lastUpdate;
-   vec2 dir, pos;
-   float radius;
+   vec2 dir;
    bool moving, alive;
-   int id;
    int hp;
 };
 
 
-struct Missile {
+struct Missile : MissileBase {
    Missile(int id, int type, vec2 pos, vec2 dir);
    void update();
 
-   int type;
    bool alive;
-   vec2 pos, dir;
-   int id;
+   vec2 dir;
 };
 
-struct Item {
+struct Item : ItemBase {
    Item(int id, int type, vec2 pos);
    void update();
    bool isCollectable() const;
 
    int lastUpdate;
    bool alive;
-   int type;
-   vec2 pos;
-   int id;
 };
 
-struct NPC {
+struct NPC : NPCBase {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
    void update();
    
    int lastUpdate;
    bool moving, alive;
-   int type;
-   vec2 pos, dir;
-   int id, hp;
+   vec2 dir;
+   int hp;
 };
 
-struct ObjectHolder {
-   struct IdType {
-      IdType() {}
-      IdType(int index, int type) : index(index), type(type) {}
-      int index, type;
-   };
+struct ObjectHolder : ObjectManager {
+   ObjectHolder() : ObjectManager() {}
 
-   std::vector<Player> players;
-   std::vector<Missile> missiles;
-   std::vector<Item> items;
-   std::vector<NPC> npcs;
-   std::map<int, IdType> idToIndex;
-
-   void addPlayer(Player p);
-   void addMissile(Missile m);
-   void addItem(Item i);
-   void addNPC(NPC n);
+   bool addPlayer(Player *obj);
+   bool addNPC(NPC *obj);
+   bool addItem(Item *obj);
+   bool addMissile(Missile *obj);
 
    Player *getPlayer(int id);
-   Missile *getMissile(int id);
-   Item *getItem(int id);
    NPC *getNPC(int id);
-
-   bool checkObject(int id, int type);
-   void removeObject(int id);
-
+   Item *getItem(int id);
+   Missile *getMissile(int id);
+   
    void updateAll();
 };
 
-
-namespace game {
-   int getTicks();
-   float getDt();
-   Player &getPlayer(); // available only on client
-};
+} //end namespace
 
 
 

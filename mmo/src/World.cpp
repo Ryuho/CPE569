@@ -1,7 +1,7 @@
 #include "World.h"
 #include "Characters.h"
 #include "Texture.h"
-#include "packet.h"
+#include "Packets.h"
 #include "Constants.h"
 #include "GLUtil.h"
 #include "Sprite.h"
@@ -91,7 +91,7 @@ void WorldData::init(const char *host, int port)
    }
 
    pack::Packet p = pack::readPacket(conn);
-   if (p.type != pack::connect) {
+   if (p.type != PacketType::connect) {
       printf("Expected connect packet for handshake, got: %d\n", p.type);
       exit(-1);
    }
@@ -106,7 +106,7 @@ void WorldData::init(const char *host, int port)
    }
    
    p = pack::readPacket(conn);
-   if (p.type != pack::initialize) {
+   if (p.type != PacketType::initialize) {
       printf("Expecting initalize, got %d\n", p.type);
       exit(-1);
    }
@@ -124,7 +124,7 @@ void WorldData::init(const char *host, int port)
    shadow = player;
 
 
-   printf("Connected to server successfully\nYour id is %d\n", player.id);
+   printf("Connected to server successfully\nYour id is %d\n", player.getId());
 }
 
 void World::graphicsInit(int width, int height)
@@ -153,26 +153,26 @@ void WorldData::update()
    if (playerMoveDir.length() > 0.0f) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
-		if (player.pos.x > wWidth - 41)
-		{
+		if (player.pos.x > wWidth - 41) {
 			player.pos.x = wWidth - 41;
 		}
-		else if (player.pos.x < -wWidth + 41)
-		{
+		else if (player.pos.x < -wWidth + 41) {
 			player.pos.x = -wWidth + 41;
 		}
-		if (player.pos.y > wHeight)
-		{
+
+		if (player.pos.y > wHeight) {
 			player.pos.y = wHeight;
 		}
-		else if (player.pos.y < -wHeight + 41)
-		{
+		else if (player.pos.y < -wHeight + 41) {
 			player.pos.y = -wHeight + 41;
 		}
-   } else
+   } 
+   else
       player.moving = false;
 
-   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
+   if(player.moving)
+      pack::Position(player.pos, player.dir, player.moving, 
+         player.getId()).makePacket().sendTo(conn);
 
    objs.updateAll();
 }
@@ -181,28 +181,28 @@ void WorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == position) {
+   if (p.type == PacketType::position) {
       Position pos(p);
-      if(pos.id == player.id) {
+      //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
+      if(pos.id == player.getId()) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
-      } else if(objs.checkObject(pos.id, ObjectType::Player)) {
+      } else if(objs.check(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("Accessing unknown Player %d\n", pos.id);
-      } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
+      } else if (objs.check(pos.id, ObjectType::NPC)) {
          objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("Accessing unknown NPC %d\n", pos.id);
-      } else if(objs.checkObject(pos.id, ObjectType::Item)) {
+         //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
+      } else if(objs.check(pos.id, ObjectType::Item)) {
          objs.getItem(pos.id)->move(pos.pos);
-         //printf("Accessing unknown Item %d\n", pos.id);
       }
       else
-         printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
+         printf("client %d: unable to process Pos packet id=%d\n", 
+            player.getId(), pos.id);
    }
-   else if (p.type == initialize) {
+   else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player) {
-         if(i.id == player.id) {
+         if(i.id == player.getId()) {
             player.pos = i.pos;
             player.dir = i.dir;
             player.hp = i.hp;
@@ -210,30 +210,31 @@ void WorldData::processPacket(pack::Packet p)
                i.id, i.pos.x, i.pos.y);
          } 
          else {
-            objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
+            objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
             printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
+         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(Item(i.id, i.subType, i.pos));
+         objs.addItem(new Item(i.id, i.subType, i.pos));
          printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else
          printf("Error: Unknown initialize type %d\n", i.type);
    } 
-   else if (p.type == signal) {
+   else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
-         if(sig.val == this->player.id)
+         if(sig.val == this->player.getId())
             printf("\n\n!!! Disconnected from server !!!\n\n");
          else {
+            /*
             int type = objs.idToIndex[sig.val].type;
             if(type != ObjectType::Missile)
                printf("Removed %s %d %d\n", 
@@ -242,7 +243,8 @@ void WorldData::processPacket(pack::Packet p)
                   type == ObjectType::Player ? "Player" :
                   "Unknown",
                   sig.val, type);
-            objs.removeObject(sig.val);
+            */
+            objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
@@ -254,41 +256,41 @@ void WorldData::processPacket(pack::Packet p)
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == arrow) {
-	   Arrow ar(p);
-		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
+   else if (p.type == PacketType::arrow) {
+	   //Arrow ar(p);
+		//objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
-   else if (p.type == healthChange) {
+   else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
-      if (hc.id == player.id) {
+      if (hc.id == player.getId()) {
          player.hp = hc.hp;
          shadow.hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::Player)) {
+      else if(objs.check(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::NPC)) {
+      else if(objs.check(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else
          printf("Error: Health change on id %d\n", hc.id);
    }
-   else if(p.type == pack::changePvp) {
+   else if(p.type == PacketType::changePvp) {
       Pvp pvpPacket(p);
-      if(pvpPacket.id == getPlayer().id) {
+      if(pvpPacket.id == this->player.getId()) {
          getPlayer().pvp = pvpPacket.isPvpMode != 0;
          if(getPlayer().pvp)
             printf("You are in Pvp Mode\n");
          else
             printf("You are NOT in Pvp Mode\n");
       }
-      else if(objs.checkObject(pvpPacket.id, ObjectType::Player)) {
+      else if(objs.check(pvpPacket.id, ObjectType::Player)) {
          Player &play = *objs.getPlayer(pvpPacket.id);
          play.pvp = pvpPacket.isPvpMode != 0;
          if(play.pvp)
-            printf("Player %d is in Pvp Mode\n", play.id);
+            printf("Player %d is in Pvp Mode\n", play.getId());
          else
-            printf("Player %d is NOT in Pvp Mode\n", play.id);
+            printf("Player %d is NOT in Pvp Mode\n", play.getId());
       }
       else
          printf("Error: Unknown player %d for pvp packet\n", pvpPacket.id);
@@ -343,7 +345,8 @@ void WorldData::draw()
    
    player.draw();
    
-   freetype::print(mono, 50, 50, "Experience: %d        Rupees: %d", player.exp, player.rupees);
+   freetype::print(mono, 25, 65, "Experience: %d        Rupees: %d\n\nPos: %5.0f %5.0f", 
+      player.exp, player.rupees, player.pos.x, player.pos.y);
 }
 
 void World::move(mat::vec2 dir)
@@ -354,7 +357,7 @@ void World::move(mat::vec2 dir)
 void World::shootArrow(mat::vec2 dir)
 {
 	//pack::Arrow ar(data->player.pos, dir - vec2(data->width/2,data->height/2), clientState->player.id);
-	pack::Arrow ar(dir - vec2(data->width/2,data->height/2), clientState->player.id);	
+	pack::Arrow ar(dir - vec2(data->width/2,data->height/2), getPlayer().getId());	
 	ar.makePacket().sendTo(clientState->conn);
 	//printf("arrow packet sent!\n");      
 	/**if (data->ticks - data->arrowTick > arrowCooldown) {
@@ -367,7 +370,7 @@ void World::shootArrow(mat::vec2 dir)
 
 void World::doSpecial()
 {
-	pack::Signal sig(pack::Signal::special, clientState->player.id);
+	pack::Signal sig(pack::Signal::special, clientState->player.getId());
    sig.makePacket().sendTo(clientState->conn);	
 	printf("special packet sent!\n");   
 	/*if (data->ticks - data->specialTick > specialCooldown) {
@@ -385,7 +388,7 @@ void World::rightClick(vec2 mousePos)
 {
    vec2 clickPos = clientState->player.pos + mousePos 
       - vec2(data->width/2,data->height/2);
-   pack::Click(clickPos, clientState->player.id).makePacket().sendTo(data->conn);
+   pack::Click(clickPos, clientState->player.getId()).makePacket().sendTo(data->conn);
    printf("Clicked <%5.1f %5.1f>\n", clickPos.x, clickPos.y);
 }
 
@@ -394,7 +397,7 @@ void World::spawnItem()
 
 }
 
-void World::spawnNPC()
+void World::hurtMe()
 {
    pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
 }
@@ -402,7 +405,7 @@ void World::spawnNPC()
 void World::togglePvp()
 {
    getPlayer().pvp = !getPlayer().pvp;
-   pack::Pvp(getPlayer().id, getPlayer().pvp).makePacket().sendTo(data->conn);
+   pack::Pvp(getPlayer().getId(), getPlayer().pvp).makePacket().sendTo(data->conn);
 }
 
 // Global accessor functions

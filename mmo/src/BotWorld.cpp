@@ -1,11 +1,15 @@
 #include "BotWorld.h"
-#include "packet.h"
+#include "Packets.h"
 #include "Constants.h"
 #include "Util.h"
 
 using namespace constants;
 
+BotWorldData *clientState;
+
 const float BotWorldData::botHomingRange = 1200.0f;
+const float BotWorldData::botBackupRange = 200.0f;
+const float BotWorldData::botDodgeRange = 450.0f;
 const float BotWorldData::botAggroRange = 650.0f;
 const float BotWorldData::botFightRange = 300.0f;
 const float BotWorldData::maxBotItemGrab = botAggroRange;
@@ -16,7 +20,7 @@ const float BotWorldData::returnWalkDistance
 
 //Near zero means not really dodging
 //Large numbers will mean pretty much only dodging instead of heading towards the target
-const float BotWorldData::botDodgeRatio = 2.0f; 
+const float BotWorldData::botDodgeRatio = 1.5f; 
 
 // This pointer points to the current 
 
@@ -32,6 +36,7 @@ void BotWorld::update(int ticks, float dt) {
 
 void BotWorldData::init(const char *host, int port)
 {
+   clientState = this;
    sock::setupSockets();
 
    // Maybe ask for a hostname here, along with other info (name, class etc.)
@@ -48,7 +53,7 @@ void BotWorldData::init(const char *host, int port)
    }
 
    pack::Packet p = pack::readPacket(conn);
-   if (p.type != pack::connect) {
+   if (p.type != PacketType::connect) {
       printf("Expected connect packet for handshake, got: %d\n", p.type);
       exit(-1);
    }
@@ -61,7 +66,7 @@ void BotWorldData::init(const char *host, int port)
    }
    
    p = pack::readPacket(conn);
-   if (p.type != pack::initialize) {
+   if (p.type != PacketType::initialize) {
       printf("Expecting initalize, got %d\n", p.type);
       exit(-1);
    }
@@ -82,6 +87,7 @@ void BotWorldData::init(const char *host, int port)
    dodging = true;
    looting = true;
    shooting = false;
+   backup = true;
    returnsAllWayToStart = false;
    nextLoot = 0;
    nextDirChange = 0;
@@ -89,7 +95,7 @@ void BotWorldData::init(const char *host, int port)
    fightingId = 0;
    delay = 30;
 
-   printf("Connected to server successfully\nYour id is %d\n", player.id);
+   printf("Connected to server successfully\nYour id is %d\n", player.getId());
 }
 
 #ifdef WIN32
@@ -110,6 +116,8 @@ void sleepms(int ms)
 
 void BotWorldData::update(int ticks, float dt)
 {
+   this->ticks = ticks;
+   this->dt = dt;
    //handle packets
    while (conn.select()) {
       if (conn) {
@@ -150,7 +158,8 @@ void BotWorldData::update(int ticks, float dt)
    if(looting) {
       updateLooting(ticks, dt);
    }
-   pack::Position(player.pos, player.dir, player.moving, player.id).makePacket().sendTo(conn);
+   pack::Position(player.pos, player.dir, player.moving, 
+      player.getId()).makePacket().sendTo(conn);
    if(shooting) {
       shootArrow(mat::to(player.pos, fightNpc->pos).normalize());
    }
@@ -160,56 +169,68 @@ void BotWorldData::update(int ticks, float dt)
 
 void BotWorldData::updateLooting(int ticks, float dt)
 {
-   for(unsigned i = 0; i < objs.items.size(); i++) {
-      if(objs.items[i].isCollectable() 
-            && mat::dist(player.pos, objs.items[i].pos) < maxBotItemGrab
+   for(unsigned i = 0; i < objs.itemCount(); i++) {
+      Item &item = *static_cast<Item *>(objs.get(ObjectType::Item, i));
+      if(item.isCollectable() 
+            && mat::dist(player.pos, item.pos) < maxBotItemGrab
             && nextLoot < ticks) {
-         player.moving = false;
-         pack::Position(player.pos, player.dir, false, player.id).makePacket().sendTo(conn);
+         //player.moving = false;
+         //pack::Position(player.pos, player.dir, false, 
+         //   player.getId()).makePacket().sendTo(conn);
          nextLoot = ticks + botLootTickDelay;
-         rightClick(objs.items[i].pos);
-         printf("looting item %d\n", objs.items[i].id);
+         rightClick(item.pos);
+         printf("looting item %d\n", item.getId());
       }
    }
 }
 
 vec2 tangentVec(vec2 v, bool right) {
    v.normalize();
-   float angle = asin(v.y);
-   angle += 90.0f * ((float)PI / 180.0f);
    if(right)
-      angle = -angle;
-   return vec2(cos(angle), sin(angle));
+      return vec2(-v.y, v.x);
+   else
+      return vec2(v.y, -v.x);
 }
 
 void BotWorldData::updateFighting(int ticks, float dt)
 {
    //finish NPC
-   if(objs.checkObject(fightingId, ObjectType::NPC)) {
+   if(objs.check(fightingId, ObjectType::NPC)) {
       fightNpc = objs.getNPC(fightingId);
-      if(mat::dist(player.pos, fightNpc->pos) > botAggroRange + 5.0f
-            || fightNpc->lastUpdate > noDrawTicks)
+      float distance = abs(mat::dist(player.pos, fightNpc->pos));
+      if(distance > botAggroRange + 5.0f 
+            || ticks - fightNpc->lastUpdate >= noDrawTicks) {
          fighting = false;
+      } 
       else {
-         if(homing) {
-            if(mat::dist(player.pos, fightNpc->pos) < botFightRange)
+         vec2 towardNpc(mat::to(player.pos, fightNpc->pos));
+         if(towardNpc.length() != 0)
+            towardNpc.normalize();
+         if(backup && distance < botBackupRange) {
+            player.dir = vec2(-towardNpc.x, -towardNpc.y);
+         }
+         else if(homing) {
+            if(distance < botFightRange)
                player.moving = false;
-            player.dir = mat::to(player.pos, fightNpc->pos);
+            player.dir = towardNpc;
          }
          else if (dodging) {
-            vec2 towardNpc = mat::to(player.pos, fightNpc->pos);
-            towardNpc.normalize();
-            if(ticks > nextDodgeChange) {
-               dodgeDir = tangentVec(towardNpc, randomizeLeftRightDodge
-                  && util::irand(0,1) == 0);
-               nextDodgeChange = ticks + dodgeChangeDelay;
-               //printf("%0.2f %0.2f tangent(%0.2f %0.2f)\n", towardNpc.x, towardNpc.y, dodgeDir.x, dodgeDir.y);
+            if(distance > botDodgeRange) {
+               player.dir = towardNpc;
             }
-            //if(mat::dist(player.pos, fightNpc->pos) < botFightRange) {
-            //   towardNpc = vec2(0,0) - towardNpc * 2*botDodgeRatio;
-            //}
-            player.dir = towardNpc + dodgeDir * botDodgeRatio;
-            //will be normalized later
+            else {
+               if(ticks > nextDodgeChange) {
+                  dodgeDir = tangentVec(towardNpc, randomizeLeftRightDodge
+                     && util::irand(0, 1) == 0);
+                  if(dodgeDir.length() != 0)
+                     dodgeDir.normalize();
+                  nextDodgeChange = ticks + dodgeChangeDelay;
+                  player.dir = towardNpc + botDodgeRatio*dodgeDir;
+                  if(player.dir.length() != 0)
+                     player.dir.normalize();
+                  //printf("%0.2f %0.2f tangent(%0.2f %0.2f)\n", towardNpc.x, towardNpc.y, dodgeDir.x, dodgeDir.y);
+               }
+            }
          }
          else if(ticks > nextDirChange) {
             nextDirChange = ticks + dirChangeDelay;
@@ -220,15 +241,19 @@ void BotWorldData::updateFighting(int ticks, float dt)
       }
    } else
       fighting = false;
+
+   //player.dir.normalize();
+   //will be normalized later
 }
 
 void BotWorldData::updateNotFighting(int ticks, float dt)
 {
    //check if NPC in range (turn on fighting)
-   for(unsigned i = 0; i < objs.npcs.size() && !fighting; i++) {
-      if(mat::dist(player.pos, objs.npcs[i].pos) < botAggroRange
-            && objs.npcs[i].lastUpdate < noDrawTicks) {
-         fightingId = objs.npcs[i].id;
+   for(unsigned i = 0; i < objs.npcCount() && !fighting; i++) {
+      NPC &npc = *static_cast<NPC *>(objs.get(ObjectType::NPC, i));
+      if(mat::dist(player.pos, npc.pos) < botAggroRange
+            && ticks - npc.lastUpdate < noDrawTicks) {
+         fightingId = npc.getId();
          fighting = true;
          printf("fighting %d\n", fightingId);
       }
@@ -238,9 +263,10 @@ void BotWorldData::updateNotFighting(int ticks, float dt)
       if(ticks > nextDirChange) {
          nextDirChange = ticks + dirChangeDelay;
          if(homing) {
-            for(unsigned i = 0; i < objs.npcs.size(); i++) {
-               if(mat::dist(player.pos, objs.npcs[i].pos) < botHomingRange) {
-                  player.dir = mat::to(player.pos, objs.npcs[i].pos);
+            for(unsigned i = 0; i < objs.npcCount(); i++) {
+               NPC &npc = *static_cast<NPC *>(objs.get(ObjectType::NPC, i));
+               if(mat::dist(player.pos, npc.pos) < botHomingRange) {
+                  player.dir = mat::to(player.pos, npc.pos);
                }
             }
          } else {
@@ -276,48 +302,54 @@ void BotWorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == position) {
+   if (p.type == PacketType::position) {
       Position pos(p);
-      if(pos.id == player.id) {
-      } else if(objs.checkObject(pos.id, ObjectType::Player)) {
+      if(pos.id == player.getId()) {
+         player.pos = pos.pos;
+      } else if(objs.check(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } else if (objs.checkObject(pos.id, ObjectType::NPC)) {
-         NPC *npc = objs.getNPC(pos.id);
-         npc->pos = pos.pos;
-         npc->dir = pos.dir;
-         npc->moving = pos.moving != 0;
-      } else if(objs.checkObject(pos.id, ObjectType::Item)) {
+      } else if (objs.check(pos.id, ObjectType::NPC)) {
+         NPC &npc = *objs.getNPC(pos.id);
+         npc.pos = pos.pos;
+         npc.dir = pos.dir;
+         npc.moving = pos.moving != 0;
+      } else if(objs.check(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
          item->pos = pos.pos;
+      } else if(objs.check(pos.id, ObjectType::Missile)) {
+         Missile *mis = objs.getMissile(pos.id);
+         mis->pos = pos.pos;
       }
       else
-         printf("client %d: unable to process Pos packet id=%d\n", player.id, pos.id);
+         printf("client %d: unable to process Pos packet id=%d\n", 
+            player.getId(), pos.id);
    }
-   else if (p.type == initialize) {
+   else if (p.type == PacketType::initialize) {
       Initialize i(p);
-      if (i.type == ObjectType::Player && i.id != player.id) {
-         objs.addPlayer(Player(i.id, i.pos, i.dir, i.hp));
+      if (i.type == ObjectType::Player && i.id != player.getId()) {
+         objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
          //printf("Added player pos: %.1f %.1f\n", objs.getPlayer(i.id)->pos.x, objs.getPlayer(i.id)->pos.y);
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(Missile(i.id, i.subType, i.pos, i.dir));
-      } 
+         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
+      }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          //printf("Added NPC %d \n", i.id);
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(Item(i.id, i.subType, i.pos));
+         objs.addItem(new Item(i.id, i.subType, i.pos));
          //printf("Added Item %d \n", i.id);
       }
    }
-   else if (p.type == signal) {
+   else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
-         if(sig.val == this->player.id)
+         if(sig.val == this->player.getId()) {
             printf("\n\n!!! Disconnected from server !!!\n\n");
+         }
          else {
-            objs.removeObject(sig.val);
+            objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
@@ -325,25 +357,25 @@ void BotWorldData::processPacket(pack::Packet p)
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == arrow) {
-	   Arrow ar(p);
-		objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
+   else if (p.type == PacketType::arrow) {
+	   //Arrow ar(p);
+		//objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
 	}
-   else if (p.type == healthChange) {
+   else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
-      if (hc.id == player.id) {
+      if (hc.id == player.getId()) {
          player.hp = hc.hp;
       } 
-      else if (objs.checkObject(hc.id, ObjectType::Player)) {
+      else if (objs.check(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.checkObject(hc.id, ObjectType::NPC)) {
+      else if(objs.check(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else
          printf("Error: Health change on id %d\n", hc.id);
    }
-   else if(p.type == pack::changePvp) {
+   else if(p.type == PacketType::changePvp) {
    }
    else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
@@ -351,17 +383,33 @@ void BotWorldData::processPacket(pack::Packet p)
 
 void BotWorldData::shootArrow(mat::vec2 dir)
 {
-	pack::Arrow ar(dir, player.id);	
+   pack::Arrow ar(dir, player.getId());	
 	ar.makePacket().sendTo(conn);
 }
 
 void BotWorldData::doSpecial()
 {
-	pack::Signal sig(pack::Signal::special, player.id);
+   pack::Signal sig(pack::Signal::special, player.getId());
    sig.makePacket().sendTo(conn);	
 }
 
 void BotWorldData::rightClick(vec2 mousePos)
 {
-   pack::Click(mousePos, player.id).makePacket().sendTo(conn);
+   pack::Click(mousePos, player.getId()).makePacket().sendTo(conn);
+}
+
+
+int getTicks()
+{
+   return clientState->ticks;
+}
+
+float getDt()
+{
+   return clientState->dt;
+}
+
+Player &getPlayer()
+{
+   return clientState->player;
 }
