@@ -84,7 +84,6 @@ void GameServer::clientDisconnect(int id)
    printf("Client %d disconnected\n", id);
    Packet removePacket(Signal(Signal::remove, id).makePacket());
    cm.clientBroadcast(removePacket);
-   cm.serverBroadcast(removePacket);
    om.remove(id);
 }
 
