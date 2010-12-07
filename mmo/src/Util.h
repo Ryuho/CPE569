@@ -38,6 +38,16 @@ namespace util {
 
    /////////////////// VECTORS ///////////////////
    ///////////////////////////////////////////////
+   
+   template<typename Ty>
+   bool isequal(const std::vector<Ty> &vec1, const std::vector<Ty> &vec2)
+   {
+      if(vec1.size() == vec2.size())
+         return std::equal(vec1.begin(), vec1.end(), vec2.begin());
+      else
+         return false;
+   }
+
    template <typename T>
    void removeDuplicates(std::vector<T> &v)
    {

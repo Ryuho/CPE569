@@ -210,31 +210,32 @@ void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
    const std::vector<int> &regsOld = rm.getData(obj->getId())->regionIds;
    pos = toWorldPos(newPos);
    getRegions(newPos, obj->getGeom(), regsNew);
-   if(regsNew.size() != regsOld.size()
-      || !std::equal(regsOld.begin(), regsOld.end(), regsNew.begin())) 
+   if(!util::isequal(regsOld, regsNew)) 
    {
       rm.removeObject(obj->getId(), obj->getType());
       rm.addObject(obj, obj->getType(), regsNew);
-    
+
 /*
 //debug version
-#ifdef assert
-#undef assert
-#endif
-#define assert(x) ASSERT(x)
-      assert(regsNew.size() > 0 && regsOld.size() > 0
-         && std::equal(regsOld.begin(), regsOld.end(), regsNew.begin()));
+      regionManager::RMObject * rmobj;
+      assert(regsNew.size() > 0 && regsOld.size() > 0);
       int count = rm.objectCount();
       std::vector<int> regionIds(rm.getData(obj->getId())->regionIds);
+      assert(regionIds.size() > 0);
+      assert(count);
       assert(rm.getData(obj->getId()));
       assert(rm.getData(obj->getId())->obj == obj);
       assert(rm.getData(obj->getId())->regionIds.size() == regsOld.size());
       for(unsigned i = 0; i < regionIds.size(); i++) {
-         assert(rm.getRegion(regionIds[i])->contains(obj->getId()));
-         assert(rm.getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
-         assert(!rm.getRegion(regionIds[i])->add(obj, obj->getType()));
-         assert(rm.getRegion(regionIds[i])->objectCount() > 0);
-         assert(rm.getRegion(regionIds[i])->count(obj->getType()) > 0);
+         Region &region = *rm.getRegion(regionIds[i]);
+         assert(region.contains(obj->getId()));
+         int type = obj->getType();
+         rmobj = region.get(obj->getId(), type);
+         if(!rmobj || rmobj != obj) {
+            assert(0);
+         }
+         assert(!region.add(obj, obj->getType()));
+         assert(region.count(obj->getType()) > 0);
       }
 
       //remove
@@ -274,12 +275,15 @@ void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
       assert(rm.getData(obj->getId())->regionIds.size() == regsNew.size());
       regionIds = rm.getData(obj->getId())->regionIds;
       for(unsigned i = 0; i < regionIds.size(); i++) {
-         assert(rm.getRegion(regionIds[i])->contains(obj->getId()));
-         assert(rm.getRegion(regionIds[i])->get(obj->getId(), obj->getType()));
-         assert(!rm.getRegion(regionIds[i])->add(obj, obj->getType()));
+         Region &region = *rm.getRegion(regionIds[i]);
+         assert(region.contains(obj->getId()));
+         assert(region.get(obj->getId(), obj->getType()));
+         assert(!region.add(obj, obj->getType()));
       }
-#undef assert
+//#undef assert
 */
+
+
    }
 }
 

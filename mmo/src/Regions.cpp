@@ -1,4 +1,5 @@
 #include "Regions.h"
+#include <assert.h>
 
 using namespace std;
 using namespace regionManager;
@@ -32,8 +33,9 @@ RMObject *Region::get(int objectId, int typeIndex) const
       return 0; //doesn't exist
    }
    unsigned index = iter->second;
-   if(_contains(objectId, typeIndex, index)) 
+   if(!_contains(objectId, typeIndex, index)) 
       return 0; //invalid type, but exists
+   assert(objectList[typeIndex][index]);
    return objectList[typeIndex][index];
 }
 
@@ -55,6 +57,7 @@ bool Region::add(RMObject *object, int typeIndex)
    }
    objectMap[object->getId()] = objectList[typeIndex].size();
    objectList[typeIndex].push_back(object);
+   assert(objectList[typeIndex][objectList[typeIndex].size()-1]);
    return true;
 }
 
@@ -105,6 +108,7 @@ unsigned Region::count(int typeIndex) const
 RegionManager::RegionManager(unsigned regionCount, unsigned typeCount)
    : objectTotal(0)
 {
+   assert(regionCount > 0 && typeCount > 0);
    for(unsigned i = 0; i < regionCount; i++) {
       regions.push_back(Region(i, typeCount));
    }
@@ -121,6 +125,7 @@ RMObject *RegionManager::getObject(int objectId) const
    if(iter == objectToRegionsMap.end()) {
       return 0; //doesn't exist
    }
+   assert(iter->second.obj);
    return iter->second.obj;
 }
 
@@ -132,6 +137,7 @@ Region *RegionManager::getRegion(int regionIndex)
 bool RegionManager::addObject(RMObject *object, int typeIndex,
    std::vector<int> &regionIds)
 {
+   assert(regionIds.size() > 0);
    if(objectToRegionsMap.find(object->getId()) != objectToRegionsMap.end()) {
       return false; //already exists
    }
@@ -161,6 +167,7 @@ RMObject *RegionManager::removeObject(int objectId, int typeIndex)
       return false; //wrong type, but exists
 
    RMObject *obj = iter->second.obj;
+   assert(obj);
    //remove from Regions
    std::vector<int> &regionIds = iter->second.regionIds;
    for(unsigned i = 0; i < regionIds.size(); i++) {
@@ -169,6 +176,7 @@ RMObject *RegionManager::removeObject(int objectId, int typeIndex)
    //remove from List
    int replacementIndex = objectList[typeIndex].size()-1;
    RMObject *replacement = objectList[typeIndex][replacementIndex];
+   assert(replacement);
    objectList[typeIndex][currIndex] = replacement;
    objectList[typeIndex].pop_back();
    //remove from Map Data
