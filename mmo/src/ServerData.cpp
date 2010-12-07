@@ -3,6 +3,7 @@
 #include "Geometry.h"
 #include "Util.h"
 #include "Packets.h"
+#include "ServerUtil.h"
 #include <cstdio>
 
 using namespace server;

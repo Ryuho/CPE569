@@ -31,9 +31,4 @@ struct GameServer {
    float dt;
 };
 
-int getTicks();
-float getDt();
-ObjectManager &getOM();
-ConnectionManager &getCM();
-
-#endif
+#endif // _GAME_SERVER_H_

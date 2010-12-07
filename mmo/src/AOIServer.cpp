@@ -11,8 +11,7 @@ GameServer *serverState = 0;
 
 void GameServer::newServerConnection(int id) 
 { 
-   printf("Single Game Server Implementation!!!\n");
-   printf("Forcing disconnect to remote server.\n");
+   printf("newServerConnection\n");
    std::map<int, int>::iterator iter = cm.idToServerIndex.find(id);
    if(iter != cm.idToServerIndex.end())
       cm.removeServerAt(cm.idToServerIndex.find(id)->second);
@@ -22,15 +21,13 @@ void GameServer::newServerConnection(int id)
 
 void GameServer::serverDisconnect(int id) 
 {
-   printf("Single Game Server Implementation!!!\n");
-   printf("Illegal action: serverDisconnect.\n");
+   printf("serverDisconnect\n");
    exit(EXIT_FAILURE); 
 }
 
 void GameServer::processServerPacket(pack::Packet p, int fromid) 
 {
-   printf("Single Game Server Implementation!!!\n");
-   printf("Illegal action: processServerPacket.\n");
+   printf("processServerPacket\n");
    exit(EXIT_FAILURE); 
 }
 
@@ -38,6 +35,7 @@ GameServer::GameServer(ConnectionManager &cm, int remoteServerId)
    : cm(cm), ticks(0), dt(0.0f)
 {
    serverState = this;
+
 
    Item *stump = spawnStump(newId());
    getCM().clientBroadcast(Initialize(stump->getId(), ObjectType::Item, 

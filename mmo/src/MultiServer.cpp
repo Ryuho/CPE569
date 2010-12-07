@@ -9,31 +9,6 @@ using namespace server;
 
 GameServer *serverState = 0;
 
-void GameServer::newServerConnection(int id) 
-{ 
-   printf("Single Game Server Implementation!!!\n");
-   printf("Forcing disconnect to remote server.\n");
-   std::map<int, int>::iterator iter = cm.idToServerIndex.find(id);
-   if(iter != cm.idToServerIndex.end())
-      cm.removeServerAt(cm.idToServerIndex.find(id)->second);
-   else
-      exit(EXIT_FAILURE); 
-}
-
-void GameServer::serverDisconnect(int id) 
-{
-   printf("Single Game Server Implementation!!!\n");
-   printf("Illegal action: serverDisconnect.\n");
-   exit(EXIT_FAILURE); 
-}
-
-void GameServer::processServerPacket(pack::Packet p, int fromid) 
-{
-   printf("Single Game Server Implementation!!!\n");
-   printf("Illegal action: processServerPacket.\n");
-   exit(EXIT_FAILURE); 
-}
-
 GameServer::GameServer(ConnectionManager &cm, int remoteServerId) 
    : cm(cm), ticks(0), dt(0.0f)
 {
@@ -79,6 +54,32 @@ void GameServer::newClientConnection(int id)
       cm.clientSendPacket(Initialize(npc.getId(), ObjectType::NPC, 
          npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
+
+   cm.serverBroadcast(newPlayer->serialize());
+}
+
+void GameServer::newServerConnection(int id)
+{
+   printf("New server connection: %d\n", id);
+
+   //tell new server about previous players (includes self)
+   for(unsigned i = 0; i < om.playerCount(); i++) {
+      Player &obj = *static_cast<Player *>(om.get(ObjectType::Player, i));
+      if(obj.sid == cm.ownServerId)
+         cm.serverSendPacket(obj.serialize(), id);
+   }
+   //tell new server about previous Items
+   for(unsigned i = 0; i < om.itemCount(); i++) {
+      Item &obj = *static_cast<Item *>(om.get(ObjectType::Item, i));
+      if(obj.sid == cm.ownServerId)
+         cm.serverSendPacket(obj.serialize(), id);
+   }
+   //tell new server about previous NPCs
+   for(unsigned i = 0; i < om.npcCount(); i++) {
+      NPC &obj = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
+      if(obj.sid == cm.ownServerId)
+         cm.serverSendPacket(obj.serialize(), id);
+   }
 }
 
 void GameServer::clientDisconnect(int id)
@@ -88,6 +89,11 @@ void GameServer::clientDisconnect(int id)
    cm.clientBroadcast(removePacket);
    cm.serverBroadcast(removePacket);
    om.remove(id);
+}
+
+void GameServer::serverDisconnect(int id)
+{
+   printf("Server %d disconnected\n", id);
 }
 
 void GameServer::processClientPacket(pack::Packet p, int id)
@@ -194,6 +200,69 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
 }
 
+void GameServer::processServerPacket(pack::Packet p, int id)
+{
+   /*if (p.type == pack::serverList) {
+      ServerList servList(p);
+      printf("Got a server list packet! uLongList size is %d\n",servList.uLongList.size());
+      for(unsigned i = 0; i < servList.uLongList.size(); i++){
+         printf("%d: %lu\n",i,servList.uLongList[i]);
+      }
+   }
+   else{
+      printf("Unknown server packet type=%d size=%d\n", p.type, p.data.size());
+   }*/
+   if(p.type == PacketType::serialPlayer) {
+      Player *obj = new Player(p);
+      if(getOM().contains(obj->getId())) {
+         delete obj;
+      }
+      else
+         getOM().add(obj);
+   } 
+   else if(p.type == PacketType::serialItem) {
+      Item *obj = new Item(p);
+      if(getOM().contains(obj->getId())) {
+         delete obj;
+      }
+      else
+         getOM().add(obj);
+   }
+   else if(p.type == PacketType::serialMissile) {
+      Missile *obj = new Missile(p);
+      if(getOM().contains(obj->getId())) {
+         delete obj;
+      }
+      else
+         getOM().add(obj);
+   }
+   else if(p.type == PacketType::serialNPC) {
+      NPC *obj = new NPC(p);
+      if(getOM().contains(obj->getId())) {
+         delete obj;
+      }
+      else
+         getOM().add(obj);
+   }
+   else if(p.type == PacketType::signal) {
+      Signal signal(p);
+      if(signal.sig == Signal::remove) {
+         int total = getOM().itemCount() + getOM().playerCount() 
+            + getOM().npcCount() + getOM().missileCount();
+         getOM().remove(signal.val);
+         total -= getOM().itemCount() + getOM().playerCount() 
+            + getOM().npcCount() + getOM().missileCount();
+         if(total)
+            printf("Error: Failed to remove %d\n", signal.val);
+      }
+      else
+         printf("Error: unknown signal (sig=%d val=%d)\n", 
+            signal.sig, signal.val);
+   }
+   else
+      printf("Error: unknown server packet, size: %d\n", p.data.size());
+}
+
 void GameServer::update(int ticks)
 {
    //get the current delta time (time passed since it last ran update())
@@ -218,10 +287,9 @@ void GameServer::update(int ticks)
    while(om.npcCount() < 4) {
       int i = regionXSize/2-1;
       int j = regionYSize/2-1;
-      //spawnNPC(i, j);
-      //spawnNPC(i, j+1);
-      //spawnNPC(i+1, j);
-      spawnNPC(i+1, j+1);
+      NPC *npc = spawnNPC(i+1, j+1);
+      getCM().clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
+         npc->type, npc->pos, npc->dir, npc->hp).makePacket());
    }
    */
 
@@ -408,6 +476,7 @@ void GameServer::updatePlayers(int ticks, float dt)
       om.remove(p.getId());
    }
 }
+
 
 int getTicks()
 {
