@@ -8,7 +8,7 @@
 using namespace server;
 
 struct GameServer {
-   GameServer(ConnectionManager &cm);
+   GameServer(ConnectionManager &cm, int remoteServerId);
    void newClientConnection(int id);
    void newServerConnection(int id);
 

@@ -99,6 +99,7 @@ int main(int argc, const char* argv[])
    int clientPort, serverPort;
    const char* altAddress = 0;
    int altPort = -1;
+   int remoteId = -1, remoteClientPort;
    vector<TConn> tconns;
 
    testPackets();
@@ -150,7 +151,6 @@ int main(int argc, const char* argv[])
          printf("timed out waiting for host server\n");
          return -1;
       }
-      int remoteId, remoteClientPort;
       p.readInt(cm.ownServerId).readInt(remoteId).readInt(remoteClientPort);
       printf("Connected to host server. using id %d!\n", cm.ownServerId);
       cm.addServerConnection(servConn, remoteId, remoteClientPort, altPort);
@@ -170,7 +170,7 @@ int main(int argc, const char* argv[])
       printf("Server started as independent host. id: %d\n", cm.ownServerId);
    }
 
-   GameServer gs(cm); // should also tell game server which server it connected to originally or none at all if independent
+   GameServer gs(cm, remoteId); // should also tell game server which server it connected to originally or none at all if independent
 
    printf("Game server started, accepting client Connections on port %d\n", clientServ.port());
 

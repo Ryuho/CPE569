@@ -74,7 +74,7 @@ void spawnStump(int id)
          stump->pos, vec2(), 0));
 }
 
-GameServer::GameServer(ConnectionManager &cm) 
+GameServer::GameServer(ConnectionManager &cm, int remoteServerId) 
    : cm(cm), ticks(0), dt(0.0f)
 {
    serverState = this;
