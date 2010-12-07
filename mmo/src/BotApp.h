@@ -26,6 +26,7 @@ struct BotApp {
    float fdt; // fdt is a floating point value in seconds
 
    BotWorld world;
+   bool alive;
 };
 
 #endif //_BOT_APP_H_

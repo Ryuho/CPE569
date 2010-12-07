@@ -55,7 +55,8 @@ void ConnectionManager::clientSendPacket(pack::Packet p, int toid)
       updatePackStat(p.type);
    }
    else
-      printf("Error: clientSendPacket: Unable to send to %d\n", toid);
+	   return;
+	   //printf("Error: clientSendPacket: Unable to send to %d\n", toid);
 }
 
 
@@ -97,13 +98,16 @@ void ConnectionManager::addClientConnection(Connection conn, int id)
 
    idToClientIndex[id] = clientConnections.size();
    clientConnections.push_back(ConnectionInfo(id, conn));
+   //printf("add client connection\n");
 }
 
 void ConnectionManager::removeClientConnection(int id)
 {
-   std::map<int,int>::iterator iter = idToClientIndex.find(id);
+	printf("removing client id: %d\n",id);
+	std::map<int,int>::iterator iter = idToClientIndex.find(id);
    if (iter != idToClientIndex.end()) {
-      removeClientAt(idToClientIndex[(*iter).second]);
+	   removeClientAt(iter->second);
+	   //removeClientAt(idToClientIndex[(*iter).second]);
    }
    else
       printf("Error: removeClientConnection: Unable to remove %d\n", id);
@@ -111,15 +115,41 @@ void ConnectionManager::removeClientConnection(int id)
 
 void ConnectionManager::removeClientAt(int i)
 {
-   if (clientConnections[i].conn)
-      clientConnections[i].conn.close();
+	int cID = clientConnections[i].id;
+	/**for(unsigned int j = 0; j < clientConnections.size(); j++)
+	{
+		if(clientConnections[j].id == cID && j != i)
+		{
+			printf("Duplicate client connections!!!!\n");
+		}
+	}**/
 
-   idToClientIndex.erase(clientConnections[i].id);
+
+
+	if (clientConnections[i].conn)
+      clientConnections[i].conn.close();
+   else
+	   printf("tried to remove connection at %d that had no connection \n",i);
+
+   //idToClientIndex.erase(clientConnections[i].id);
    if (clientConnections.size() > 1) {
       clientConnections[i] = clientConnections.back();
       idToClientIndex[clientConnections[i].id] = i;
    }
    clientConnections.pop_back();
+   idToClientIndex.erase(cID);
+
+	/**for(unsigned int j = 0; j < clientConnections.size(); j++)
+	{
+		if(clientConnections[j].id == cID)
+		{
+			printf("connection ID was NOT removed!!!!\n");
+		}
+	}
+	if(idToClientIndex.find(cID) != idToClientIndex.end())
+	{
+		printf("Still exists in map!!!\n");
+	}**/
 }
 
 // server -> server connection functions
@@ -140,7 +170,7 @@ void ConnectionManager::removeServerConnection(int id)
 {
    std::map<int,int>::iterator iter = idToServerIndex.find(id);
    if (iter != idToClientIndex.end()) {
-      removeServerAt(idToServerIndex[(*iter).second]);
+	   removeServerAt(iter->second);
    }
    else
       printf("Error: removeServerConnection: Unable to remove %d\n", id);

@@ -11,6 +11,7 @@ void BotApp::init(const char *host, int port)
    // Set up the window and other stuff
    ticks = SDL_GetTicks();
    dt = 1;
+   alive = true;
 }
 
 void BotApp::update()
@@ -22,6 +23,7 @@ void BotApp::update()
    handleEvents();
 
    world.update(ticks, fdt);
+   alive = world.data.alive;
 }
 
 void BotApp::handleEvents()
