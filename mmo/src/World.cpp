@@ -187,12 +187,12 @@ void WorldData::processPacket(pack::Packet p)
       if(pos.id == player.getId()) {
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
-      } else if(objs.check(pos.id, ObjectType::Player)) {
+      } else if(objs.contains(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } else if (objs.check(pos.id, ObjectType::NPC)) {
+      } else if (objs.contains(pos.id, ObjectType::NPC)) {
          objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
-      } else if(objs.check(pos.id, ObjectType::Item)) {
+      } else if(objs.contains(pos.id, ObjectType::Item)) {
          objs.getItem(pos.id)->move(pos.pos);
       }
       else
@@ -266,10 +266,10 @@ void WorldData::processPacket(pack::Packet p)
          player.hp = hc.hp;
          shadow.hp = hc.hp;
       } 
-      else if(objs.check(hc.id, ObjectType::Player)) {
+      else if(objs.contains(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.check(hc.id, ObjectType::NPC)) {
+      else if(objs.contains(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else
@@ -284,7 +284,7 @@ void WorldData::processPacket(pack::Packet p)
          else
             printf("You are NOT in Pvp Mode\n");
       }
-      else if(objs.check(pvpPacket.id, ObjectType::Player)) {
+      else if(objs.contains(pvpPacket.id, ObjectType::Player)) {
          Player &play = *objs.getPlayer(pvpPacket.id);
          play.pvp = pvpPacket.isPvpMode != 0;
          if(play.pvp)

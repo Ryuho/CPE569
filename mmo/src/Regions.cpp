@@ -27,11 +27,14 @@ std::vector<RMObject *> &Region::getObjects(int typeIndex)
 
 RMObject *Region::get(int objectId, int typeIndex) const
 {
-   std::map<int, int>::const_iterator iter = objectMap.find(objectId);
+   std::map<int, unsigned>::const_iterator iter = objectMap.find(objectId);
    if(iter == objectMap.end()) {
-      return 0; //not found
+      return 0; //doesn't exist
    }
-   return objectList[typeIndex][iter->second];
+   unsigned index = iter->second;
+   if(_contains(objectId, typeIndex, index)) 
+      return 0; //invalid type, but exists
+   return objectList[typeIndex][index];
 }
 
 bool Region::contains(int objectId) const
@@ -39,9 +42,14 @@ bool Region::contains(int objectId) const
    return objectMap.find(objectId) != objectMap.end();
 }
 
+bool Region::contains(int objectId, int typeIndex) const
+{
+   return get(objectId, typeIndex) != 0;
+}
+
 bool Region::add(RMObject *object, int typeIndex)
 {
-   std::map<int, int>::iterator iter = objectMap.find(object->getId());
+   std::map<int, unsigned>::iterator iter = objectMap.find(object->getId());
    if(iter != objectMap.end()) {
       return false; //already exists
    }
@@ -50,16 +58,21 @@ bool Region::add(RMObject *object, int typeIndex)
    return true;
 }
 
+bool Region::_contains(int objectId, int typeIndex, unsigned index) const
+{
+   return objectList[typeIndex].size() > index 
+      && objectList[typeIndex][index]->getId() == objectId;
+}
+
 bool Region::remove(int objectId, int typeIndex)
 {
-   std::map<int, int>::iterator iter = objectMap.find(objectId);
+   std::map<int, unsigned>::iterator iter = objectMap.find(objectId);
    if(iter == objectMap.end()) {
       return false; //doesn't exist
    }
-   //1. swap in list with end of list
-   //2. replace old end of list's mapped index
-   //3. remove object from map AND list
-   int index = objectMap[objectId];
+   unsigned index = objectMap[objectId];
+   if(!_contains(objectId, typeIndex, index))
+      return false; //invalid type, but exists
    //swap removed with end of list
    RMObject *replacement = objectList[typeIndex][objectList[typeIndex].size() - 1];
    objectList[typeIndex][index] = replacement;
@@ -100,9 +113,9 @@ RegionManager::RegionManager(unsigned regionCount, unsigned typeCount)
    }
 }
 
-RMObject *RegionManager::getObject(int objectId)
+RMObject *RegionManager::getObject(int objectId) const
 {
-   std::map<int, RegionManagerData>::iterator iter;
+   std::map<int, RegionManagerData>::const_iterator iter;
 
    iter = objectToRegionsMap.find(objectId);
    if(iter == objectToRegionsMap.end()) {
@@ -143,6 +156,10 @@ RMObject *RegionManager::removeObject(int objectId, int typeIndex)
    if(iter == objectToRegionsMap.end()) {
       return 0; //doesn't exists
    }
+   unsigned currIndex = iter->second.objectListIndex;
+   if(!_contains(objectId, typeIndex, currIndex))
+      return false; //wrong type, but exists
+
    RMObject *obj = iter->second.obj;
    //remove from Regions
    std::vector<int> &regionIds = iter->second.regionIds;
@@ -150,7 +167,6 @@ RMObject *RegionManager::removeObject(int objectId, int typeIndex)
       regions[regionIds[i]].remove(objectId, typeIndex);
    }
    //remove from List
-   int currIndex = iter->second.objectListIndex;
    int replacementIndex = objectList[typeIndex].size()-1;
    RMObject *replacement = objectList[typeIndex][replacementIndex];
    objectList[typeIndex][currIndex] = replacement;
@@ -170,6 +186,26 @@ const RegionManagerData *RegionManager::getData(int objectId) const
    if(iter == objectToRegionsMap.end())
       return 0;
    return &iter->second;
+}
+
+bool RegionManager::_contains(int objectId, int typeIndex, unsigned index) const
+{
+   return objectList[typeIndex].size() > index
+      && objectList[typeIndex][index]->getId() == objectId;
+}
+
+bool RegionManager::contains(int objectId) const
+{
+   return objectToRegionsMap.find(objectId) != objectToRegionsMap.end();
+}
+
+bool RegionManager::contains(int objectId, int typeIndex) const
+{
+   std::map<int, RegionManagerData>::const_iterator iter
+      = objectToRegionsMap.find(objectId);
+   if(iter == objectToRegionsMap.end())
+      return false;
+   return _contains(objectId, typeIndex, iter->second.objectListIndex);
 }
 
 /////////// Count ///////////

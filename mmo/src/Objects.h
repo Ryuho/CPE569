@@ -74,7 +74,10 @@ namespace objectManager {
       bool add(ItemBase *i);
       
       bool remove(int id);
-      bool check(int id, int type);
+      bool contains(int id) const;
+      bool contains(int id, int type) const;
+      ObjectBase *get(int id);
+      ObjectBase *get(int type, int index_Not_The_Id);
       
       void collidingPlayers(Geometry g, vec2 center, 
          std::vector<PlayerBase *> &collided);
@@ -90,12 +93,11 @@ namespace objectManager {
       void move(MissileBase *m, vec2 newPos);
       void move(NPCBase *n, vec2 newPos);
       
-      ObjectBase *get(int type, int index_Not_The_Id);
-      
       unsigned itemCount() const;
       unsigned playerCount() const;
       unsigned npcCount() const;
       unsigned missileCount() const;
+      unsigned objectCount() const;
       
       vec2 worldBotLeft;
       

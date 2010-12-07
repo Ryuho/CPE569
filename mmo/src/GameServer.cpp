@@ -168,7 +168,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if (p.type == PacketType::position) {
       Position pos(p);
-      if(om.check(pos.id, ObjectType::Player)) {
+      if(om.contains(pos.id, ObjectType::Player)) {
          Player &pl = *static_cast<Player *>(om.getPlayer(pos.id));
          //printf("id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
          //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
@@ -188,7 +188,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Signal signal(p);
 
       if (signal.sig == Signal::special) {
-         if(om.check(id, ObjectType::Player)) {
+         if(om.contains(id, ObjectType::Player)) {
             Player &play = *static_cast<Player *>(om.getPlayer(id));
             for (int i = 0; i < constants::numArrows; i++) {
                float t = i/(float)constants::numArrows;
@@ -204,7 +204,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             printf("Error: Packet Unknown Player id %d\n", id);
       }
       else if (signal.sig == Signal::hurtme) {
-         if(om.check(id, ObjectType::Player)) {
+         if(om.contains(id, ObjectType::Player)) {
             Player &p = *static_cast<Player *>(om.getPlayer(id));
             p.takeDamage(1);
             cm.clientBroadcast(HealthChange(id, p.hp));
@@ -218,7 +218,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == PacketType::arrow) {
       Arrow ar(p);
-      if (om.check(id, ObjectType::Player)) {
+      if (om.contains(id, ObjectType::Player)) {
          Player &pl = *static_cast<Player *>(om.getPlayer(id));
          if(!pl.shotThisFrame) {
             pl.shotThisFrame = true;
@@ -233,7 +233,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if (p.type == PacketType::click) {
       Click click(p);
-      if(om.check(click.id, ObjectType::Player)) {
+      if(om.contains(click.id, ObjectType::Player)) {
          Geometry point(Point(click.pos));
          printf("Player %d clicked <%0.1f, %0.1f>\n", 
             click.id, click.pos.x, click.pos.y);
@@ -255,7 +255,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else if(p.type == PacketType::changePvp) {
       Pvp pvpPacket(p);
-      if(om.check(pvpPacket.id, ObjectType::Player)) {
+      if(om.contains(pvpPacket.id, ObjectType::Player)) {
          Player &play = *static_cast<Player *>(om.getPlayer(pvpPacket.id));
          play.pvp = pvpPacket.isPvpMode != 0;
          cm.clientBroadcast(pvpPacket.makePacket());
@@ -378,10 +378,10 @@ void GameServer::updateNPCs(int ticks, float dt)
       om.collidingMissiles(npc.getGeom(), npc.pos, ms);
       for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
          Missile &m = *static_cast<Missile *>(ms[j]);
-         if(m.owned != npc.getId() && om.check(m.owned, ObjectType::Player)) {
+         if(m.owned != npc.getId() && om.contains(m.owned, ObjectType::Player)) {
             npc.takeDamage(m.getDamage());
             if(npc.hp == 0) {
-               if(om.check(m.owned, ObjectType::Player)) {
+               if(om.contains(m.owned, ObjectType::Player)) {
                   Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
                   p.gainExp(npc.getExp());
                   cm.clientSendPacket(Signal(Signal::changeExp, p.exp).makePacket(), p.getId());
@@ -479,12 +479,12 @@ void GameServer::updatePlayers(int ticks, float dt)
       for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
          Missile &m = *static_cast<Missile *>(collidedMis[mdx]);
          if(m.owned != p.getId()) {
-            if(p.pvp && (om.check(m.owned, ObjectType::Player)
+            if(p.pvp && (om.contains(m.owned, ObjectType::Player)
                   && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) 
             {
                continue;
             }
-            else if(!p.pvp && (om.check(m.owned, ObjectType::Player)))
+            else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
                continue;
             p.takeDamage(m.getDamage());
             cm.clientBroadcast(Signal(Signal::remove, m.getId()).makePacket());

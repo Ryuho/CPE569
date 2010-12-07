@@ -310,7 +310,7 @@ void NPC::update()
       }
    }
    if(aiType == AIType::Attacking 
-         && (!getOM().check(attackId, ObjectType::Player) || !p)) {
+         && (!getOM().contains(attackId, ObjectType::Player) || !p)) {
       attackId = 0;
       aiType = AIType::Stopped;
       return;

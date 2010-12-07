@@ -24,6 +24,7 @@ namespace regionManager {
       std::vector<RMObject *> &getObjects(int typeIndex);
       RMObject *get(int objectId, int typeIndex) const;
       bool contains(int objectId) const;
+      bool contains(int objectId, int typeIndex) const;
       bool add(RMObject *object, int typeIndex);
       bool remove(int objectId, int typeIndex);
       unsigned objectCount() const;
@@ -31,9 +32,11 @@ namespace regionManager {
       unsigned count(int typeIndex) const;
 
    private:
+      bool _contains(int objectId, int typeIndex, unsigned index) const;
+
       int id;
       //speeds up lookup/removal of a specific object
-      std::map<int, int> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
+      std::map<int, unsigned> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
       //allows iteration of each Type of object
       std::vector<std::vector<RMObject *>> objectList; //objectList[typeIndex] -> list of Objects of given type
    };
@@ -48,7 +51,7 @@ namespace regionManager {
          : obj(obj), objectListIndex(objectListIndex), regionIds(regionIds) {}
 
       RMObject *obj; //could be removed for memory use efficiency
-      int objectListIndex;
+      unsigned objectListIndex;
       std::vector<int> regionIds;
    };
 
@@ -59,7 +62,9 @@ namespace regionManager {
       typedef std::vector<RMObject *>::const_iterator const_iterator;
 
       RegionManager(unsigned regionCount, unsigned typeCount);
-      RMObject *getObject(int objectId);
+      bool contains(int objectId) const;
+      bool contains(int objectId, int typeIndex) const;
+      RMObject *getObject(int objectId) const;
       Region *getRegion(int regionIndex);
       bool addObject(RMObject *object, int typeIndex, std::vector<int> &regionIds);
       RMObject *removeObject(int objectId, int typeIndex);
@@ -71,6 +76,8 @@ namespace regionManager {
       std::vector<RMObject *> &operator[](int typeIndex);
 
    private:
+      bool _contains(int objectId, int typeIndex, unsigned index) const;
+
       unsigned objectTotal;
       std::map<int, RegionManagerData> objectToRegionsMap; //objectToRegionsMap[objectId] -> data
       //redundant list of Region's objects for more simplistic traversal

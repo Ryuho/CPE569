@@ -195,7 +195,7 @@ vec2 tangentVec(vec2 v, bool right) {
 void BotWorldData::updateFighting(int ticks, float dt)
 {
    //finish NPC
-   if(objs.check(fightingId, ObjectType::NPC)) {
+   if(objs.contains(fightingId, ObjectType::NPC)) {
       fightNpc = objs.getNPC(fightingId);
       float distance = abs(mat::dist(player.pos, fightNpc->pos));
       if(distance > botAggroRange + 5.0f 
@@ -306,17 +306,17 @@ void BotWorldData::processPacket(pack::Packet p)
       Position pos(p);
       if(pos.id == player.getId()) {
          player.pos = pos.pos;
-      } else if(objs.check(pos.id, ObjectType::Player)) {
+      } else if(objs.contains(pos.id, ObjectType::Player)) {
          objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } else if (objs.check(pos.id, ObjectType::NPC)) {
+      } else if (objs.contains(pos.id, ObjectType::NPC)) {
          NPC &npc = *objs.getNPC(pos.id);
          npc.pos = pos.pos;
          npc.dir = pos.dir;
          npc.moving = pos.moving != 0;
-      } else if(objs.check(pos.id, ObjectType::Item)) {
+      } else if(objs.contains(pos.id, ObjectType::Item)) {
          Item *item = objs.getItem(pos.id);
          item->pos = pos.pos;
-      } else if(objs.check(pos.id, ObjectType::Missile)) {
+      } else if(objs.contains(pos.id, ObjectType::Missile)) {
          Missile *mis = objs.getMissile(pos.id);
          mis->pos = pos.pos;
       }
@@ -366,10 +366,10 @@ void BotWorldData::processPacket(pack::Packet p)
       if (hc.id == player.getId()) {
          player.hp = hc.hp;
       } 
-      else if (objs.check(hc.id, ObjectType::Player)) {
+      else if (objs.contains(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
-      else if(objs.check(hc.id, ObjectType::NPC)) {
+      else if(objs.contains(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
       else
