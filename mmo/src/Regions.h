@@ -38,7 +38,7 @@ namespace regionManager {
       //speeds up lookup/removal of a specific object
       std::map<int, unsigned> objectMap; //objectMap[objectId] -> X where objectList[typeIndex][X] is the Object
       //allows iteration of each Type of object
-      std::vector<std::vector<RMObject *>> objectList; //objectList[typeIndex] -> list of Objects of given type
+      std::vector<std::vector<RMObject *> > objectList; //objectList[typeIndex] -> list of Objects of given type
    };
 
 
@@ -81,7 +81,7 @@ namespace regionManager {
       unsigned objectTotal;
       std::map<int, RegionManagerData> objectToRegionsMap; //objectToRegionsMap[objectId] -> data
       //redundant list of Region's objects for more simplistic traversal
-      std::vector<std::vector<RMObject *>> objectList; //objectList[typeIndex] -> list of Objects of given type
+      std::vector<std::vector<RMObject *> > objectList; //objectList[typeIndex] -> list of Objects of given type
       std::vector<Region> regions;
    };
 }
