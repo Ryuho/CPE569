@@ -41,6 +41,8 @@ struct BotWorldData {
    bool shooting; //within firing range
    bool tostart; //means bot is going to initial position since it travelled to far
    bool returnsAllWayToStart; //means the bot will return completely to start
+   bool alive;
+
    int nextLoot;
    int nextDirChange;
    int fightingId;

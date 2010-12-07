@@ -94,6 +94,7 @@ void BotWorldData::init(const char *host, int port)
    nextDodgeChange = 0;
    fightingId = 0;
    delay = 30;
+   alive = true;
 
    printf("Connected to server successfully\nYour id is %d\n", player.getId());
 }
@@ -124,7 +125,8 @@ void BotWorldData::update(int ticks, float dt)
          processPacket(pack::readPacket(conn));
       } else {
          printf("server disconnected!\n");
-         exit(-1);
+         alive = false;
+         return;
       }
    }
    updatePlayerPos(ticks, dt);

@@ -24,11 +24,13 @@ int main(int argc, char *argv[])
       port = atoi(argv[2]);
    }
 
-   srand((unsigned)time(0));
-   app.init(address,port);
+   while(1){
+      srand((unsigned)time(0));
+      app.init(address,port);
 
-   while (1) {
-      app.update();
+      while (app.alive) {
+         app.update();
+      }
    }
 
    return 0;
