@@ -26,6 +26,8 @@ void Player::move(vec2 pos, vec2 dir, bool moving)
       animStart = getTicks();
    this->pos = pos;
    this->dir = dir;
+   if(this->dir.length() > 0.0)
+      this->dir.normalize();
    this->moving = moving;
 }
 
@@ -46,8 +48,8 @@ Missile::Missile(int id, int type, vec2 pos, vec2 dir)
 {
    lastUpdate = getTicks();
    this->dir = dir;
-   if (this->dir.length() > 0.0)
-      this->dir = normalize(this->dir);
+   if(this->dir.length() > 0.0)
+      this->dir.normalize();
 }
 
 void Missile::update()
@@ -107,6 +109,8 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
    this->lastUpdate = getTicks();
    this->pos = pos;
    this->dir = dir;
+   if(this->dir.length() > 0.0)
+      this->dir.normalize();
    if(!this->moving && moving) {
       anim->animStart = getTicks();
    }
@@ -116,24 +120,24 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
 ////////////////// OBJECTHOLDER //////////////////
 //////////////////////////////////////////////////
 
-bool ObjectHolder::addPlayer(Player *obj)
+bool ObjectHolder::add(Player *obj)
 {
-   return add(static_cast<PlayerBase *>(obj));
+   return ObjectManager::add(static_cast<PlayerBase *>(obj));
 }
 
-bool ObjectHolder::addMissile(Missile *obj)
+bool ObjectHolder::add(Missile *obj)
 {
-   return add(static_cast<MissileBase *>(obj));
+   return ObjectManager::add(static_cast<MissileBase *>(obj));
 }
 
-bool ObjectHolder::addItem(Item *obj)
+bool ObjectHolder::add(Item *obj)
 {
-   return add(static_cast<ItemBase *>(obj));
+   return ObjectManager::add(static_cast<ItemBase *>(obj));
 }
 
-bool ObjectHolder::addNPC(NPC *obj)
+bool ObjectHolder::add(NPC *obj)
 {
-   return add(static_cast<NPCBase *>(obj));
+   return ObjectManager::add(static_cast<NPCBase *>(obj));
 }
 
 Player *ObjectHolder::getPlayer(int id)

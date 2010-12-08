@@ -134,7 +134,7 @@ MissileBase *ObjectManager::getMissile(int id)
    return static_cast<MissileBase *>(_get(id, ObjectType::Missile));
 }
 
-NPCBase *ObjectManager::getNpc(int id)
+NPCBase *ObjectManager::getNPC(int id)
 {
    return static_cast<NPCBase *>(_get(id, ObjectType::NPC));
 }
@@ -204,7 +204,7 @@ bool ObjectManager::add(ItemBase *obj)
 //////////////////////////////////
 void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
 {
-   assert(rm.getObject(obj->getId()));
+   assert(rm.get(obj->getId()));
    std::vector<int> regsNew;
    const std::vector<int> &regsOld = rm.getData(obj->getId())->regionIds;
    pos = toWorldPos(newPos);
@@ -407,8 +407,13 @@ void ObjectManager::getRegions(vec2 pos, Geometry g,
       }
    }
    if(regionIds.size() == 0) {
-      if(inBounds(pos))
+      if(inBounds(pos)) {
+         //Geometry g2 = getRegionGeom(x,y); 
+         //Geometry g3 = Circle(pos, 0.1f);
+         //printf("Error getRegions: pos<%0.1f %0.1f> reg<%d %d> %d %d %d %d\n", 
+         //   pos.x, pos.y, x, y, g2.collision(g), g.collision(g2), g3.collision(g2), g2.collision(g3));
          printf("Error getRegions\n");
+      }
       regionIds.push_back(omToRm(x, y, regionXSize));
    }
 }

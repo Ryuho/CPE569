@@ -28,7 +28,7 @@ Player::Player(pack::Packet &serialized)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   getOM().move(static_cast<PlayerBase *>(this), pos);
+   //getOM().move(static_cast<PlayerBase *>(this), pos);
    //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
@@ -106,12 +106,12 @@ Missile::Missile(pack::Packet &serialized)
 
 void Missile::update()
 {
-   move(pos + dir * projectileSpeed * getDt(), dir);
+   pos = pos + dir * projectileSpeed * getDt();
 }
 
 int Missile::getDamage() const
 {
-   return rand()%6 + 5;
+   return rand()%(missileDamageMax-missileDamageMin) + missileDamageMin;
 }
 
 void Missile::deserialize(pack::Packet &serialized)
@@ -137,8 +137,8 @@ pack::Packet Missile::serialize() const
 
 void Missile::move(vec2 pos, vec2 dir)
 {
-   getOM().move(static_cast<MissileBase *>(this), pos);
-   //Unreferenced in om.move() so okay to update anywhere
+   //getOM().move(static_cast<MissileBase *>(this), pos);
+   this->pos = pos;
    this->dir = dir;
 }
 
@@ -465,6 +465,46 @@ pack::Packet Item::serialize() const
    p.data.writeUInt(id).writeInt(sid).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
+}
+
+bool ObjectHolder::add(Player *obj)
+{
+   return ObjectManager::add(static_cast<PlayerBase *>(obj));
+}
+
+bool ObjectHolder::add(NPC *obj)
+{
+   return ObjectManager::add(static_cast<NPCBase *>(obj));
+}
+
+bool ObjectHolder::add(Item *obj)
+{
+   return ObjectManager::add(static_cast<ItemBase *>(obj));
+}
+
+bool ObjectHolder::add(Missile *obj)
+{
+   return ObjectManager::add(static_cast<MissileBase *>(obj));
+}
+
+Player *ObjectHolder::getPlayer(int id)
+{
+   return static_cast<Player *>(ObjectManager::getPlayer(id));
+}
+
+NPC *ObjectHolder::getNPC(int id)
+{
+   return static_cast<NPC *>(ObjectManager::getNPC(id));
+}
+
+Item *ObjectHolder::getItem(int id)
+{
+   return static_cast<Item *>(ObjectManager::getItem(id));
+}
+
+Missile *ObjectHolder::getMissile(int id)
+{
+   return static_cast<Missile *>(ObjectManager::getMissile(id));
 }
 
 } // end server namespace

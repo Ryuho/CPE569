@@ -1,5 +1,6 @@
 #include "ServerConnManager.h"
 #include "socket.h"
+#include "Constants.h"
 #include <stdio.h>
 
 #ifdef WIN32
@@ -231,7 +232,7 @@ void ConnectionManager::printPackStat()
 void ConnectionManager::initPackStat()
 {
    packStat.clear();
-   for(unsigned i = 0; i < 15; i++){
+   for(unsigned i = 0; i < constants::PacketType::MaxPacketType; i++){
       packStat.push_back(0);
    }
    

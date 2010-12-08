@@ -64,10 +64,10 @@ struct NPC : NPCBase {
 struct ObjectHolder : ObjectManager {
    ObjectHolder() : ObjectManager() {}
 
-   bool addPlayer(Player *obj);
-   bool addNPC(NPC *obj);
-   bool addItem(Item *obj);
-   bool addMissile(Missile *obj);
+   bool add(Player *obj);
+   bool add(NPC *obj);
+   bool add(Item *obj);
+   bool add(Missile *obj);
 
    Player *getPlayer(int id);
    NPC *getNPC(int id);

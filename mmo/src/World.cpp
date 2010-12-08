@@ -147,8 +147,11 @@ void World::graphicsInit(int width, int height)
    data->mono.init("DejaVuSansMono.ttf", 12);
 }
 
+//static bool pushed = false;
+
 void WorldData::update()
 {
+   //pushed = false;
    while (conn.select()) {
       if (conn) {
          processPacket(pack::readPacket(conn));
@@ -158,31 +161,37 @@ void WorldData::update()
       }
    }
 
+   //if(pushed)
+   //   printf("3 %0.1f %0.1f\n", player.pos.x, player.pos.y);
    if (playerMoveDir.length() > 0.0f) {
       playerMoveDir.normalize();
       player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
 		if (player.pos.x > wWidth - 41) {
-			player.pos.x = wWidth - 41;
+         player.pos.x = wWidth - player.getRadius();
 		}
 		else if (player.pos.x < -wWidth + 41) {
-			player.pos.x = -wWidth + 41;
+			player.pos.x = -wWidth + player.getRadius();
 		}
 
 		if (player.pos.y > wHeight) {
-			player.pos.y = wHeight;
+			player.pos.y = wHeight - player.getRadius();
 		}
 		else if (player.pos.y < -wHeight + 41) {
-			player.pos.y = -wHeight + 41;
+			player.pos.y = -wHeight + player.getRadius();
 		}
    } 
    else
       player.moving = false;
 
+   //if(pushed)
+   //   printf("4 %0.1f %0.1f\n", player.pos.x, player.pos.y);
    if(player.moving)
       pack::Position(player.pos, player.dir, player.moving, 
          player.getId()).makePacket().sendTo(conn);
 
    objs.updateAll();
+   //if(pushed)
+   //   printf("5 %0.1f %0.1f\n\n", player.pos.x, player.pos.y);
 }
 
 void WorldData::processPacket(pack::Packet p)
@@ -191,10 +200,7 @@ void WorldData::processPacket(pack::Packet p)
    
    if (p.type == PacketType::position) {
       Position pos(p);
-      //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
-      if(pos.id == player.getId()) {
-         shadow.move(pos.pos, pos.dir, pos.moving != 0);
-         player.move(pos.pos, pos.dir, pos.moving != 0);
+      if(pos.id == player.getId()) { //ignore
       } else if(objs.contains(pos.id, ObjectType::Player)) {
          Player *obj = objs.getPlayer(pos.id);
          objs.move(obj, pos.pos);
@@ -203,7 +209,6 @@ void WorldData::processPacket(pack::Packet p)
          NPC *obj = objs.getNPC(pos.id);
          objs.move(obj, pos.pos);
          obj->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
       } else if(objs.contains(pos.id, ObjectType::Item)) {
          Item *obj = objs.getItem(pos.id);
          objs.move(obj, pos.pos);
@@ -217,6 +222,14 @@ void WorldData::processPacket(pack::Packet p)
          printf("client %d: unable to process Pos packet id=%d\n", 
             player.getId(), pos.id);
    }
+   else if (p.type == PacketType::teleport) {
+      Teleport tele(p);
+      printf("teleported\n");
+      playerMoveDir = vec2();
+      //player.pos = pos.pos;
+      shadow.move(tele.pos, player.dir, false);
+      player.move(tele.pos, player.dir, false);
+   }
    else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player) {
@@ -228,19 +241,19 @@ void WorldData::processPacket(pack::Packet p)
                i.id, i.pos.x, i.pos.y);
          } 
          else {
-            objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
+            objs.add(new Player(i.id, i.pos, i.dir, i.hp));
             printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
+         objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
          printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(new Item(i.id, i.subType, i.pos));
+         objs.add(new Item(i.id, i.subType, i.pos));
          printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else
@@ -253,7 +266,7 @@ void WorldData::processPacket(pack::Packet p)
             printf("\n\n!!! Disconnected from server !!!\n\n");
          else {
             /*
-            int type = objs.idToIndex[sig.val].type;
+            int type = objs.get(sig.val)->getType();
             if(type != ObjectType::Missile)
                printf("Removed %s %d %d\n", 
                   type == ObjectType::Item ? "Item" :
@@ -271,13 +284,11 @@ void WorldData::processPacket(pack::Packet p)
       } else if (sig.sig == Signal::changeExp) {
          player.exp = sig.val;
          printf("exp = %d\n", player.exp);
+      } else if(sig.sig == Signal::setPvp) {
+         printf("Error: Player recieved setPvp signal\n");
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == PacketType::arrow) {
-	   //Arrow ar(p);
-		//objs.addMissile(Missile(ar.id, MissileType::Arrow, ar.orig, ar.direction));
-	}
    else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
       if (hc.id == player.getId()) {
@@ -378,7 +389,7 @@ void World::move(mat::vec2 dir)
 void World::shootArrow(mat::vec2 dir)
 {
 	//pack::Arrow ar(data->player.pos, dir - vec2(data->width/2,data->height/2), clientState->player.id);
-	pack::Arrow ar(dir - vec2(data->width/2,data->height/2), getPlayer().getId());	
+	pack::Arrow ar(dir - vec2(data->width/2,data->height/2));	
 	ar.makePacket().sendTo(clientState->conn);
 	//printf("arrow packet sent!\n");      
 	/**if (data->ticks - data->arrowTick > arrowCooldown) {
@@ -409,7 +420,7 @@ void World::rightClick(vec2 mousePos)
 {
    vec2 clickPos = clientState->player.pos + mousePos 
       - vec2(data->width/2,data->height/2);
-   pack::Click(clickPos, clientState->player.getId()).makePacket().sendTo(data->conn);
+   pack::Click(clickPos).makePacket().sendTo(data->conn);
    printf("Clicked <%5.1f %5.1f>\n", clickPos.x, clickPos.y);
 }
 

@@ -12,6 +12,8 @@ namespace constants {
 
    const float maxProjectileTicks = 500;
    const float projectileSpeed = 800;
+   const unsigned missileDamageMax = 11;
+   const unsigned missileDamageMin = 5;
    const float areaOfInfluenceRadius = 800;
 
    const int predictTicks = 200;
@@ -80,7 +82,7 @@ namespace constants {
       message = 2,
       connect = 3,
       signal = 4,
-	   arrow = 5,
+      arrow = 5,
       initialize = 6,
       healthChange = 7,
       click = 8,
@@ -90,6 +92,8 @@ namespace constants {
       serialMissile = 12,
       serverList = 13,
       changePvp = 14,
+      teleport = 15,
+      MaxPacketType
    };}
 }
 

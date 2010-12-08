@@ -48,9 +48,6 @@ NPC *spawnNPC(int regionX, int regionY)
       vec2(0,1), npcType(regionX, regionY));
 
    getOM().add(n);
-
-   //getCM().clientBroadcast(Initialize(n->getId(), ObjectType::NPC, 
-   //   n->type, n->pos, n->dir, n->hp).makePacket());
    return n;
 }
 
@@ -60,8 +57,6 @@ Item *spawnItem(int id)
    Item *item = new Item(id, getCM().ownServerId, pos, rand() % (ItemType::Explosion+1));
    getOM().add(item);
    printf("Spawn Item id=%d type=%d\n", item->getId(), item->type);
-   //getCM().clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
-   //      item->pos, vec2(), 0));
    return item;
 }
 
@@ -71,8 +66,6 @@ Item *spawnStump(int id)
    Item *stump = new Item(id, getCM().ownServerId, pos, ItemType::Stump);
    getOM().add(stump);
    printf("Spawn Stump id=%d type=%d\n", stump->getId(), stump->type);
-   //getCM().clientBroadcast(Initialize(stump->getId(), ObjectType::Item, stump->type,
-   //      stump->pos, vec2(), 0));
    return stump;
 }
 
@@ -93,6 +86,5 @@ void collectItem(Player &pl, Item &item)
       printf("Collected unknown item type %d type=%d\n",
          item.getId(), item.type);
    }
-   //getCM().clientBroadcast(Signal(Signal::remove, item.getId()));
    getOM().remove(item.getId()); //only remove one item per click max
 }

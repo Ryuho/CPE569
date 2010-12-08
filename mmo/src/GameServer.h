@@ -25,7 +25,7 @@ struct GameServer {
    void update(int ticks);
 
    ConnectionManager &cm;
-   ObjectManager om;
+   ObjectHolder om;
 
    int ticks;
    float dt;

@@ -365,16 +365,16 @@ void BotWorldData::processPacket(pack::Packet p)
    else if (p.type == PacketType::initialize) {
       Initialize i(p);
       if (i.type == ObjectType::Player && i.id != player.getId()) {
-         objs.addPlayer(new Player(i.id, i.pos, i.dir, i.hp));
+         objs.add(new Player(i.id, i.pos, i.dir, i.hp));
       }
       else if (i.type == ObjectType::Missile) {
-         objs.addMissile(new Missile(i.id, i.subType, i.pos, i.dir));
+         objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.addNPC(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
       }
       else if (i.type == ObjectType::Item) {
-         objs.addItem(new Item(i.id, i.subType, i.pos));
+         objs.add(new Item(i.id, i.subType, i.pos));
       }
    }
    else if (p.type == PacketType::signal) {
@@ -392,8 +392,7 @@ void BotWorldData::processPacket(pack::Packet p)
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
-   else if (p.type == PacketType::arrow) {
-	} else if (p.type == PacketType::healthChange) {
+   else if (p.type == PacketType::healthChange) {
       HealthChange hc(p);
       if (hc.id == player.getId()) {
          player.hp = hc.hp;
@@ -417,7 +416,7 @@ void BotWorldData::processPacket(pack::Packet p)
 
 void BotWorldData::shootArrow(mat::vec2 dir)
 {
-   pack::Arrow ar(dir, player.getId());	
+   pack::Arrow ar(dir);	
 	ar.makePacket().sendTo(conn);
 }
 
@@ -429,7 +428,7 @@ void BotWorldData::doSpecial()
 
 void BotWorldData::rightClick(vec2 mousePos)
 {
-   pack::Click(mousePos, player.getId()).makePacket().sendTo(conn);
+   pack::Click(mousePos).makePacket().sendTo(conn);
 }
 
 int getTicks()

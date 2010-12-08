@@ -65,13 +65,13 @@ namespace objectManager {
       bool inBounds(vec2 pos) const;
       PlayerBase *getPlayer(int id);
       MissileBase *getMissile(int id);
-      NPCBase *getNpc(int id);
+      NPCBase *getNPC(int id);
       ItemBase *getItem(int id);
       
-      bool add(PlayerBase *p);
-      bool add(MissileBase *m);
-      bool add(NPCBase *n);
-      bool add(ItemBase *i);
+      bool add(PlayerBase *obj);
+      bool add(MissileBase *obj);
+      bool add(NPCBase *obj);
+      bool add(ItemBase *obj);
       
       bool remove(int id);
       bool contains(int id) const;

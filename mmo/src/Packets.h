@@ -32,23 +32,33 @@ struct Position {
    }
 };
 
+struct Teleport {
+   Teleport() {}
+   Teleport(vec2 pos) : pos(pos) {}
+   Teleport(Packet &p) {
+      p.data.readFloat(pos.x).readFloat(pos.y).reset();
+   }
+   Packet makePacket() {
+      Packet p(PacketType::teleport);
+      p.data.writeFloat(pos.x).writeFloat(pos.y);
+      return p;
+   }
+   vec2 pos;
+};
+
 struct Click {
-   Click() : id(0) {}
-   Click(vec2 pos, int id) 
-      : pos(pos), id(id) {}
+   Click() {}
+   Click(vec2 pos) : pos(pos) {}
    Click(Packet &p) {
-      p.data.readInt(id).readFloat(pos.x)
-         .readFloat(pos.y).reset();
+      p.data.readFloat(pos.x).readFloat(pos.y).reset();
    }
    Packet makePacket() {
       Packet p(PacketType::click);
-      p.data.writeInt(id).writeFloat(pos.x)
-         .writeFloat(pos.y);
+      p.data.writeFloat(pos.x).writeFloat(pos.y);
       return p;
    }
 
    vec2 pos;
-   int id;
 };
 
 // Player/Server sends a text message?
@@ -89,7 +99,7 @@ struct Pvp
    int id; //player id
    int isPvpMode;
    Pvp() : id(0), isPvpMode(false) {}
-   Pvp(int id, bool isPvpMode) : id(id), isPvpMode(isPvpMode) {}
+   Pvp(int id, int isPvpMode) : id(id), isPvpMode(isPvpMode) {}
    Pvp(Packet &p) {
       p.data.readInt(id).readInt(isPvpMode).reset();
    }
@@ -109,6 +119,7 @@ struct Signal {
       hurtme = 4,       // damages the player
       changeExp = 5,
       changeRupee = 6,
+      setPvp = 7,
    };
    int sig, val;
    Signal() : sig(0) {}
@@ -126,19 +137,15 @@ struct Signal {
 
 // used for an arrow
 struct Arrow {
-	vec2 orig;
-	vec2 direction;
-   int id;
+	vec2 dir;
    Arrow() {}
-   Arrow(vec2 dir) : orig(0), direction(dir), id(0) {}
-   Arrow(vec2 dir, int id) : orig(0), direction(dir), id(id) {}
-	Arrow(vec2 dir, vec2 orig, int id) : orig(orig), direction(dir), id(id) {}
+   Arrow(vec2 dir) : dir(dir) {}
    Arrow(Packet &p) {
-      p.data.readInt(id).readFloat(orig.x).readFloat(orig.y).readFloat(direction.x).readFloat(direction.y).reset();
+      p.data.readFloat(dir.x).readFloat(dir.y).reset();
    }
    Packet makePacket() {
       Packet p(PacketType::arrow);
-      p.data.writeInt(id).writeFloat(orig.x).writeFloat(orig.y).writeFloat(direction.x).writeFloat(direction.y);
+      p.data.writeFloat(dir.x).writeFloat(dir.y);
       return p;
    }
 };

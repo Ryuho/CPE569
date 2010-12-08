@@ -129,24 +129,24 @@ void NPC::move(vec2 pos, vec2 dir, bool moving)
 ////////////////// OBJECTHOLDER //////////////////
 //////////////////////////////////////////////////
 
-bool ObjectHolder::addPlayer(Player *obj)
+bool ObjectHolder::add(Player *obj)
 {
-   return add(static_cast<PlayerBase *>(obj));
+   return ObjectManager::add(static_cast<PlayerBase *>(obj));
 }
 
-bool ObjectHolder::addMissile(Missile *obj)
+bool ObjectHolder::add(Missile *obj)
 {
-   return add(static_cast<MissileBase *>(obj));
+   return ObjectManager::add(static_cast<MissileBase *>(obj));
 }
 
-bool ObjectHolder::addItem(Item *obj)
+bool ObjectHolder::add(Item *obj)
 {
-   return add(static_cast<ItemBase *>(obj));
+   return ObjectManager::add(static_cast<ItemBase *>(obj));
 }
 
-bool ObjectHolder::addNPC(NPC *obj)
+bool ObjectHolder::add(NPC *obj)
 {
-   return add(static_cast<NPCBase *>(obj));
+   return ObjectManager::add(static_cast<NPCBase *>(obj));
 }
 
 Player *ObjectHolder::getPlayer(int id)

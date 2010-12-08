@@ -79,115 +79,85 @@ void GameServer::newClientConnection(int id)
       cm.clientSendPacket(Initialize(npc.getId(), ObjectType::NPC, 
          npc.type, npc.pos, npc.dir, npc.hp).makePacket(), id);
    }
-}
 
+   cm.serverBroadcast(newPlayer->serialize());
+}
 void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
    Packet removePacket(Signal(Signal::remove, id).makePacket());
    cm.clientBroadcast(removePacket);
+   cm.serverBroadcast(removePacket);
    om.remove(id);
 }
-
 void GameServer::processClientPacket(pack::Packet p, int id)
 {
+   if(!om.contains(id, ObjectType::Player)) {
+      printf("Error: Client %d sent packet and is not connected", id);
+      return;
+   }
+   Player &player = *static_cast<Player *>(om.getPlayer(id));
    if (p.type == PacketType::position) {
       Position pos(p);
-      if(om.contains(pos.id, ObjectType::Player)) {
-         Player &pl = *static_cast<Player *>(om.getPlayer(pos.id));
-         //printf("id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
-         //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
-         pl.move(pos.pos, pos.dir, pos.moving != 0);
-         //player went out of bounds or invalid positon?
-         if(pos.pos.x != pl.pos.x || pos.pos.y != pl.pos.y) {
-            //printf("Invalid Position: id=%d <%0.1f %0.1f> -> <%0.1f %0.1f>\n", pl.getId(), 
-            //   pos.pos.x, pos.pos.y, pl.pos.x, pl.pos.y);
-            cm.clientSendPacket(Position(pl.pos, pl.dir, pl.moving, pl.getId()), pl.getId());
-         }
-      } 
-      else {
-         printf("Accessing unknown Player %d\n", pos.id);
+      getOM().move(&player, pos.pos);
+      player.move(pos.pos, pos.dir, pos.moving != 0);
+      //player went out of bounds or invalid positon?
+      if(pos.pos.x != player.pos.x || pos.pos.y != player.pos.y) {
+         cm.clientSendPacket(Teleport(pos.pos), id);
+         printf("Player %d went outside map bounds\n", id);
       }
    }
-   else if (p.type == PacketType::signal) {
+   else if(p.type == PacketType::signal) {
       Signal signal(p);
-
       if (signal.sig == Signal::special) {
-         if(om.contains(id, ObjectType::Player)) {
-            Player &play = *static_cast<Player *>(om.getPlayer(id));
-            for (int i = 0; i < constants::numArrows; i++) {
-               float t = i/(float)constants::numArrows;
-               Missile *m = new Missile(newId(), cm.ownServerId, id, play.pos, 
-                  vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
-               om.add(m);
-               Initialize init(m->getId(), ObjectType::Missile, 
-                  m->type, m->pos, m->dir, 0);
-               cm.clientBroadcast(init);
-            }
+         for(int i = 0; i < constants::numArrows; i++) {
+            float t = i/(float)constants::numArrows;
+            Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
+               vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
+            om.add(m);
+            cm.clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
+               m->type, m->pos, m->dir, 0));
          }
-         else
-            printf("Error: Packet Unknown Player id %d\n", id);
       }
-      else if (signal.sig == Signal::hurtme) {
-         if(om.contains(id, ObjectType::Player)) {
-            Player &p = *static_cast<Player *>(om.getPlayer(id));
-            p.takeDamage(1);
-            cm.clientBroadcast(HealthChange(id, p.hp));
-         }
-         else
-            printf("Error: Packet Unknown Player id %d\n", id);
+      else if(signal.sig == Signal::setPvp) {
+         player.pvp = signal.val != 0;
+         cm.clientBroadcast(Pvp(id, signal.val).makePacket());
+      }
+      else if(signal.sig == Signal::hurtme) {
+         player.takeDamage(1);
+         cm.clientBroadcast(HealthChange(id, player.hp));
       }
       else
          printf("Error: Unknown Signal packet type=%d val=%d\n", 
-         signal.sig, signal.val);
+            signal.sig, signal.val);
    }
    else if (p.type == PacketType::arrow) {
       Arrow ar(p);
-      if (om.contains(id, ObjectType::Player)) {
-         Player &pl = *static_cast<Player *>(om.getPlayer(id));
-         if(!pl.shotThisFrame) {
-            pl.shotThisFrame = true;
-            Missile *m = new Missile(newId(), cm.ownServerId,id, 
-               pl.pos, ar.direction);
-            om.add(m);
-            Initialize init(m->getId(), ObjectType::Missile, m->type, 
-               m->pos, m->dir, 0);
-            cm.clientBroadcast(init);
-         }
+      if(!player.shotThisFrame) {
+         player.shotThisFrame = true;
+         Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
+            ar.dir);
+         om.add(m);
+         cm.clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
+            m->type, m->pos, m->dir, 0));
       }
    }
-   else if (p.type == PacketType::click) {
+   else if(p.type == PacketType::click) {
       Click click(p);
-      if(om.contains(click.id, ObjectType::Player)) {
-         Geometry point(Point(click.pos));
-         printf("Player %d clicked <%0.1f, %0.1f>\n", 
-            click.id, click.pos.x, click.pos.y);
-
-         std::vector<ItemBase *> items;
-         om.collidingItems(point, click.pos, items);
-         if(items.size() > 0) {
-            Player &pl = *static_cast<Player *>(om.getPlayer(click.id));
-            for(unsigned i = 0; i < items.size(); i++) {
-               Item &item = *static_cast<Item *>(items[i]);
-               if(item.isCollectable()) {
-                  getCM().clientBroadcast(Signal(Signal::remove, item.getId()));
-                  collectItem(pl, item);
-               }
+      Geometry point(Point(click.pos));
+      //printf("Player %d clicked <%0.1f, %0.1f>\n", id, click.pos.x, 
+      //   click.pos.y);
+      std::vector<ItemBase *> items;
+      om.collidingItems(point, click.pos, items);
+      if(items.size() > 0) {
+         for(unsigned i = 0; i < items.size(); i++) {
+            Item &item = *static_cast<Item *>(items[i]);
+            if(item.isCollectable()) {
+               getCM().clientBroadcast(Signal(Signal::remove, item.getId()));
+               collectItem(player, item);
             }
          }
       }
-      else
-         printf("Error invalid click Player id %d\n", click.id);
-   }
-   else if(p.type == PacketType::changePvp) {
-      Pvp pvpPacket(p);
-      if(om.contains(pvpPacket.id, ObjectType::Player)) {
-         Player &play = *static_cast<Player *>(om.getPlayer(pvpPacket.id));
-         play.pvp = pvpPacket.isPvpMode != 0;
-         cm.clientBroadcast(pvpPacket.makePacket());
-      }
-      else
-         printf("Error: Unknown player %d for pvp packet\n", pvpPacket.id);
    }
    else
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
@@ -215,18 +185,17 @@ void GameServer::update(int ticks)
 
    /*
    while(om.npcCount() < 4) {
-      int i = regionXSize/2-1;
-      int j = regionYSize/2-1;
-      //spawnNPC(i, j);
-      //spawnNPC(i, j+1);
-      //spawnNPC(i+1, j);
-      spawnNPC(i+1, j+1);
+      int i = regionXSize/2;
+      int j = regionYSize/2;
+      NPC *npc = spawnNPC(i, j);
+      getCM().clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
+         npc->type, npc->pos, npc->dir, npc->hp).makePacket());
    }
    */
 
    updateNPCs(ticks, dt);
    updatePlayers(ticks, dt);
-   updateMissiles(ticks, dt);
+   updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
 }
 
 void GameServer::updateNPCs(int ticks, float dt)
@@ -236,7 +205,6 @@ void GameServer::updateNPCs(int ticks, float dt)
    for(unsigned i = 0; i < om.npcCount(); i++) {
       NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
       bool removeNPC = false;
-      //bool npcHit = false;
 
       std::vector<ItemBase *> collidedItems;
       om.collidingItems(npc.getGeom(), npc.pos, collidedItems);
@@ -341,12 +309,15 @@ void GameServer::updatePlayers(int ticks, float dt)
          Item &item = *static_cast<Item *>(collidedItems[j]);
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, p.pos);
-            if(pushDir.length() > 0.0f) //no divide by zero!
+            if(pushDir.length() > 0.1f) //no divide by zero!
                pushDir.normalize();
             else
                pushDir = vec2(1, 0);
-            p.move(item.pos + pushDir * (item.getRadius() + playerRadius), p.dir);
-            cm.clientSendPacket(Position(p.pos, p.dir, p.moving, p.getId()), p.getId());
+            vec2 newPos(item.pos + pushDir * (item.getRadius() + p.getRadius()));
+            om.move(&p, newPos);
+            p.move(newPos, p.dir, false);
+            cm.clientSendPacket(Teleport(newPos), p.getId());
+            printf("Player %d collided\n", p.getId());
          }
          else if(item.isCollectable()) {
             getCM().clientBroadcast(Signal(Signal::remove, item.getId()));
@@ -407,6 +378,7 @@ void GameServer::updatePlayers(int ticks, float dt)
       om.remove(p.getId());
    }
 }
+
 
 int getTicks()
 {

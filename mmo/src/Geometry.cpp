@@ -64,7 +64,7 @@ bool RectanglePoint(const Rectangle *rec, const Point *p)
    return p->pos.x >= rec->botLeft.x 
       && p->pos.y >= rec->botLeft.y 
       && p->pos.x <= rec->botLeft.x + rec->w 
-      && p->pos.y <= rec->botLeft.x + rec->h;
+      && p->pos.y <= rec->botLeft.y + rec->h;
 }
 
 bool RectangleRectangle(const Rectangle *rec1, const Rectangle *rec2)
