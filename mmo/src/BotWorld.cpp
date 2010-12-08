@@ -314,20 +314,22 @@ void BotWorldData::updatePlayerPos(int ticks, float dt)
 {
    //ensure the bot doesn't go off of map
    if(player.moving) {
-      player.move(player.pos + player.dir * dt * playerSpeed, player.dir, 
-         player.moving);
-		if (player.pos.x > worldWidth) {
-			player.pos.x = worldWidth;
+      vec2 newPos(player.pos + player.dir * dt * playerSpeed);
+      int wWidth = constants::worldWidth/2;
+      int wHeight = constants::worldHeight/2;
+      if (player.pos.x > wWidth - player.getRadius()) {
+         newPos.x = wWidth - player.getRadius();
 		}
-		else if (player.pos.x < -worldWidth) {
-			player.pos.x = -worldWidth;
+		else if (player.pos.x < -wWidth + player.getRadius()) {
+			newPos.x = -wWidth + player.getRadius();
 		}
-		if (player.pos.y > worldHeight) {
-			player.pos.y = worldHeight;
-		} 
-      else if (player.pos.y < -worldHeight) {
-			player.pos.y = -worldHeight;
+		if (player.pos.y > wHeight - player.getRadius()) {
+			newPos.y = wHeight - player.getRadius();
 		}
+		else if (player.pos.y < -wHeight + player.getRadius()) {
+			newPos.y = -wHeight + player.getRadius();
+		}
+      player.move(newPos, player.dir, player.moving);
    }
 }
 

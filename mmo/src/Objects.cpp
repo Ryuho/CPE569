@@ -202,12 +202,12 @@ bool ObjectManager::add(ItemBase *obj)
 
 ////////////// Move //////////////
 //////////////////////////////////
-void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
+void ObjectManager::move(ObjectBase *obj, const vec2 &newPos)
 {
    assert(rm.get(obj->getId()));
    std::vector<int> regsNew;
    const std::vector<int> &regsOld = rm.getData(obj->getId())->regionIds;
-   pos = toWorldPos(newPos);
+   obj->pos = toWorldPos(newPos);
    getRegions(newPos, obj->getGeom(), regsNew);
    if(!util::isequal(regsOld, regsNew)) 
    {
@@ -286,7 +286,8 @@ void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
    }
 }
 
-void ObjectManager::move(PlayerBase *obj, vec2 newPos)
+/*
+void ObjectManager::move(ObjectBase *obj, vec2 newPos)
 {
    _move(obj, obj->pos, newPos);
 }
@@ -305,6 +306,7 @@ void ObjectManager::move(NPCBase *obj, vec2 newPos)
 {
    _move(obj, obj->pos, newPos);
 }
+*/
 
 /////////// Colliding ////////////
 //////////////////////////////////

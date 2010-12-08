@@ -14,29 +14,29 @@ void GameServer::processServerPacket(pack::Packet p, int id)
 {
    if(p.type == PacketType::serialPlayer) {
       Player obj(p);
-      if(!getOM().contains(obj.getId()))
-         getOM().add(new Player(obj));
+      if(!om.contains(obj.getId()))
+         om.add(new Player(obj));
    }
    else if(p.type == PacketType::serialItem) {
       Item obj(p);
-      if(!getOM().contains(obj.getId()))
-         getOM().add(new Item(obj));
+      if(!om.contains(obj.getId()))
+         om.add(new Item(obj));
    }
    else if(p.type == PacketType::serialMissile) {
       Missile obj(p);
-      if(!getOM().contains(obj.getId()))
-         getOM().add(new Missile(obj));
+      if(!om.contains(obj.getId()))
+         om.add(new Missile(obj));
    }
    else if(p.type == PacketType::serialNPC) {
       NPC obj(p);
-      if(!getOM().contains(obj.getId()))
-         getOM().add(new NPC(obj));
+      if(!om.contains(obj.getId()))
+         om.add(new NPC(obj));
    }
    else if(p.type == PacketType::signal) {
       Signal signal(p);
       if(signal.sig == Signal::remove) {
-         if(getOM().contains(signal.val))
-            getOM().remove(signal.val);
+         if(om.contains(signal.val))
+            om.remove(signal.val);
       }
       else
          printf("Error: unknown signal (sig=%d val=%d)\n", 

@@ -147,11 +147,9 @@ void World::graphicsInit(int width, int height)
    data->mono.init("DejaVuSansMono.ttf", 12);
 }
 
-//static bool pushed = false;
-
 void WorldData::update()
 {
-   //pushed = false;
+   bool wasMoving = player.moving;
    while (conn.select()) {
       if (conn) {
          processPacket(pack::readPacket(conn));
@@ -161,31 +159,29 @@ void WorldData::update()
       }
    }
 
-   //if(pushed)
-   //   printf("3 %0.1f %0.1f\n", player.pos.x, player.pos.y);
    if (playerMoveDir.length() > 0.0f) {
       playerMoveDir.normalize();
-      player.move(player.pos + playerMoveDir * dt * playerSpeed, playerMoveDir, true);
-		if (player.pos.x > wWidth - 41) {
+      player.move(player.pos + playerMoveDir * dt * playerSpeed, 
+         playerMoveDir, true);
+		if (player.pos.x > wWidth - player.getRadius()) {
          player.pos.x = wWidth - player.getRadius();
 		}
-		else if (player.pos.x < -wWidth + 41) {
+		else if (player.pos.x < -wWidth + player.getRadius()) {
 			player.pos.x = -wWidth + player.getRadius();
 		}
 
-		if (player.pos.y > wHeight) {
+		if (player.pos.y > wHeight - player.getRadius()) {
 			player.pos.y = wHeight - player.getRadius();
 		}
-		else if (player.pos.y < -wHeight + 41) {
+		else if (player.pos.y < -wHeight + player.getRadius()) {
 			player.pos.y = -wHeight + player.getRadius();
 		}
    } 
    else
       player.moving = false;
 
-   //if(pushed)
-   //   printf("4 %0.1f %0.1f\n", player.pos.x, player.pos.y);
-   if(player.moving)
+
+   if(player.moving || wasMoving)
       pack::Position(player.pos, player.dir, player.moving, 
          player.getId()).makePacket().sendTo(conn);
 
@@ -264,16 +260,16 @@ void WorldData::processPacket(pack::Packet p)
          if(sig.val == this->player.getId())
             printf("\n\n!!! Disconnected from server !!!\n\n");
          else {
-            /*
-            int type = objs.get(sig.val)->getType();
-            if(type != ObjectType::Missile)
-               printf("Removed %s %d %d\n", 
-                  type == ObjectType::Item ? "Item" :
-                  type == ObjectType::NPC ? "NPC" :
-                  type == ObjectType::Player ? "Player" :
-                  "Unknown",
-                  sig.val, type);
-            */
+            if(objs.contains(sig.val)) {
+               int type = objs.get(sig.val)->getType();
+               if(type != ObjectType::Missile)
+                  printf("Removed %s %d %d\n", 
+                     type == ObjectType::Item ? "Item" :
+                     type == ObjectType::NPC ? "NPC" :
+                     type == ObjectType::Player ? "Player" :
+                     "Unknown",
+                     sig.val, type);
+            }
             objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }

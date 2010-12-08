@@ -9,19 +9,13 @@ using namespace server;
 
 struct GameServer {
    GameServer(ConnectionManager &cm, int remoteServerId);
+
    void newClientConnection(int id);
    void newServerConnection(int id);
-
    void clientDisconnect(int id);
    void serverDisconnect(int id);
-
    void processClientPacket(pack::Packet p, int fromid);
    void processServerPacket(pack::Packet p, int fromid);
-
-   void updateNPCs(int ticks, float dt);
-   void updateMissiles(int ticks, float dt);
-   void updatePlayers(int ticks, float dt);
-
    void removeClientConnection(int id);
 
    void clientSendPacket(Packet &p, int id);
@@ -46,19 +40,26 @@ struct GameServer {
    }
 
    void update(int ticks);
-
-   ConnectionManager &cm;
-   ObjectHolder om;
-
-   int ticks;
-   float dt;
+   void updateNPCs(int ticks, float dt);
+   void updateMissiles(int ticks, float dt);
+   void updatePlayers(int ticks, float dt);
 
    //Utilities
-private:
-   void collectItem(Player &pl, Item &item);
+   bool collectItem(Player &pl, Item &item); //collect, not collide
+   bool collideMissile(Player &p, Missile &m);
+   bool collideMissile(NPC &npc, Missile &m);
+   bool collideItem(ObjectBase &o, Item &item); //do not use for missiles
    NPC *spawnNPC(int regionX, int regionY);
    Item *spawnItem(int id);
    Item *spawnStump(int id);
+
+   //members
+   ConnectionManager &cm;
+   ObjectHolder om;
+   ObjectHolder som; //other servers' objects
+
+   int ticks;
+   float dt;
 };
 
 GameServer &getGS(); //singleton

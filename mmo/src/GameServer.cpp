@@ -84,7 +84,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       player.move(pos.pos, pos.dir, pos.moving != 0);
       //player went out of bounds or invalid positon?
       if(pos.pos.x != player.pos.x || pos.pos.y != player.pos.y) {
-         clientSendPacket(Teleport(pos.pos), id);
+         clientSendPacket(Teleport(player.pos), id);
          printf("Player %d went outside map bounds\n", id);
       }
    }
@@ -134,7 +134,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
          for(unsigned i = 0; i < items.size(); i++) {
             Item &item = *static_cast<Item *>(items[i]);
             if(item.isCollectable()) {
-               clientBroadcast(Signal(Signal::remove, item.getId()));
                collectItem(player, item);
             }
          }
@@ -144,6 +143,9 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
 }
 
+///////////////////////////////////////
+/////////////// Updates ///////////////
+///////////////////////////////////////
 void GameServer::update(int ticks)
 {
    //get the current delta time (time passed since it last ran update())
@@ -164,19 +166,79 @@ void GameServer::update(int ticks)
       }
    }
 
-   /*
-   while(om.npcCount() < 4) {
-      int i = regionXSize/2;
-      int j = regionYSize/2;
-      NPC *npc = spawnNPC(i, j);
-      cm.clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
-         npc->type, npc->pos, npc->dir, npc->hp));
-   }
-   */
-
    updateNPCs(ticks, dt);
    updatePlayers(ticks, dt);
    updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
+}
+
+void GameServer::updatePlayers(int ticks, float dt)
+{
+   std::vector<Player *> playersToRemove;
+   for(unsigned i = 0; i < om.playerCount(); i++) {
+      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
+      Geometry g(p.getGeom());
+      p.shotThisFrame = false;
+
+      p.gainHp(playerHpPerTick);
+      std::vector<ItemBase *> collidedItems;
+      om.collidingItems(g, p.pos, collidedItems);
+      for(unsigned j = 0; j < collidedItems.size(); j++) {
+         Item &item = *static_cast<Item *>(collidedItems[j]);
+         if(collectItem(p, item)) {
+            //collected, do nothing
+         }
+         else if(collideItem(p, item)) {
+            clientSendPacket(Teleport(p.pos), p.getId());
+         }
+      }
+
+      //if player is colliding with any missile that is not owned by it, they take dmg
+      std::vector<MissileBase *> collidedMis;
+      om.collidingMissiles(g, p.pos, collidedMis);
+      //bool damaged = false;
+      for(unsigned j = 0; j < collidedMis.size(); j++) {
+         Missile &m = *static_cast<Missile *>(collidedMis[j]);
+         collideMissile(p, m);
+      }
+      collidedMis.clear();
+      som.collidingMissiles(g, p.pos, collidedMis);
+      for(unsigned j = 0; j < collidedMis.size(); j++) {
+         Missile &m = *static_cast<Missile *>(collidedMis[j]);
+         collideMissile(p, m);
+      }
+
+      if(p.hp == 0) {
+         playersToRemove.push_back(&p);
+         continue;
+      } else {
+         Circle areaOfInfluence(p.pos, areaOfInfluenceRadius);
+         std::vector<NPCBase *> aoinpcs;
+         om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
+         for(unsigned i = 0; i < aoinpcs.size(); i++) {
+            NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
+            clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
+            clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), 
+               p.getId());
+         }
+         std::vector<PlayerBase *> aoiplayers;
+         om.collidingPlayers(areaOfInfluence, p.pos, aoiplayers);
+         for(unsigned i = 0; i < aoiplayers.size(); i++) {
+            Player &player = *static_cast<Player *>(aoiplayers[i]);
+            clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
+            if(player.getId() != p.getId()) {
+               clientSendPacket(Position(player.pos, player.dir, player.moving, 
+                  player.getId()),  p.getId());
+            }
+         }
+      }
+   }
+
+   for(unsigned i = 0; i < playersToRemove.size(); i++) {
+      Player &p = *playersToRemove[i];
+      clientBroadcast(Signal(Signal::remove, p.getId()));
+      removeClientConnection(p.getId());
+      om.remove(p.getId());
+   }
 }
 
 void GameServer::updateNPCs(int ticks, float dt)
@@ -185,45 +247,27 @@ void GameServer::updateNPCs(int ticks, float dt)
    std::vector<NPC *> npcsToRemove;
    for(unsigned i = 0; i < om.npcCount(); i++) {
       NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
-      bool removeNPC = false;
+      Geometry g(npc.getGeom());
 
       std::vector<ItemBase *> collidedItems;
-      om.collidingItems(npc.getGeom(), npc.pos, collidedItems);
+      om.collidingItems(g, npc.pos, collidedItems);
       for(unsigned j = 0; j < collidedItems.size(); j++) {
          Item &item = *static_cast<Item *>(collidedItems[j]);
-         if(item.isCollidable()) {
-            vec2 pushDir = mat::to(item.pos, npc.pos);
-            if(pushDir.length() > 0.1f) //no divide by zero!
-               pushDir.normalize();
-            else
-               pushDir = vec2(1, 0);
-            vec2 newPos(item.pos + pushDir * (item.getRadius() + npc.getRadius()));
-            om.move(&npc, newPos);
-            npc.move(newPos, npc.dir, false);
+         if(collideItem(npc, item)) {
+            //already pushed back
          }
       }
   
       std::vector<MissileBase *> ms;
-      om.collidingMissiles(npc.getGeom(), npc.pos, ms);
-      for(unsigned j = 0; j < ms.size() && !removeNPC; j++) {
+      om.collidingMissiles(g, npc.pos, ms);
+      for(unsigned j = 0; j < ms.size() && npc.hp > 0; j++) {
          Missile &m = *static_cast<Missile *>(ms[j]);
-         if(m.owned != npc.getId() && om.contains(m.owned, ObjectType::Player)) {
-            npc.takeDamage(m.getDamage());
-            if(npc.hp <= 0) {
-               if(om.contains(m.owned, ObjectType::Player)) {
-                  Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
-                  p.gainExp(npc.getExp());
-                  clientSendPacket(Signal(Signal::changeExp, p.exp), p.getId());
-               }
-               removeNPC = true;
-            }
-            clientBroadcast(Signal(Signal::remove, m.getId()));
-            om.remove(m.getId());
+         if(collideMissile(npc, m)) {
+            //do nothing
          }
       }
-      if(!removeNPC) {
+      if(npc.hp > 0)
          npc.update();
-      }
       else
          npcsToRemove.push_back(&npc);
    }
@@ -275,106 +319,10 @@ void GameServer::updateMissiles(int ticks, float dt)
    }
 }
 
-void GameServer::updatePlayers(int ticks, float dt)
-{
-   std::vector<Player *> playersToRemove;
-   for(unsigned i = 0; i < om.playerCount(); i++) {
-      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
-      p.shotThisFrame = false;
 
-      p.gainHp(playerHpPerTick);
-      std::vector<ItemBase *> collidedItems;
-      om.collidingItems(p.getGeom(), p.pos, collidedItems);
-      for(unsigned j = 0; j < collidedItems.size(); j++) {
-         Item &item = *static_cast<Item *>(collidedItems[j]);
-         if(item.isCollidable()) {
-            vec2 pushDir = mat::to(item.pos, p.pos);
-            if(pushDir.length() > 0.1f) //no divide by zero!
-               pushDir.normalize();
-            else
-               pushDir = vec2(1, 0);
-            vec2 newPos(item.pos + pushDir * (item.getRadius() + p.getRadius()));
-            om.move(&p, newPos);
-            p.move(newPos, p.dir, false);
-            clientSendPacket(Teleport(newPos), p.getId());
-            //printf("Player %d collided\n", p.getId());
-         }
-         else if(item.isCollectable()) {
-            clientBroadcast(Signal(Signal::remove, item.getId()));
-            collectItem(p, item);
-         }
-      }
-
-      //if player is colliding with any missile that is not owned by it, they take dmg
-      std::vector<MissileBase *> collidedMis;
-      om.collidingMissiles(p.getGeom(), p.pos, collidedMis);
-      //bool damaged = false;
-      for(unsigned mdx = 0; mdx < collidedMis.size(); mdx++) {
-         Missile &m = *static_cast<Missile *>(collidedMis[mdx]);
-         if(m.owned != p.getId()) {
-            if(p.pvp && (om.contains(m.owned, ObjectType::Player)
-                  && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) 
-            {
-               continue;
-            }
-            else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
-               continue;
-            p.takeDamage(m.getDamage());
-            clientBroadcast(Signal(Signal::remove, m.getId()));
-            om.remove(m.getId());
-         }
-      }
-      /*
-      for(unsigned i = 0; i < om.missileCount(); i++) {
-         Missile *m = static_cast<Missile *>(om.get(ObjectType::Missile, i));
-         bool a = m->getGeom().collision(p.getGeom());
-         bool b = p.getGeom().collision(m->getGeom());
-         if(a || b)
-         {
-            printf("Error %d %d\n", a, b);
-         }
-         else if(mat::dist(p.pos, m->pos) < p.getRadius() + m->getRadius())
-         {
-            printf("Error a\n");
-         }
-      }
-      */
-
-      if(p.hp == 0) {
-         playersToRemove.push_back(&p);
-         continue;
-      } else {
-         Circle areaOfInfluence(p.pos, areaOfInfluenceRadius);
-         std::vector<NPCBase *> aoinpcs;
-         om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
-         for(unsigned i = 0; i < aoinpcs.size(); i++) {
-            NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
-            clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
-            clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), p.getId());
-            //printf("id=%d pos=%f %f\n", npc.getId(), npc.pos.x, npc.pos.y);
-         }
-         std::vector<PlayerBase *> aoiplayers;
-         om.collidingPlayers(areaOfInfluence, p.pos, aoiplayers);
-         for(unsigned i = 0; i < aoiplayers.size(); i++) {
-            Player &player = *static_cast<Player *>(aoiplayers[i]);
-            clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
-            if(player.getId() != p.getId()) {
-               //Sending pos packet to player can cause jittering
-               clientSendPacket(Position(player.pos, player.dir, player.moving, player.getId()), 
-                  p.getId());
-            }
-         }
-      }
-   }
-
-   for(unsigned i = 0; i < playersToRemove.size(); i++) {
-      Player &p = *playersToRemove[i];
-      clientBroadcast(Signal(Signal::remove, p.getId()));
-      removeClientConnection(p.getId());
-      om.remove(p.getId());
-   }
-}
-
+/////////////////////////////////////////
+/////////////// Utilities ///////////////
+/////////////////////////////////////////
 NPC *GameServer::spawnNPC(int regionX, int regionY)
 {
    util::clamp(regionX, 0, (int)regionXSize-1);
@@ -410,22 +358,78 @@ Item *GameServer::spawnStump(int id)
    return stump;
 }
 
-void GameServer::collectItem(Player &pl, Item &item)
+bool GameServer::collectItem(Player &pl, Item &item)
 {
-   int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
-      item.type == ItemType::BlueRupee ? blueRupeeValue :
-      item.type == ItemType::RedRupee ? redRupeeValue :
-      0;
-   if(rupees > 0) {
-      pl.gainRupees(rupees);
-      clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
+   if(item.isCollectable()) {
+      clientBroadcast(Signal(Signal::remove, item.getId()));
+      int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+         item.type == ItemType::BlueRupee ? blueRupeeValue :
+         item.type == ItemType::RedRupee ? redRupeeValue :
+         0;
+      if(rupees > 0) {
+         pl.gainRupees(rupees);
+         clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
+      }
+      else if(item.type == ItemType::Heart) {
+         pl.gainHp(heartValue);
+      }
+      else {
+         printf("Collected unknown item type %d type=%d\n",
+            item.getId(), item.type);
+      }
+      om.remove(item.getId()); //only remove one item per click max
+      return true;
    }
-   else if(item.type == ItemType::Heart) {
-      pl.gainHp(heartValue);
+   return false;
+}
+
+bool GameServer::collideMissile(Player &p, Missile &m)
+{
+   if(m.owned != p.getId()) {
+      if(p.pvp && (om.contains(m.owned, ObjectType::Player)
+            && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) 
+      {
+         return false;
+      }
+      else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
+         return false;
+      p.takeDamage(m.getDamage());
+      clientBroadcast(Signal(Signal::remove, m.getId()));
+      om.remove(m.getId());
+      return true;
    }
-   else {
-      printf("Collected unknown item type %d type=%d\n",
-         item.getId(), item.type);
+   return false;
+}
+
+bool GameServer::collideMissile(NPC &npc, Missile &m)
+{
+   if(m.owned != npc.getId() && om.contains(m.owned, ObjectType::Player)) {
+      npc.takeDamage(m.getDamage());
+      if(npc.hp <= 0) {
+         if(om.contains(m.owned, ObjectType::Player)) {
+            Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
+            p.gainExp(npc.getExp());
+            clientSendPacket(Signal(Signal::changeExp, p.exp), p.getId());
+         }
+      }
+      clientBroadcast(Signal(Signal::remove, m.getId()));
+      om.remove(m.getId());
+      return true;
    }
-   om.remove(item.getId()); //only remove one item per click max
+   return false;
+}
+
+bool GameServer::collideItem(ObjectBase &obj, Item &item)
+{
+   if(item.isCollidable()) {
+      vec2 pushDir = mat::to(item.pos, obj.pos);
+      if(pushDir.length() > 0.1f) //no divide by zero!
+         pushDir.normalize();
+      else
+         pushDir = vec2(1, 0);
+      vec2 newPos(item.pos + pushDir * (item.getRadius() + obj.getRadius()));
+      om.move(&obj, newPos);
+      return true;
+   }
+   return false;
 }

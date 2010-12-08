@@ -88,28 +88,24 @@ namespace objectManager {
       void collidingItems(Geometry g, vec2 center,
          std::vector<ItemBase *> &collided) const;
       
-      void move(PlayerBase *p, vec2 newPos);
-      void move(ItemBase *i, vec2 newPos);
-      void move(MissileBase *m, vec2 newPos);
-      void move(NPCBase *n, vec2 newPos);
+      void move(ObjectBase *obj, const vec2 &newPos);
       
       unsigned itemCount() const;
       unsigned playerCount() const;
       unsigned npcCount() const;
       unsigned missileCount() const;
       unsigned objectCount() const;
+      vec2 toWorldPos(vec2 pos) const;
       
       vec2 worldBotLeft;
       
    protected:
-      void _move(ObjectBase *obj, vec2 &pos, vec2 &newPos);
       ObjectBase *_get(int id, int type) const;
       ObjectBase *_get(int id) const;
       bool _add(ObjectBase *obj, vec2 pos, Geometry g);
       template<typename Ty, int ObjectTy>
       vector<Ty> &_colliding(Geometry g, const vec2 &center, 
          std::vector<Ty> &collided) const;
-      vec2 toWorldPos(vec2 pos) const;
       void getRegion(vec2 pos, int &x, int &y) const;
       void getRegions(vec2 pos, Geometry g, std::vector<int> &regionIds) const;
       Geometry getRegionGeom(int x, int y) const;
