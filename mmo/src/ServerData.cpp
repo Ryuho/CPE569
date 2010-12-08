@@ -504,4 +504,27 @@ Missile *ObjectHolder::getMissile(int id)
    return static_cast<Missile *>(ObjectManager::getMissile(id));
 }
 
+Serializable *ObjectHolder::getSerialized(int id)
+{
+   ObjectBase *obj = static_cast<ObjectBase *>(getOM().get(id));
+   Serializable *serialized = 0;
+   switch(obj->getType()) {
+      case ObjectType::Player:
+         serialized = static_cast<Serializable *>(static_cast<Player *>(obj));
+         break;
+      case ObjectType::NPC:
+         serialized = static_cast<Serializable *>(static_cast<NPC *>(obj));
+         break;
+      case ObjectType::Item:
+         serialized = static_cast<Serializable *>(static_cast<Item *>(obj));
+         break;
+      case ObjectType::Missile:
+         serialized = static_cast<Serializable *>(static_cast<Missile *>(obj));
+         break;
+      default:
+         printf("Error: getSerialized Unknown type %d\n", obj->getType());
+   }
+   return serialized;
+}
+
 } // end server namespace

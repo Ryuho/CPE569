@@ -13,36 +13,24 @@ using namespace server;
 void GameServer::processServerPacket(pack::Packet p, int id)
 {
    if(p.type == PacketType::serialPlayer) {
-      Player *obj = new Player(p);
-      if(getOM().contains(obj->getId())) {
-         delete obj;
-      }
-      else
-         getOM().add(obj);
-   } 
+      Player obj(p);
+      if(!getOM().contains(obj.getId()))
+         getOM().add(new Player(obj));
+   }
    else if(p.type == PacketType::serialItem) {
-      Item *obj = new Item(p);
-      if(getOM().contains(obj->getId())) {
-         delete obj;
-      }
-      else
-         getOM().add(obj);
+      Item obj(p);
+      if(!getOM().contains(obj.getId()))
+         getOM().add(new Item(obj));
    }
    else if(p.type == PacketType::serialMissile) {
-      Missile *obj = new Missile(p);
-      if(getOM().contains(obj->getId())) {
-         delete obj;
-      }
-      else
-         getOM().add(obj);
+      Missile obj(p);
+      if(!getOM().contains(obj.getId()))
+         getOM().add(new Missile(obj));
    }
    else if(p.type == PacketType::serialNPC) {
-      NPC *obj = new NPC(p);
-      if(getOM().contains(obj->getId())) {
-         delete obj;
-      }
-      else
-         getOM().add(obj);
+      NPC obj(p);
+      if(!getOM().contains(obj.getId()))
+         getOM().add(new NPC(obj));
    }
    else if(p.type == PacketType::signal) {
       Signal signal(p);
@@ -77,6 +65,12 @@ void GameServer::newServerConnection(int id)
    //tell new server about previous NPCs
    for(unsigned i = 0; i < om.npcCount(); i++) {
       NPC &obj = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
+      if(obj.sid == cm.ownServerId)
+         cm.serverSendPacket(obj.serialize(), id);
+   }
+   //tell new servers about previous Missiles
+   for(unsigned i = 0; i < om.npcCount(); i++) {
+      Missile &obj = *static_cast<Missile *>(om.get(ObjectType::Missile, i));
       if(obj.sid == cm.ownServerId)
          cm.serverSendPacket(obj.serialize(), id);
    }

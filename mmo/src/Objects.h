@@ -63,10 +63,10 @@ namespace objectManager {
       ObjectManager();
 
       bool inBounds(vec2 pos) const;
-      PlayerBase *getPlayer(int id);
-      MissileBase *getMissile(int id);
-      NPCBase *getNPC(int id);
-      ItemBase *getItem(int id);
+      PlayerBase *getPlayer(int id) const;
+      MissileBase *getMissile(int id) const;
+      NPCBase *getNPC(int id) const;
+      ItemBase *getItem(int id) const;
       
       bool add(PlayerBase *obj);
       bool add(MissileBase *obj);
@@ -76,17 +76,17 @@ namespace objectManager {
       bool remove(int id);
       bool contains(int id) const;
       bool contains(int id, int type) const;
-      ObjectBase *get(int id);
-      ObjectBase *get(int type, int index_Not_The_Id);
+      ObjectBase *get(int id) const;
+      ObjectBase *get(int type, int index_Not_The_Id) const;
       
       void collidingPlayers(Geometry g, vec2 center, 
-         std::vector<PlayerBase *> &collided);
+         std::vector<PlayerBase *> &collided) const;
       void collidingMissiles(Geometry g, vec2 center,
-         std::vector<MissileBase *> &collided);
+         std::vector<MissileBase *> &collided) const;
       void collidingNPCs(Geometry g, vec2 center,
-         std::vector<NPCBase *> &collided);
+         std::vector<NPCBase *> &collided) const;
       void collidingItems(Geometry g, vec2 center,
-         std::vector<ItemBase *> &collided);
+         std::vector<ItemBase *> &collided) const;
       
       void move(PlayerBase *p, vec2 newPos);
       void move(ItemBase *i, vec2 newPos);
@@ -103,23 +103,23 @@ namespace objectManager {
       
    protected:
       void _move(ObjectBase *obj, vec2 &pos, vec2 &newPos);
-      ObjectBase *_get(int id, int type);
-      ObjectBase *_get(int id);
+      ObjectBase *_get(int id, int type) const;
+      ObjectBase *_get(int id) const;
       bool _add(ObjectBase *obj, vec2 pos, Geometry g);
       template<typename Ty, int ObjectTy>
       vector<Ty> &_colliding(Geometry g, const vec2 &center, 
-         std::vector<Ty> &collided);
-      vec2 toWorldPos(vec2 pos);
-      void getRegion(vec2 pos, int &x, int &y);
-      void getRegions(vec2 pos, Geometry g, std::vector<int> &regionIds);
-      Geometry getRegionGeom(int x, int y);
+         std::vector<Ty> &collided) const;
+      vec2 toWorldPos(vec2 pos) const;
+      void getRegion(vec2 pos, int &x, int &y) const;
+      void getRegions(vec2 pos, Geometry g, std::vector<int> &regionIds) const;
+      Geometry getRegionGeom(int x, int y) const;
       
       RegionManager rm;
    };
 
    template<typename Ty, int ObjectTy>
    vector<Ty> &ObjectManager::_colliding(Geometry g, const vec2 &center, 
-      std::vector<Ty> &collided)
+      std::vector<Ty> &collided) const
    {
       std::vector<int> regionIds;
       getRegions(center, g, regionIds);

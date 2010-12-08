@@ -97,6 +97,7 @@ namespace server {
       Item *getItem(int id);
       Missile *getMissile(int id);
 
+      Serializable *getSerialized(int id);
    };
 
 } // end server namespace

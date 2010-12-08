@@ -101,17 +101,17 @@ float MissileBase::getRadius() const
 
 ///////////// Getters ////////////
 //////////////////////////////////
-ObjectBase *ObjectManager::get(int id) 
+ObjectBase *ObjectManager::get(int id) const
 {
    return _get(id);
 }
 
-ObjectBase *ObjectManager::get(int type, int index_Not_The_Id)
+ObjectBase *ObjectManager::get(int type, int index_Not_The_Id) const
 {
    return static_cast<ObjectBase *>(rm[type][index_Not_The_Id]);
 }
 
-ObjectBase *ObjectManager::_get(int id, int type)
+ObjectBase *ObjectManager::_get(int id, int type) const
 {
    ObjectBase *obj = static_cast<ObjectBase *>(rm.get(id));
    if(obj && obj->getType() == type)
@@ -119,27 +119,27 @@ ObjectBase *ObjectManager::_get(int id, int type)
    return 0;
 }
 
-ObjectBase *ObjectManager::_get(int id)
+ObjectBase *ObjectManager::_get(int id) const
 {
    return static_cast<ObjectBase *>(rm.get(id));
 }
 
-PlayerBase *ObjectManager::getPlayer(int id)
+PlayerBase *ObjectManager::getPlayer(int id) const
 {
    return static_cast<PlayerBase *>(_get(id, ObjectType::Player));
 }
 
-MissileBase *ObjectManager::getMissile(int id)
+MissileBase *ObjectManager::getMissile(int id) const
 {
    return static_cast<MissileBase *>(_get(id, ObjectType::Missile));
 }
 
-NPCBase *ObjectManager::getNPC(int id)
+NPCBase *ObjectManager::getNPC(int id) const
 {
    return static_cast<NPCBase *>(_get(id, ObjectType::NPC));
 }
 
-ItemBase *ObjectManager::getItem(int id)
+ItemBase *ObjectManager::getItem(int id) const
 {
    return static_cast<ItemBase *>(_get(id, ObjectType::Item));
 }
@@ -309,25 +309,25 @@ void ObjectManager::move(NPCBase *obj, vec2 newPos)
 /////////// Colliding ////////////
 //////////////////////////////////
 void ObjectManager::collidingPlayers(Geometry g, vec2 center, 
-   std::vector<PlayerBase *> &collided)
+   std::vector<PlayerBase *> &collided) const
 {
    _colliding<PlayerBase *, ObjectType::Player>(g, center, collided);
 }
 
 void ObjectManager::collidingMissiles(Geometry g, vec2 center,
-   std::vector<MissileBase *> &collided)
+   std::vector<MissileBase *> &collided) const
 {
    _colliding<MissileBase *, ObjectType::Missile>(g, center, collided);
 }
 
 void ObjectManager::collidingNPCs(Geometry g, vec2 center,
-   std::vector<NPCBase *> &collided)
+   std::vector<NPCBase *> &collided) const
 {
    _colliding<NPCBase *, ObjectType::NPC>(g, center, collided);
 }
 
 void ObjectManager::collidingItems(Geometry g, vec2 center,
-   std::vector<ItemBase *> &collided)
+   std::vector<ItemBase *> &collided) const
 {
    _colliding<ItemBase *, ObjectType::Item>(g, center, collided);
 }
@@ -374,7 +374,7 @@ bool ObjectManager::contains(int id) const
 
 /////////// Protected ////////////
 //////////////////////////////////
-void ObjectManager::getRegion(vec2 pos, int &x, int &y)
+void ObjectManager::getRegion(vec2 pos, int &x, int &y) const
 {
    x = (int) ((pos.x - worldBotLeft.x) / regionSize);
    y = (int) ((pos.y - worldBotLeft.y) / regionSize);
@@ -382,7 +382,7 @@ void ObjectManager::getRegion(vec2 pos, int &x, int &y)
    util::clamp(y, 0, (int) regionYSize-1);
 }
 
-Geometry ObjectManager::getRegionGeom(int x, int y)
+Geometry ObjectManager::getRegionGeom(int x, int y) const
 {
    return Rectangle(
       vec2(worldBotLeft.x + regionSize*x, worldBotLeft.y + regionSize*y),
@@ -390,7 +390,7 @@ Geometry ObjectManager::getRegionGeom(int x, int y)
 }
 
 void ObjectManager::getRegions(vec2 pos, Geometry g, 
-   std::vector<int> &regionIds)
+   std::vector<int> &regionIds) const
 {
    regionIds.clear();
    int x, y;
@@ -418,7 +418,7 @@ void ObjectManager::getRegions(vec2 pos, Geometry g,
    }
 }
 
-vec2 ObjectManager::toWorldPos(vec2 pos)
+vec2 ObjectManager::toWorldPos(vec2 pos) const
 {
    if(!inBounds(pos)) {
       int x, y;

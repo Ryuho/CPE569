@@ -36,7 +36,6 @@ struct GameServer {
    void clientBroadcast(T &t) {
       clientBroadcast(t.makePacket());
    }
-
    template<typename T>
    void serverSendPacket(T &t, int id) {
       serverSendPacket(t.makePacket(), id);
