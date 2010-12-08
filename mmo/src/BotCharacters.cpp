@@ -151,22 +151,22 @@ bool ObjectHolder::addNPC(NPC *obj)
 
 Player *ObjectHolder::getPlayer(int id)
 {
-   return static_cast<Player *>(rm.getObject(id));
+   return static_cast<Player *>(rm.get(id));
 }
 
 Missile *ObjectHolder::getMissile(int id)
 {
-   return static_cast<Missile *>(rm.getObject(id));
+   return static_cast<Missile *>(rm.get(id));
 }
 
 Item *ObjectHolder::getItem(int id)
 {
-   return static_cast<Item *>(rm.getObject(id));
+   return static_cast<Item *>(rm.get(id));
 }
 
 NPC *ObjectHolder::getNPC(int id)
 {
-   return static_cast<NPC *>(rm.getObject(id));
+   return static_cast<NPC *>(rm.get(id));
 }
 
 void ObjectHolder::updateAll()

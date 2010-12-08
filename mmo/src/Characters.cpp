@@ -138,22 +138,22 @@ bool ObjectHolder::addNPC(NPC *obj)
 
 Player *ObjectHolder::getPlayer(int id)
 {
-   return static_cast<Player *>(rm.getObject(id));
+   return static_cast<Player *>(rm.get(id));
 }
 
 Missile *ObjectHolder::getMissile(int id)
 {
-   return static_cast<Missile *>(rm.getObject(id));
+   return static_cast<Missile *>(rm.get(id));
 }
 
 Item *ObjectHolder::getItem(int id)
 {
-   return static_cast<Item *>(rm.getObject(id));
+   return static_cast<Item *>(rm.get(id));
 }
 
 NPC *ObjectHolder::getNPC(int id)
 {
-   return static_cast<NPC *>(rm.getObject(id));
+   return static_cast<NPC *>(rm.get(id));
 }
 
 void ObjectHolder::updateAll()
@@ -180,8 +180,6 @@ ObjectHolder::ObjectHolder() : ObjectManager()
 {
    const float width(constants::worldWidth/2);
    const float height(constants::worldHeight/2);
-   //const float width = constants::worldWidth;
-   //const float height = constants::worldHeight;
    corners[Direction::Up] = vec2(-width, height);
    corners[Direction::Right] = vec2(width, height);
    corners[Direction::Down] = vec2(width, -height);
@@ -194,13 +192,13 @@ void ObjectHolder::drawAll(bool checkNoDraw)
 
    for(unsigned i = 0; i < playerCount(); i++) {
       Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
-      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+      if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
    for(unsigned i = 0; i < npcCount(); i++) {
       NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
-      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+      if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
@@ -229,7 +227,7 @@ void ObjectHolder::drawAll(vec2 pos, bool checkNoDraw)
    collidingPlayers(aoi, pos, players);
    for (unsigned i = 0; i < players.size(); i++) {
       Player &obj = *static_cast<Player *>(players[i]);
-      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+      if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
@@ -237,7 +235,7 @@ void ObjectHolder::drawAll(vec2 pos, bool checkNoDraw)
    collidingNPCs(aoi, pos, npcs);
    for (unsigned i = 0; i < npcs.size(); i++) {
       NPC &obj = *static_cast<NPC *>(npcs[i]);
-      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+      if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }

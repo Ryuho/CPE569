@@ -125,9 +125,8 @@ namespace objectManager {
       getRegions(center, g, regionIds);
       int counted = 0;
       for(unsigned i = 0; i < regionIds.size(); i++) {
-         Region &region = *rm.getRegion(regionIds[i]);
-         std::vector<RMObject *> &objs
-            = region.getObjects(ObjectTy);
+         const Region &region = *rm.getRegion(regionIds[i]);
+         const std::vector<RMObject *> &objs = region[ObjectTy];
          for(unsigned j = 0; j < objs.size(); j++) {
             Ty obj = static_cast<Ty>(objs[j]);
             if(obj->getGeom().collision(g)) {

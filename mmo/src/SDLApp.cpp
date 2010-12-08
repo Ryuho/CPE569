@@ -71,10 +71,10 @@ void SDLApp::update()
    if (inputMgr.keyPressed(SDLK_p)) {
       world.togglePvp();
    }
-   if (inputMgr.keyPressed(SDLK_o)) {
+   if (inputMgr.keyPressed(SDLK_l)) {
       world.toggleDrawAll();
    }
-   if (inputMgr.keyPressed(SDLK_p)) {
+   if (inputMgr.keyPressed(SDLK_k)) {
       world.toggleDrawUpdated();
    }
 

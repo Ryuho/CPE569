@@ -21,7 +21,7 @@ int Region::getId() const
    return id;
 }
 
-std::vector<RMObject *> &Region::getObjects(int typeIndex)
+const std::vector<RMObject *> &Region::operator[](int typeIndex) const
 {
    return objectList[typeIndex];
 }
@@ -117,7 +117,7 @@ RegionManager::RegionManager(unsigned regionCount, unsigned typeCount)
    }
 }
 
-RMObject *RegionManager::getObject(int objectId) const
+RMObject *RegionManager::get(int objectId) const
 {
    std::map<int, RegionManagerData>::const_iterator iter;
 
@@ -129,12 +129,12 @@ RMObject *RegionManager::getObject(int objectId) const
    return iter->second.obj;
 }
 
-Region *RegionManager::getRegion(int regionIndex)
+const Region *RegionManager::getRegion(int regionIndex) const
 {
    return &regions[regionIndex];
 }
 
-bool RegionManager::addObject(RMObject *object, int typeIndex,
+bool RegionManager::add(RMObject *object, int typeIndex,
    std::vector<int> &regionIds)
 {
    assert(regionIds.size() > 0);
@@ -155,7 +155,7 @@ bool RegionManager::addObject(RMObject *object, int typeIndex,
    return true;
 }
 
-RMObject *RegionManager::removeObject(int objectId, int typeIndex)
+RMObject *RegionManager::remove(int objectId, int typeIndex)
 {
    std::map<int, RegionManagerData>::iterator iter;
    iter = objectToRegionsMap.find(objectId);
@@ -237,7 +237,7 @@ unsigned RegionManager::count(int typeIndex) const
    return objectList[typeIndex].size();
 }
 
-std::vector<RMObject *> &RegionManager::operator[](int typeIndex)
+const std::vector<RMObject *> &RegionManager::operator[](int typeIndex) const
 {
    return objectList[typeIndex];
 }

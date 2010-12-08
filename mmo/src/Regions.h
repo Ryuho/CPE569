@@ -21,7 +21,6 @@ namespace regionManager {
       Region(int id, unsigned typeCount);
 
       int getId() const; //Region Id
-      std::vector<RMObject *> &getObjects(int typeIndex);
       RMObject *get(int objectId, int typeIndex) const;
       bool contains(int objectId) const;
       bool contains(int objectId, int typeIndex) const;
@@ -30,6 +29,7 @@ namespace regionManager {
       unsigned objectCount() const;
       unsigned typeCount() const;
       unsigned count(int typeIndex) const;
+      const std::vector<RMObject *> &operator[](int typeIndex) const;
 
    private:
       bool _contains(int objectId, int typeIndex, unsigned index) const;
@@ -64,16 +64,16 @@ namespace regionManager {
       RegionManager(unsigned regionCount, unsigned typeCount);
       bool contains(int objectId) const;
       bool contains(int objectId, int typeIndex) const;
-      RMObject *getObject(int objectId) const;
-      Region *getRegion(int regionIndex);
-      bool addObject(RMObject *object, int typeIndex, std::vector<int> &regionIds);
-      RMObject *removeObject(int objectId, int typeIndex);
+      RMObject *get(int objectId) const;
+      const Region *getRegion(int regionIndex) const;
+      bool add(RMObject *object, int typeIndex, std::vector<int> &regionIds);
+      RMObject *remove(int objectId, int typeIndex);
       const RegionManagerData *getData(int objectId) const;
       unsigned regionCount() const;
       unsigned objectCount() const;
       unsigned typeCount() const;
       unsigned count(int typeIndex) const;
-      std::vector<RMObject *> &operator[](int typeIndex);
+      const std::vector<RMObject *> &operator[](int typeIndex) const;
 
    private:
       bool _contains(int objectId, int typeIndex, unsigned index) const;

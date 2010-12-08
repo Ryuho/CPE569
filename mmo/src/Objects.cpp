@@ -113,7 +113,7 @@ ObjectBase *ObjectManager::get(int type, int index_Not_The_Id)
 
 ObjectBase *ObjectManager::_get(int id, int type)
 {
-   ObjectBase *obj = static_cast<ObjectBase *>(rm.getObject(id));
+   ObjectBase *obj = static_cast<ObjectBase *>(rm.get(id));
    if(obj && obj->getType() == type)
       return obj;
    return 0;
@@ -121,7 +121,7 @@ ObjectBase *ObjectManager::_get(int id, int type)
 
 ObjectBase *ObjectManager::_get(int id)
 {
-   return static_cast<ObjectBase *>(rm.getObject(id));
+   return static_cast<ObjectBase *>(rm.get(id));
 }
 
 PlayerBase *ObjectManager::getPlayer(int id)
@@ -177,8 +177,7 @@ bool ObjectManager::_add(ObjectBase *obj, vec2 pos, Geometry g)
 {
    std::vector<int> regionIds;
    getRegions(pos, g, regionIds);
-   return regionIds.size() != 0 
-      && rm.addObject(obj, obj->getType(), regionIds);
+   return rm.add(obj, obj->getType(), regionIds);
 }
 
 bool ObjectManager::add(PlayerBase *obj)
@@ -212,8 +211,8 @@ void ObjectManager::_move(ObjectBase *obj, vec2 &pos, vec2 &newPos)
    getRegions(newPos, obj->getGeom(), regsNew);
    if(!util::isequal(regsOld, regsNew)) 
    {
-      rm.removeObject(obj->getId(), obj->getType());
-      rm.addObject(obj, obj->getType(), regsNew);
+      rm.remove(obj->getId(), obj->getType());
+      rm.add(obj, obj->getType(), regsNew);
 
 /*
 //debug version
@@ -352,7 +351,7 @@ bool ObjectManager::inBounds(vec2 pos) const
 bool ObjectManager::remove(int id)
 {
    ObjectBase *obj = _get(id);
-   if(!obj || !rm.removeObject(id, obj->getType())) {
+   if(!obj || !rm.remove(id, obj->getType())) {
       printf("Error: Failed to remove Object id=%d", id);
       if(obj)
          printf(" type=%d\n", obj->getType());
