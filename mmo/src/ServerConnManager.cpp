@@ -240,7 +240,10 @@ void ConnectionManager::initPackStat()
 
 void ConnectionManager::updatePackStat(int packType)
 {
-   packStat[packType]++;
+   if(packType >= 0 && packType < constants::PacketType::MaxPacketType)
+      packStat[packType]++;
+   //else
+   //   printf("updatePackStat: Unknown Pack Type %d\n", packType);
 }
 
 

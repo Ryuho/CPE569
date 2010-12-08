@@ -57,6 +57,44 @@ inline Packet readPacket(sock::Connection conn) {
    return Packet(0);
 }
 
+//Can be used to create a list or tree of Packets 
+//e.g. nest Packet2s within a Packet2
+struct Packet2 {
+   Packet2() {}
+   Packet2(Packet &p)  {
+      unsigned count;
+      p.data.readUInt(count);
+      for(unsigned i = 0; i < count; i++) {
+         unsigned count2;
+         int subtype;
+         p.data.readInt(subtype);
+         p.data.readUInt(count2);
+         Packet pn(subtype);
+         for(unsigned j = 0; j < count2; j++) {
+            unsigned char byt;
+            p.data.readByte(byt);
+            pn.data.writeByte(byt);
+         }
+         pn.data.setCursor(0);
+         packets.push_back(pn);
+      }
+      p.data.reset();
+   }
+
+   Packet makePacket() {
+      Packet p(pack2type);
+      p.data.writeUInt(packets.size());
+      for(unsigned i = 0; i < packets.size(); i++) {
+         p.data.writeInt(packets[i].type);
+         p.data.writeUInt(packets[i].data.size());
+         p.data.writeData(&packets[i].data[0], packets[i].data.size());
+      }
+      return p;
+   }
+   static const int pack2type = 0;
+   std::vector<pack::Packet> packets;
+};
+
 } // end pack namespace
 
 #endif

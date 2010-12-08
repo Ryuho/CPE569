@@ -3,6 +3,7 @@
 
 #include "packet.h"
 #include "Constants.h"
+#include <vector>
 
 namespace pack {
    using namespace constants;
@@ -11,6 +12,8 @@ namespace pack {
 
 // Update of a player position. 
 // id is not used when sending to server (can't trust pesky client)
+
+
 struct Position {
    vec2 pos, dir;
    int id, moving;

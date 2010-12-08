@@ -171,7 +171,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 
 void GameServer::processServerPacket(pack::Packet p, int id)
 {
-   /*
    if(p.type == PacketType::serialPlayer) {
       Player *obj = new Player(p);
       if(getOM().contains(obj->getId())) {
@@ -220,7 +219,6 @@ void GameServer::processServerPacket(pack::Packet p, int id)
             signal.sig, signal.val);
    }
    else
-   */
       printf("Error: unknown server packet, size: %d\n", p.data.size());
 }
 
@@ -273,14 +271,13 @@ void GameServer::updateNPCs(int ticks, float dt)
          Item &item = *static_cast<Item *>(collidedItems[j]);
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, npc.pos);
-            if(pushDir.length() > 0.01) //no divide by zero!
+            if(pushDir.length() > 0.1f) //no divide by zero!
                pushDir.normalize();
             else
                pushDir = vec2(1, 0);
-            npc.move(item.pos + pushDir * (item.getRadius() + npc.getRadius()), 
-               npc.dir, npc.moving);
-            //not needed since self is within Area of Influence?
-            //cm.sendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
+            vec2 newPos(item.pos + pushDir * (item.getRadius() + npc.getRadius()));
+            om.move(&npc, newPos);
+            npc.move(newPos, npc.dir, false);
          }
       }
   
@@ -290,7 +287,7 @@ void GameServer::updateNPCs(int ticks, float dt)
          Missile &m = *static_cast<Missile *>(ms[j]);
          if(m.owned != npc.getId() && om.contains(m.owned, ObjectType::Player)) {
             npc.takeDamage(m.getDamage());
-            if(npc.hp == 0) {
+            if(npc.hp <= 0) {
                if(om.contains(m.owned, ObjectType::Player)) {
                   Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
                   p.gainExp(npc.getExp());
@@ -414,6 +411,10 @@ void GameServer::updatePlayers(int ticks, float dt)
          om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
          for(unsigned i = 0; i < aoinpcs.size(); i++) {
             NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
+            //Packet2 p2;
+            //p2.packets.push_back(HealthChange(npc.getId(), npc.hp).makePacket());
+            //p2.packets.push_back(Position(npc.pos, npc.dir, npc.moving, npc.getId()).makePacket());
+            //cm.clientSendPacket(p2.makePacket(), p.getId());
             cm.clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
             cm.clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), p.getId());
             //printf("id=%d pos=%f %f\n", npc.getId(), npc.pos.x, npc.pos.y);

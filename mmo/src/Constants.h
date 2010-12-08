@@ -93,7 +93,7 @@ namespace constants {
       serverList = 13,
       changePvp = 14,
       teleport = 15,
-      MaxPacketType
+      MaxPacketType = 15 //make sure this is the number of types
    };}
 }
 

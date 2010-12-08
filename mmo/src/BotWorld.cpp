@@ -334,8 +334,8 @@ void BotWorldData::updatePlayerPos(int ticks, float dt)
 void BotWorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
-   
-   if (p.type == PacketType::position) {
+
+   if(p.type == PacketType::position) {
       Position pos(p);
       if(pos.id == player.getId()) {
          player.move(pos.pos, pos.dir, pos.moving != 0);

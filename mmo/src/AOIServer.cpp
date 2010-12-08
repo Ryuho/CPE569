@@ -212,14 +212,13 @@ void GameServer::updateNPCs(int ticks, float dt)
          Item &item = *static_cast<Item *>(collidedItems[j]);
          if(item.isCollidable()) {
             vec2 pushDir = mat::to(item.pos, npc.pos);
-            if(pushDir.length() > 0.01) //no divide by zero!
+            if(pushDir.length() > 0.1f) //no divide by zero!
                pushDir.normalize();
             else
                pushDir = vec2(1, 0);
-            npc.move(item.pos + pushDir * (item.getRadius() + npc.getRadius()), 
-               npc.dir, npc.moving);
-            //not needed since self is within Area of Influence?
-            //cm.sendPacket(Position(p.pos, p.dir, p.moving, p.id), p.id);
+            vec2 newPos(item.pos + pushDir * (item.getRadius() + npc.getRadius()));
+            om.move(&npc, newPos);
+            npc.move(newPos, npc.dir, false);
          }
       }
   
