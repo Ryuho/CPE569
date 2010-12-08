@@ -86,10 +86,12 @@ struct ObjectHolder : ObjectManager {
    Missile *getMissile(int id);
 
    void updateAll();
-   void drawAll(vec2 pos);
+   void drawAll(vec2 pos, bool updatedOnly);
+   void drawAll();
 
    std::vector<Item> border[4];
    vec2 corners[4];
+   bool checkNoDraw;
 };
 
 } //end namespace

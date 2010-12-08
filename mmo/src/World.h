@@ -22,6 +22,8 @@ struct World {
    void spawnItem();
    void hurtMe();
    void togglePvp();
+   void toggleDrawAll();
+   void toggleDrawUpdated();
    void rightClick(vec2 mousePos);
 
 protected:

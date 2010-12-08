@@ -341,16 +341,22 @@ void BotWorldData::processPacket(pack::Packet p)
          player.move(pos.pos, pos.dir, pos.moving != 0);
       } 
       else if(objs.contains(pos.id, ObjectType::Player)) {
-         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } 
-      else if (objs.contains(pos.id, ObjectType::NPC)) {
-         objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
-      } 
-      else if(objs.contains(pos.id, ObjectType::Item)) {
-         objs.getItem(pos.id)->move(pos.pos);
-      } 
-      else if(objs.contains(pos.id, ObjectType::Missile)) {
-         objs.getMissile(pos.id)->move(pos.pos, pos.dir);
+         Player *obj = objs.getPlayer(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir, pos.moving != 0);
+      } else if (objs.contains(pos.id, ObjectType::NPC)) {
+         NPC *obj = objs.getNPC(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir, pos.moving != 0);
+         //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
+      } else if(objs.contains(pos.id, ObjectType::Item)) {
+         Item *obj = objs.getItem(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos);
+      } else if(objs.contains(pos.id, ObjectType::Missile)) {
+         Missile *obj = objs.getMissile(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir);
       }
       else
          printf("client %d: unable to process Pos packet id=%d\n", 

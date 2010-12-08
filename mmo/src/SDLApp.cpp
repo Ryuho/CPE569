@@ -71,6 +71,14 @@ void SDLApp::update()
    if (inputMgr.keyPressed(SDLK_p)) {
       world.togglePvp();
    }
+   if (inputMgr.keyPressed(SDLK_o)) {
+      world.toggleDrawAll();
+      printf("\nToggled Draw All\n");
+   }
+   if (inputMgr.keyPressed(SDLK_p)) {
+      world.toggleDrawUpdated();
+      printf("\nToggled Draw Updated\n");
+   }
 
    vec2 dir(0.0, 0.0);
    if (inputMgr.keyDown(SDLK_w))

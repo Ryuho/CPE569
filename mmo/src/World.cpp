@@ -10,12 +10,16 @@
 using namespace constants;
 
 struct WorldData {
-   WorldData() {};
+   WorldData() 
+      : ticks(0), width(0), height(0), dt(0.0f), arrowTick(0), 
+      specialTick(0), drawEverything(true), drawUpdatedOnly(false) {};
    int width, height;
    int ticks;
    float dt;
    vec2 playerMoveDir;
    int arrowTick, specialTick;
+   bool drawEverything;
+   bool drawUpdatedOnly;
 
    freetype::font_data mono;
 
@@ -71,6 +75,8 @@ void setUpBoarder()
 void WorldData::init(const char *host, int port)
 {
    clientState = this;
+   clientState->ticks = getTicks();
+   clientState->dt = 0;
 
    arrowTick = 0;
    specialTick = 0;
@@ -122,7 +128,8 @@ void WorldData::init(const char *host, int port)
    player.rupees = 0;
    setUpBoarder();
    shadow = player;
-
+   drawEverything = false;
+   drawUpdatedOnly = true;
 
    printf("Connected to server successfully\nYour id is %d\n", player.getId());
 }
@@ -188,12 +195,22 @@ void WorldData::processPacket(pack::Packet p)
          shadow.move(pos.pos, pos.dir, pos.moving != 0);
          player.move(pos.pos, pos.dir, pos.moving != 0);
       } else if(objs.contains(pos.id, ObjectType::Player)) {
-         objs.getPlayer(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         Player *obj = objs.getPlayer(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir, pos.moving != 0);
       } else if (objs.contains(pos.id, ObjectType::NPC)) {
-         objs.getNPC(pos.id)->move(pos.pos, pos.dir, pos.moving != 0);
+         NPC *obj = objs.getNPC(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir, pos.moving != 0);
          //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
       } else if(objs.contains(pos.id, ObjectType::Item)) {
-         objs.getItem(pos.id)->move(pos.pos);
+         Item *obj = objs.getItem(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos);
+      } else if(objs.contains(pos.id, ObjectType::Missile)) {
+         Missile *obj = objs.getMissile(pos.id);
+         objs.move(obj, pos.pos);
+         obj->move(pos.pos, pos.dir);
       }
       else
          printf("client %d: unable to process Pos packet id=%d\n", 
@@ -341,7 +358,10 @@ void WorldData::draw()
    glColor4ub(255,255,255,255);*/
 	glColor3ub(255, 255, 255);
 
-   objs.drawAll(player.pos);
+   if(drawEverything)
+      objs.drawAll();
+   else
+      objs.drawAll(player.pos, drawUpdatedOnly);
    
    player.draw();
    
@@ -406,6 +426,16 @@ void World::togglePvp()
 {
    getPlayer().pvp = !getPlayer().pvp;
    pack::Pvp(getPlayer().getId(), getPlayer().pvp).makePacket().sendTo(data->conn);
+}
+
+void World::toggleDrawAll()
+{
+   data->drawEverything = !data->drawEverything;
+}
+
+void World::toggleDrawUpdated()
+{
+   data->drawUpdatedOnly = !data->drawUpdatedOnly;
 }
 
 // Global accessor functions
