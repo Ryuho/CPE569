@@ -188,17 +188,21 @@ ObjectHolder::ObjectHolder() : ObjectManager()
    corners[Direction::Left] = vec2(-width, -height);
 }
 
-void ObjectHolder::drawAll()
+void ObjectHolder::drawAll(bool checkNoDraw)
 {
    int ticks = getTicks();
 
    for(unsigned i = 0; i < playerCount(); i++) {
       Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
-      obj.draw();
+      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+         obj.draw();
+      }
    }
    for(unsigned i = 0; i < npcCount(); i++) {
       NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
-      obj.draw();
+      if(checkNoDraw && ticks - obj.lastUpdate < noDrawTicks) {
+         obj.draw();
+      }
    }
    for(unsigned i = 0; i < itemCount(); i++) {
       Item &obj = *static_cast<Item *>(get(ObjectType::Item, i));

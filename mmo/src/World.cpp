@@ -39,7 +39,7 @@ struct WorldData {
 WorldData* clientState = 0;
 int wHeight = 0;
 int wWidth = 0;
-GLfloat boarderWidth = .05;
+const float boarderWidth = .05;
 
 // Interface stubs
 void World::init(const char *host, int port) {
@@ -72,6 +72,7 @@ void setUpBoarder()
 		clientState->objs.border[Direction::Down].push_back(Item(0, ItemType::Teleportor, vec2(-i, -wHeight)));
 	}
 }
+
 void WorldData::init(const char *host, int port)
 {
    clientState = this;
@@ -359,7 +360,7 @@ void WorldData::draw()
 	glColor3ub(255, 255, 255);
 
    if(drawEverything)
-      objs.drawAll();
+      objs.drawAll(drawUpdatedOnly);
    else
       objs.drawAll(player.pos, drawUpdatedOnly);
    
@@ -431,11 +432,13 @@ void World::togglePvp()
 void World::toggleDrawAll()
 {
    data->drawEverything = !data->drawEverything;
+   printf("Draw Everything: %s\n", data->drawEverything ? "on" : "off");
 }
 
 void World::toggleDrawUpdated()
 {
    data->drawUpdatedOnly = !data->drawUpdatedOnly;
+   printf("Draw Only Updated: %s\n", data->drawUpdatedOnly ? "on" : "off");
 }
 
 // Global accessor functions
