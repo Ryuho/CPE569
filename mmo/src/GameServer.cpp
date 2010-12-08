@@ -375,6 +375,60 @@ void GameServer::updatePlayers(int ticks, float dt)
    }
 }
 
+NPC *GameServer::spawnNPC(int regionX, int regionY)
+{
+   util::clamp(regionX, 0, (int)regionXSize-1);
+   util::clamp(regionY, 0,  (int)regionYSize-1);
+
+   vec2 botLeft(getOM().worldBotLeft.x + regionSize*regionX,
+      getOM().worldBotLeft.y + regionSize*regionY);
+   vec2 pos(util::frand(botLeft.x, botLeft.x + regionSize),
+      util::frand(botLeft.y, botLeft.y + regionSize));
+
+   NPC *n = new server::NPC(newId(), getCM().ownServerId, npcMaxHp, pos, 
+      vec2(0,1), npcType(regionX, regionY));
+
+   getOM().add(n);
+   return n;
+}
+
+Item *GameServer::spawnItem(int id)
+{
+   vec2 pos = randPos2(200, 350);
+   Item *item = new Item(id, getCM().ownServerId, pos, rand() % (ItemType::Explosion+1));
+   getOM().add(item);
+   printf("Spawn Item id=%d type=%d\n", item->getId(), item->type);
+   return item;
+}
+
+Item *GameServer::spawnStump(int id)
+{
+   vec2 pos = randPos2(200, 350);
+   Item *stump = new Item(id, getCM().ownServerId, pos, ItemType::Stump);
+   getOM().add(stump);
+   printf("Spawn Stump id=%d type=%d\n", stump->getId(), stump->type);
+   return stump;
+}
+
+void GameServer::collectItem(Player &pl, Item &item)
+{
+   int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
+      item.type == ItemType::BlueRupee ? blueRupeeValue :
+      item.type == ItemType::RedRupee ? redRupeeValue :
+      0;
+   if(rupees > 0) {
+      pl.gainRupees(rupees);
+      getGS().clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
+   }
+   else if(item.type == ItemType::Heart) {
+      pl.gainHp(heartValue);
+   }
+   else {
+      printf("Collected unknown item type %d type=%d\n",
+         item.getId(), item.type);
+   }
+   getOM().remove(item.getId()); //only remove one item per click max
+}
 
 
 

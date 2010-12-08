@@ -234,10 +234,6 @@
 			Name="Servers"
 			>
 			<File
-				RelativePath=".\src\GameServer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\mmo\src\server.cpp"
 				>
 			</File>
@@ -268,6 +264,10 @@
 		</Filter>
 		<File
 			RelativePath=".\src\GameServer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\src\GameServer.h"
 			>
 		</File>
 		<File

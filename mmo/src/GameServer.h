@@ -53,6 +53,13 @@ struct GameServer {
 
    int ticks;
    float dt;
+
+   //Utilities
+private:
+   void collectItem(Player &pl, Item &item);
+   NPC *spawnNPC(int regionX, int regionY);
+   Item *spawnItem(int id);
+   Item *spawnStump(int id);
 };
 
 #endif // _GAME_SERVER_H_
