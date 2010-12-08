@@ -31,7 +31,7 @@ void GameServer::newClientConnection(int id)
    vec2 pos((float)(rand()%200), (float)(rand()%200));
    
    Player *newPlayer 
-      = new Player(id, getCM().ownServerId, pos, vec2(0,1), playerMaxHp);
+      = new Player(id, cm.ownServerId, pos, vec2(0,1), playerMaxHp);
    om.add(newPlayer);
 
 	clientSendPacket(Connect(id, constants::worldHeight, 
@@ -93,7 +93,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       if (signal.sig == Signal::special) {
          for(int i = 0; i < constants::numArrows; i++) {
             float t = i/(float)constants::numArrows;
-            Missile *m = new Missile(newId(), getCM().ownServerId, id, player.pos, 
+            Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
                vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
             om.add(m);
             clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
@@ -116,7 +116,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Arrow ar(p);
       if(!player.shotThisFrame) {
          player.shotThisFrame = true;
-         Missile *m = new Missile(newId(), getCM().ownServerId, id, player.pos, 
+         Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
             ar.dir);
          om.add(m);
          clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
@@ -169,7 +169,7 @@ void GameServer::update(int ticks)
       int i = regionXSize/2;
       int j = regionYSize/2;
       NPC *npc = spawnNPC(i, j);
-      getCM().clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
+      cm.clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
          npc->type, npc->pos, npc->dir, npc->hp));
    }
    */
@@ -233,7 +233,7 @@ void GameServer::updateNPCs(int ticks, float dt)
       NPC &npc = *npcsToRemove[i];
       int lootItem = npc.getLoot();
       if(lootItem >= 0) {
-         Item *item = new Item(newId(), getCM().ownServerId, npc.pos, lootItem);
+         Item *item = new Item(newId(), cm.ownServerId, npc.pos, lootItem);
          om.add(item);
          clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
             item->pos, vec2(0,1), 0));
@@ -380,23 +380,23 @@ NPC *GameServer::spawnNPC(int regionX, int regionY)
    util::clamp(regionX, 0, (int)regionXSize-1);
    util::clamp(regionY, 0,  (int)regionYSize-1);
 
-   vec2 botLeft(getOM().worldBotLeft.x + regionSize*regionX,
-      getOM().worldBotLeft.y + regionSize*regionY);
+   vec2 botLeft(om.worldBotLeft.x + regionSize*regionX,
+      om.worldBotLeft.y + regionSize*regionY);
    vec2 pos(util::frand(botLeft.x, botLeft.x + regionSize),
       util::frand(botLeft.y, botLeft.y + regionSize));
 
-   NPC *n = new server::NPC(newId(), getCM().ownServerId, npcMaxHp, pos, 
+   NPC *n = new server::NPC(newId(), cm.ownServerId, npcMaxHp, pos, 
       vec2(0,1), npcType(regionX, regionY));
 
-   getOM().add(n);
+   om.add(n);
    return n;
 }
 
 Item *GameServer::spawnItem(int id)
 {
    vec2 pos = randPos2(200, 350);
-   Item *item = new Item(id, getCM().ownServerId, pos, rand() % (ItemType::Explosion+1));
-   getOM().add(item);
+   Item *item = new Item(id, cm.ownServerId, pos, rand() % (ItemType::Explosion+1));
+   om.add(item);
    printf("Spawn Item id=%d type=%d\n", item->getId(), item->type);
    return item;
 }
@@ -404,8 +404,8 @@ Item *GameServer::spawnItem(int id)
 Item *GameServer::spawnStump(int id)
 {
    vec2 pos = randPos2(200, 350);
-   Item *stump = new Item(id, getCM().ownServerId, pos, ItemType::Stump);
-   getOM().add(stump);
+   Item *stump = new Item(id, cm.ownServerId, pos, ItemType::Stump);
+   om.add(stump);
    printf("Spawn Stump id=%d type=%d\n", stump->getId(), stump->type);
    return stump;
 }
@@ -418,7 +418,7 @@ void GameServer::collectItem(Player &pl, Item &item)
       0;
    if(rupees > 0) {
       pl.gainRupees(rupees);
-      getGS().clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
+      clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
    }
    else if(item.type == ItemType::Heart) {
       pl.gainHp(heartValue);
@@ -427,5 +427,5 @@ void GameServer::collectItem(Player &pl, Item &item)
       printf("Collected unknown item type %d type=%d\n",
          item.getId(), item.type);
    }
-   getOM().remove(item.getId()); //only remove one item per click max
+   om.remove(item.getId()); //only remove one item per click max
 }

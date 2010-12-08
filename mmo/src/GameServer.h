@@ -61,4 +61,6 @@ private:
    Item *spawnStump(int id);
 };
 
+GameServer &getGS(); //singleton
+
 #endif // _GAME_SERVER_H_
