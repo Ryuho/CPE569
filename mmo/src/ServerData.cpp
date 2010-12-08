@@ -28,8 +28,7 @@ Player::Player(pack::Packet &serialized)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   //getOM().move(static_cast<PlayerBase *>(this), pos);
-   //Unreferenced in om.move() so okay to update anywhere
+   getOM().move(static_cast<PlayerBase *>(this), pos);
    this->dir = dir;
    this->moving = moving;
 }
@@ -93,7 +92,7 @@ Missile::Missile(int id, int sid, int owned, mat::vec2 pos, mat::vec2 dir, int t
    spawnTime = getTicks();
    this->dir = dir;
    if (this->dir.length() > 0.0f)
-      this->dir = normalize(this->dir);
+      this->dir.normalize();
    else
       this->dir = vec2(1,0);
 }
@@ -106,7 +105,7 @@ Missile::Missile(pack::Packet &serialized)
 
 void Missile::update()
 {
-   pos = pos + dir * projectileSpeed * getDt();
+   move(pos = pos + dir * projectileSpeed * getDt(), dir);
 }
 
 int Missile::getDamage() const
@@ -137,7 +136,7 @@ pack::Packet Missile::serialize() const
 
 void Missile::move(vec2 pos, vec2 dir)
 {
-   //getOM().move(static_cast<MissileBase *>(this), pos);
+   getOM().move(static_cast<MissileBase *>(this), pos);
    this->pos = pos;
    this->dir = dir;
 }
@@ -331,9 +330,8 @@ void NPC::update()
          Missile *m = new Missile(newId(), id, sid, pos, 
             mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
          getOM().add(m);
-         getCM().clientBroadcast(pack::Initialize(m->getId(), 
-            ObjectType::Missile, m->type, m->pos, 
-            m->dir, 0));
+         getGS().clientBroadcast(pack::Initialize(m->getId(), 
+            ObjectType::Missile, m->type, m->pos,  m->dir, 0));
       }
    }
    else {
@@ -347,7 +345,6 @@ void NPC::update()
 void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
    getOM().move(static_cast<NPCBase *>(this), pos);
-   //Unreferenced in om.move() so okay to update anywhere
    this->dir = dir;
    this->moving = moving;
 }

@@ -334,13 +334,11 @@ void BotWorldData::updatePlayerPos(int ticks, float dt)
 void BotWorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
-
-   if(p.type == PacketType::position) {
+   
+   if (p.type == PacketType::position) {
       Position pos(p);
-      if(pos.id == player.getId()) {
-         player.move(pos.pos, pos.dir, pos.moving != 0);
-      } 
-      else if(objs.contains(pos.id, ObjectType::Player)) {
+      if(pos.id == player.getId()) { //ignore
+      } else if(objs.contains(pos.id, ObjectType::Player)) {
          Player *obj = objs.getPlayer(pos.id);
          objs.move(obj, pos.pos);
          obj->move(pos.pos, pos.dir, pos.moving != 0);
@@ -348,7 +346,6 @@ void BotWorldData::processPacket(pack::Packet p)
          NPC *obj = objs.getNPC(pos.id);
          objs.move(obj, pos.pos);
          obj->move(pos.pos, pos.dir, pos.moving != 0);
-         //printf("id=%d pos=%f %f\n", pos.id, pos.pos.x, pos.pos.y);
       } else if(objs.contains(pos.id, ObjectType::Item)) {
          Item *obj = objs.getItem(pos.id);
          objs.move(obj, pos.pos);
@@ -362,33 +359,57 @@ void BotWorldData::processPacket(pack::Packet p)
          printf("client %d: unable to process Pos packet id=%d\n", 
             player.getId(), pos.id);
    }
+   else if (p.type == PacketType::teleport) {
+      Teleport tele(p);
+      printf("Teleported\n");
+      player.move(tele.pos, player.dir, false);
+   }
    else if (p.type == PacketType::initialize) {
       Initialize i(p);
-      if (i.type == ObjectType::Player && i.id != player.getId()) {
-         objs.add(new Player(i.id, i.pos, i.dir, i.hp));
+      if (i.type == ObjectType::Player) {
+         if(i.id == player.getId()) {
+            player.pos = i.pos;
+            player.dir = i.dir;
+            player.hp = i.hp;
+            printf("*******Initialized Self %d <%0.1f, %0.1f>\n", 
+               i.id, i.pos.x, i.pos.y);
+         } 
+         else {
+            objs.add(new Player(i.id, i.pos, i.dir, i.hp));
+            printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+         }
       }
       else if (i.type == ObjectType::Missile) {
          objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
          objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+         //printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
       }
       else if (i.type == ObjectType::Item) {
          objs.add(new Item(i.id, i.subType, i.pos));
+         //printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
-   }
+      else
+         printf("Error: Unknown initialize type %d\n", i.type);
+   } 
    else if (p.type == PacketType::signal) {
       Signal sig(p);
       if (sig.sig == Signal::remove) {
-         if(sig.val == this->player.getId()) {
+         if(sig.val == this->player.getId())
             printf("\n\n!!! Disconnected from server !!!\n\n");
-         }
          else {
             objs.remove(sig.val);
             //printf("Object %d disconnected\n", sig.val);
          }
       } else if (sig.sig == Signal::changeRupee) {
+         player.rupees = sig.val;
+         //printf("rupees = %d\n", player.rupees);
       } else if (sig.sig == Signal::changeExp) {
+         player.exp = sig.val;
+         //printf("exp = %d\n", player.exp);
+      } else if(sig.sig == Signal::setPvp) {
+         printf("Error: Player recieved setPvp signal\n");
       } else
          printf("Unknown signal (%d %d)\n", sig.sig, sig.val);
    } 
@@ -397,7 +418,7 @@ void BotWorldData::processPacket(pack::Packet p)
       if (hc.id == player.getId()) {
          player.hp = hc.hp;
       } 
-      else if (objs.contains(hc.id, ObjectType::Player)) {
+      else if(objs.contains(hc.id, ObjectType::Player)) {
          objs.getPlayer(hc.id)->hp = hc.hp;
       } 
       else if(objs.contains(hc.id, ObjectType::NPC)) {
@@ -407,10 +428,26 @@ void BotWorldData::processPacket(pack::Packet p)
          printf("Error: Health change on id %d\n", hc.id);
    }
    else if(p.type == PacketType::changePvp) {
-      pack::Pvp pvp(p);
-      if(objs.contains(pvp.id, ObjectType::Player))
-         objs.getPlayer(pvp.id)->pvp = pvp.isPvpMode != 0;
-   } else
+      Pvp pvpPacket(p);
+      if(pvpPacket.id == this->player.getId()) {
+         getPlayer().pvp = pvpPacket.isPvpMode != 0;
+         if(getPlayer().pvp)
+            printf("You are in Pvp Mode\n");
+         else
+            printf("You are NOT in Pvp Mode\n");
+      }
+      else if(objs.contains(pvpPacket.id, ObjectType::Player)) {
+         Player &play = *objs.getPlayer(pvpPacket.id);
+         play.pvp = pvpPacket.isPvpMode != 0;
+         if(play.pvp)
+            printf("Player %d is in Pvp Mode\n", play.getId());
+         else
+            printf("Player %d is NOT in Pvp Mode\n", play.getId());
+      }
+      else
+         printf("Error: Unknown player %d for pvp packet\n", pvpPacket.id);
+   }
+   else
       printf("Unknown packet type=%d size=%d\n", p.type, p.data.size());
 }
 

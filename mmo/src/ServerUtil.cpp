@@ -77,7 +77,7 @@ void collectItem(Player &pl, Item &item)
       0;
    if(rupees > 0) {
       pl.gainRupees(rupees);
-      getCM().clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
+      getGS().clientSendPacket(Signal(Signal::changeRupee, pl.rupees), pl.getId());
    }
    else if(item.type == ItemType::Heart) {
       pl.gainHp(heartValue);

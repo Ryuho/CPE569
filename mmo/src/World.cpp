@@ -224,9 +224,8 @@ void WorldData::processPacket(pack::Packet p)
    }
    else if (p.type == PacketType::teleport) {
       Teleport tele(p);
-      printf("teleported\n");
+      printf("Teleported\n");
       playerMoveDir = vec2();
-      //player.pos = pos.pos;
       shadow.move(tele.pos, player.dir, false);
       player.move(tele.pos, player.dir, false);
    }
@@ -237,7 +236,7 @@ void WorldData::processPacket(pack::Packet p)
             player.pos = i.pos;
             player.dir = i.dir;
             player.hp = i.hp;
-            printf("Initialized self %d <%0.1f, %0.1f>\n", 
+            printf("*******Initialized Self %d <%0.1f, %0.1f>\n", 
                i.id, i.pos.x, i.pos.y);
          } 
          else {

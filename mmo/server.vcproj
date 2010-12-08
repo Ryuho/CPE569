@@ -272,6 +272,10 @@
 			RelativePath=".\src\GameServer.cpp"
 			>
 		</File>
+		<File
+			RelativePath=".\src\SingleServer.cpp"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

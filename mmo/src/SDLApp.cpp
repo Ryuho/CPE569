@@ -43,7 +43,7 @@ void SDLApp::update()
 {
    dt = SDL_GetTicks() - ticks;
    ticks += dt;
-   fdt = dt / 1000.0;
+   fdt = dt / 1000.0f;
 
    inputMgr.nextFrame();
    handleEvents();
@@ -78,15 +78,15 @@ void SDLApp::update()
       world.toggleDrawUpdated();
    }
 
-   vec2 dir(0.0, 0.0);
+   vec2 dir(0.0f, 0.0f);
    if (inputMgr.keyDown(SDLK_w))
-      dir = dir + vec2(0.0, 1.0);
+      dir = dir + vec2(0.0f, 1.0f);
    if (inputMgr.keyDown(SDLK_s))
-      dir = dir + vec2(0.0, -1.0);
+      dir = dir + vec2(0.0f, -1.0f);
    if (inputMgr.keyDown(SDLK_a))
-      dir = dir + vec2(-1.0, 0.0);
+      dir = dir + vec2(-1.0f, 0.0f);
    if (inputMgr.keyDown(SDLK_d))
-      dir = dir + vec2(1.0, 0.0);
+      dir = dir + vec2(1.0f, 0.0f);
    
    world.move(dir);
 

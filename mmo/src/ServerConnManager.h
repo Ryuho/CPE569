@@ -33,27 +33,7 @@ struct ConnectionManager {
    void clientBroadcast(pack::Packet p);
    void serverSendPacket(pack::Packet p, int id);
    void serverBroadcast(pack::Packet p);
-
-   template<typename T>
-   void clientSendPacket(T t, int id) {
-      clientSendPacket(t.makePacket(), id);
-   }
-   template<typename T>
-   void clientBroadcast(T t) {
-      clientBroadcast(t.makePacket());
-   }
-
-   template<typename T>
-   void serverSendPacket(T t, int id) {
-      serverSendPacket(t.makePacket(), id);
-   }
-   template<typename T>
-   void serverBroadcast(T t) {
-      serverBroadcast(t.makePacket());
-   }
-
-
-   
+ 
    void addClientConnection(sock::Connection conn, int id);
    void removeClientConnection(int id);
    void removeClientAt(int index);

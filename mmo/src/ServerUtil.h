@@ -4,6 +4,7 @@
 #include "matrix.h"
 #include "ServerData.h"
 #include "ServerConnManager.h"
+#include "GameServer.h"
 
 mat::vec2 randPos(int minxy, int maxxy);
 mat::vec2 randPos2(int minRadius, int maxRadius);
@@ -19,9 +20,20 @@ server::Item *spawnStump(int id);
 // THESE ARE IMPLEMENTED PER SERVER   //
 // DO NOT IMPLEMENT IN SERVERUTIL.CPP //
 ////////////////////////////////////////
-int getTicks();
-float getDt();
-objectManager::ObjectManager &getOM();
-ConnectionManager &getCM();
+
+GameServer &getGS();
+
+inline int getTicks() {
+   return getGS().ticks;
+}
+inline float getDt() {
+   return getGS().dt;
+}
+inline objectManager::ObjectManager &getOM() {
+   return getGS().om;
+}
+inline ConnectionManager &getCM() {
+   return getGS().cm;
+}
 
 #endif //__SERVER_UTIL_H__

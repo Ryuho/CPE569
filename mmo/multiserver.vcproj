@@ -267,6 +267,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\src\GameServer.cpp"
+			>
+		</File>
+		<File
 			RelativePath=".\src\MultiServer.cpp"
 			>
 		</File>
