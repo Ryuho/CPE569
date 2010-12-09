@@ -19,7 +19,6 @@ struct World {
    void move(vec2 dir);
    void shootArrow(mat::vec2 dir);
    void doSpecial();
-   void spawnItem();
    void hurtMe();
    void togglePvp();
    void toggleDrawAll();

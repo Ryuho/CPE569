@@ -62,10 +62,7 @@ void SDLApp::update()
       world.rightClick(vec2(inputMgr.x(), settings.height-inputMgr.y()));
    }
 
-   if (inputMgr.keyPressed(SDLK_e)) {
-      world.spawnItem();
-   }
-   if (inputMgr.keyPressed(SDLK_r)) {
+   if (inputMgr.keyDown(SDLK_r)) {
       world.hurtMe();
    }
    if (inputMgr.keyPressed(SDLK_p)) {

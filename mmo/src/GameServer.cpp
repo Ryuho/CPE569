@@ -102,6 +102,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       }
       else if(signal.sig == Signal::setPvp) {
          player.pvp = signal.val != 0;
+         //printf("Player %d PVP: %s\n", player.getId(), player.pvp ? "on" : "off");
          clientBroadcast(Pvp(id, signal.val));
       }
       else if(signal.sig == Signal::hurtme) {
@@ -183,15 +184,14 @@ void GameServer::updatePlayers(int ticks, float dt)
       }
       if(p.hp <= 0)
          playersToRemove.push_back(&p);
-      else
-         sendPlayerAOI(p);
+      else {
+         sendPlayerAOI(p, om);
+         sendPlayerAOI(p, som);
+      }
    }
 
    for(unsigned i = 0; i < playersToRemove.size(); i++) {
-      Player &p = *playersToRemove[i];
-      clientBroadcast(Signal(Signal::remove, p.getId()));
-      removeClientConnection(p.getId());
-      om.remove(p.getId());
+      removePlayer(*playersToRemove[i]);
    }
 }
 
@@ -236,8 +236,7 @@ void GameServer::updateNPCs(int ticks, float dt)
          clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
             item->pos, vec2(0,1), 0));
       }
-      clientBroadcast(Signal(Signal::remove, npc.getId()));
-      om.remove(npc.getId());
+      removeObject(npc);
    }
 }
 
@@ -267,9 +266,7 @@ void GameServer::updateMissiles(int ticks, float dt)
    }
 
    for(unsigned i = 0; i < missilesToRemove.size(); i++) {
-      Missile &m = *missilesToRemove[i];
-      clientBroadcast(Signal(Signal::remove, m.getId()));
-      om.remove(m.getId());
+      removeObject(*missilesToRemove[i]);
    }
 }
 
@@ -315,7 +312,7 @@ Item *GameServer::spawnStump(int id)
 bool GameServer::collectItem(Player &pl, Item &item)
 {
    if(item.isCollectable()) {
-      clientBroadcast(Signal(Signal::remove, item.getId()));
+      //clientBroadcast(Signal(Signal::remove, item.getId()));
       int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
          item.type == ItemType::BlueRupee ? blueRupeeValue :
          item.type == ItemType::RedRupee ? redRupeeValue :
@@ -328,10 +325,11 @@ bool GameServer::collectItem(Player &pl, Item &item)
          pl.gainHp(heartValue);
       }
       else {
-         printf("Collected unknown item type %d type=%d\n",
-            item.getId(), item.type);
+         printf("Collected unknown item type %d type=%d\n", item.getId(), 
+            item.type);
       }
-      om.remove(item.getId()); //only remove one item per click max
+      removeObject(item);
+      //om.remove(item.getId()); //only remove one item per click max
       return true;
    }
    return false;
@@ -348,8 +346,7 @@ bool GameServer::collideMissile(Player &p, Missile &m)
       else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
          return false;
       p.takeDamage(m.getDamage());
-      clientBroadcast(Signal(Signal::remove, m.getId()));
-      om.remove(m.getId());
+      removeObject(m);
       return true;
    }
    return false;
@@ -366,8 +363,7 @@ bool GameServer::collideMissile(NPC &npc, Missile &m)
             clientSendPacket(Signal(Signal::changeExp, p.exp), p.getId());
          }
       }
-      clientBroadcast(Signal(Signal::remove, m.getId()));
-      om.remove(m.getId());
+      removeObject(m);
       return true;
    }
    return false;
@@ -388,11 +384,11 @@ bool GameServer::collideItem(ObjectBase &obj, Item &item)
    return false;
 }
 
-void GameServer::sendPlayerAOI(Player &p)
+void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
 {
    Geometry aoi(Circle(p.pos, areaOfInfluenceRadius));
    std::vector<NPCBase *> aoinpcs;
-   om.collidingNPCs(aoi, p.pos, aoinpcs);
+   oh.collidingNPCs(aoi, p.pos, aoinpcs);
    for(unsigned i = 0; i < aoinpcs.size(); i++) {
       NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
       clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
@@ -400,7 +396,7 @@ void GameServer::sendPlayerAOI(Player &p)
          p.getId());
    }
    std::vector<PlayerBase *> aoiplayers;
-   om.collidingPlayers(aoi, p.pos, aoiplayers);
+   oh.collidingPlayers(aoi, p.pos, aoiplayers);
    for(unsigned i = 0; i < aoiplayers.size(); i++) {
       Player &player = *static_cast<Player *>(aoiplayers[i]);
       clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
@@ -413,10 +409,18 @@ void GameServer::sendPlayerAOI(Player &p)
 
 void GameServer::removePlayer(Player &p)
 {
-   printf("**TODO** removePlayer\n");
+   clientBroadcast(Signal(Signal::remove, p.getId()));
+   removeClientConnection(p.getId());
+   om.remove(p.getId());
 }
 
 void GameServer::removeObject(ObjectBase &obj)
 {
-   printf("**TODO** removeObject\n");
+   clientBroadcast(Signal(Signal::remove, obj.getId()));
+   om.remove(obj.getId());
 }
+
+//void GameServer::createObject(ObjectBase &obj)
+//{
+//
+//}

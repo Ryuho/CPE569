@@ -42,7 +42,7 @@ struct GameServer {
    void updatePlayers(int ticks, float dt);
 
    //Utilities
-   void sendPlayerAOI(Player &p);
+   void sendPlayerAOI(Player &p, ObjectHolder &oh);
    void removeObject(ObjectBase &obj);
    void removePlayer(Player &p);
    bool collectItem(Player &pl, Item &item); //collect, not collide
@@ -57,7 +57,7 @@ struct GameServer {
    ConnectionManager &cm;
    ObjectHolder om;
    ObjectHolder som; //other servers' objects
-   int rsid; //remove server id, -1 if you are the main server
+   int rsid; //remote server id, -1 if you are the main server
 
    int ticks;
    float dt;

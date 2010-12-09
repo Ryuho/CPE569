@@ -39,7 +39,7 @@ struct WorldData {
 WorldData* clientState = 0;
 int wHeight = 0;
 int wWidth = 0;
-const float boarderWidth = .05;
+const float boarderWidth = 0.05f;
 
 // Interface stubs
 void World::init(const char *host, int port) {
@@ -419,11 +419,6 @@ void World::rightClick(vec2 mousePos)
    printf("Clicked <%5.1f %5.1f>\n", clickPos.x, clickPos.y);
 }
 
-void World::spawnItem()
-{
-
-}
-
 void World::hurtMe()
 {
    pack::Signal(pack::Signal::hurtme).makePacket().sendTo(data->conn);
@@ -432,7 +427,8 @@ void World::hurtMe()
 void World::togglePvp()
 {
    getPlayer().pvp = !getPlayer().pvp;
-   pack::Pvp(getPlayer().getId(), getPlayer().pvp).makePacket().sendTo(data->conn);
+   pack::Signal(pack::Signal::setPvp, getPlayer().pvp).makePacket()
+      .sendTo(data->conn);
 }
 
 void World::toggleDrawAll()

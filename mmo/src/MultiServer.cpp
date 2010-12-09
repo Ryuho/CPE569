@@ -83,6 +83,11 @@ void GameServer::removeClientConnection(int id)
    cm.removeClientConnection(id);
 }
 
+void GameServer::serverSendPacket(Packet &p, int id)
+{
+   cm.serverSendPacket(p, id);
+}
+
 void GameServer::clientSendPacket(Packet &p, int id)
 {
    cm.clientSendPacket(p, id);

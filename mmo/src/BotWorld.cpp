@@ -378,7 +378,7 @@ void BotWorldData::processPacket(pack::Packet p)
          } 
          else {
             objs.add(new Player(i.id, i.pos, i.dir, i.hp));
-            printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+            //printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
@@ -468,6 +468,18 @@ void BotWorldData::doSpecial()
 void BotWorldData::rightClick(vec2 mousePos)
 {
    pack::Click(mousePos).makePacket().sendTo(conn);
+}
+
+void BotWorldData::hurtMe()
+{
+   pack::Signal(pack::Signal::hurtme).makePacket().sendTo(conn);
+}
+
+void BotWorldData::togglePvp()
+{
+   getPlayer().pvp = !getPlayer().pvp;
+   pack::Signal(pack::Signal::setPvp, getPlayer().pvp).makePacket()
+      .sendTo(conn);
 }
 
 int getTicks()

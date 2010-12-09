@@ -27,6 +27,8 @@ struct BotWorldData {
    void updateLooting(int ticks, float dt);
    void processPacket(pack::Packet p);
    void shootArrow(mat::vec2 dir);
+   void hurtMe();
+   void togglePvp();
    void doSpecial();
    void rightClick(vec2 mousePos);
 
