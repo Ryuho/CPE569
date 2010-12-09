@@ -11,29 +11,45 @@ void GameServer::processServerPacket(pack::Packet p, int id)
 {
    if(p.type == PacketType::serialPlayer) {
       Player obj(p);
-      if(!om.contains(obj.getId()))
-         om.add(new Player(obj));
+      if(!som.contains(obj.getId())) {
+         som.add(new Player(obj));
+         clientBroadcast(obj.cserialize());
+      }
    }
    else if(p.type == PacketType::serialItem) {
       Item obj(p);
-      if(!om.contains(obj.getId()))
-         om.add(new Item(obj));
+      if(!som.contains(obj.getId())) {
+         som.add(new Item(obj));
+         clientBroadcast(obj.cserialize());
+      }
    }
    else if(p.type == PacketType::serialMissile) {
       Missile obj(p);
-      if(!om.contains(obj.getId()))
-         om.add(new Missile(obj));
+      if(!som.contains(obj.getId())) {
+         som.add(new Missile(obj));
+         clientBroadcast(obj.cserialize());
+      }
    }
    else if(p.type == PacketType::serialNPC) {
       NPC obj(p);
-      if(!om.contains(obj.getId()))
-         om.add(new NPC(obj));
+      if(!som.contains(obj.getId())) {
+         som.add(new NPC(obj));
+         clientBroadcast(obj.cserialize());
+      }
    }
    else if(p.type == PacketType::signal) {
       Signal signal(p);
       if(signal.sig == Signal::remove) {
-         if(om.contains(signal.val))
+         if(som.contains(signal.val)) {
+            som.remove(signal.val);
+            clientBroadcast(p);
+            //may still remove other server's objects... and no easy way to check
+         }
+         else if(om.contains(signal.val)) {
             om.remove(signal.val);
+            printf("Server %d requesting remote removal of %d\n", 
+               id, signal.val);
+         }
       }
       else
          printf("Error: unknown signal (sig=%d val=%d)\n", 
@@ -46,31 +62,6 @@ void GameServer::processServerPacket(pack::Packet p, int id)
 void GameServer::newServerConnection(int id)
 {
    printf("New server connection: %d\n", id);
-
-   //tell new server about previous players (includes self)
-   for(unsigned i = 0; i < om.playerCount(); i++) {
-      Player &obj = *static_cast<Player *>(om.get(ObjectType::Player, i));
-      if(obj.sid == cm.ownServerId)
-         cm.serverSendPacket(obj.serialize(), id);
-   }
-   //tell new server about previous Items
-   for(unsigned i = 0; i < om.itemCount(); i++) {
-      Item &obj = *static_cast<Item *>(om.get(ObjectType::Item, i));
-      if(obj.sid == cm.ownServerId)
-         cm.serverSendPacket(obj.serialize(), id);
-   }
-   //tell new server about previous NPCs
-   for(unsigned i = 0; i < om.npcCount(); i++) {
-      NPC &obj = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
-      if(obj.sid == cm.ownServerId)
-         cm.serverSendPacket(obj.serialize(), id);
-   }
-   //tell new servers about previous Missiles
-   for(unsigned i = 0; i < om.npcCount(); i++) {
-      Missile &obj = *static_cast<Missile *>(om.get(ObjectType::Missile, i));
-      if(obj.sid == cm.ownServerId)
-         cm.serverSendPacket(obj.serialize(), id);
-   }
 }
 
 void GameServer::serverDisconnect(int id)
@@ -103,13 +94,41 @@ void GameServer::serverBroadcast(Packet &p)
    cm.serverBroadcast(p);
 }
 
+void updateServers()
+{
+   //tell new server about previous players (includes self)
+   for(unsigned i = 0; i < getOM().playerCount(); i++) {
+      Player &obj = *static_cast<Player *>(getOM().get(ObjectType::Player, i));
+      //if(obj.sid == getCM().ownServerId)
+         getGS().serverBroadcast(obj.serialize());
+   }
+   //tell new server about previous Items
+   for(unsigned i = 0; i < getOM().itemCount(); i++) {
+      Item &obj = *static_cast<Item *>(getOM().get(ObjectType::Item, i));
+      //if(obj.sid == getCM().ownServerId)
+         getGS().serverBroadcast(obj.serialize());
+   }
+   //tell new server about previous NPCs
+   for(unsigned i = 0; i < getOM().npcCount(); i++) {
+      NPC &obj = *static_cast<NPC *>(getOM().get(ObjectType::NPC, i));
+      //if(obj.sid == getCM().ownServerId)
+         getGS().serverBroadcast(obj.serialize());
+   }
+   //tell new servers about previous Missiles
+   for(unsigned i = 0; i < getOM().missileCount(); i++) {
+      Missile &obj = *static_cast<Missile *>(getOM().get(ObjectType::Missile, i));
+      //if(obj.sid == getCM().ownServerId)
+         getGS().serverBroadcast(obj.serialize());
+   }
+}
+
 void GameServer::update(int ticks)
 {
    //get the current delta time (time passed since it last ran update())
    dt = (ticks - this->ticks)/1000.0f;
    this->ticks = ticks;
 
-
+   updatePlayers(ticks, dt);
    if(rsid < 0) {
       //if there is a player connected, spawn NPCs, evenly distributed
       if(om.playerCount() > 0) {
@@ -123,9 +142,8 @@ void GameServer::update(int ticks)
             }
          }
       }
-
       updateNPCs(ticks, dt);
-      updatePlayers(ticks, dt);
       updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
    }
+   updateServers();
 }

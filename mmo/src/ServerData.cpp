@@ -50,7 +50,6 @@ void Player::gainRupees(int rupees)
 
 void Player::deserialize(pack::Packet &serialized)
 {
-   //printf("Error Player::deserialize untested - update with members!");
    if(serialized.type == PacketType::serialPlayer) {
       int ipvp, ialive, imoving;
       serialized.data.readInt(id).readInt(sid).readInt(hp).readInt(exp).readInt(rupees)
@@ -66,7 +65,6 @@ void Player::deserialize(pack::Packet &serialized)
 
 pack::Packet Player::serialize() const
 {
-   //printf("Error Player::serialize untested - update with members!");
    pack::Packet p(PacketType::serialPlayer);
    int ipvp = (int)pvp;
    int ialive = (int)alive;
@@ -75,6 +73,18 @@ pack::Packet Player::serialize() const
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeInt(imoving).writeInt(ialive).writeInt(ipvp);
    return p;
+}
+
+pack::Packet Player::cserialize() const
+{
+   pack::Initialize ini;
+   ini.id = id;
+   ini.hp = hp;
+   ini.dir = dir;
+   ini.pos = pos;
+   ini.subType = 0;
+   ini.type = getType();
+   return ini.makePacket();
 }
 
 void Player::gainHp(int hp)
@@ -123,6 +133,18 @@ void Missile::deserialize(pack::Packet &serialized)
    } 
    else
       printf("Error: Deserializing Missile with incorrect packet.\n");
+}
+
+pack::Packet Missile::cserialize() const
+{
+   pack::Initialize ini;
+   ini.id = id;
+   ini.hp = 0;
+   ini.dir = dir;
+   ini.pos = pos;
+   ini.subType = type;
+   ini.type = getType();
+   return ini.makePacket();
 }
 
 pack::Packet Missile::serialize() const
@@ -378,6 +400,18 @@ pack::Packet NPC::serialize() const
    return p;
 }
 
+pack::Packet NPC::cserialize() const
+{
+   pack::Initialize ini;
+   ini.id = id;
+   ini.hp = hp;
+   ini.dir = dir;
+   ini.pos = pos;
+   ini.subType = type;
+   ini.type = getType();
+   return ini.makePacket();;
+}
+
 void NPC::gainHp(int hp)
 {
    this->hp = this->hp + hp;
@@ -464,6 +498,18 @@ pack::Packet Item::serialize() const
    return p;
 }
 
+pack::Packet Item::cserialize() const
+{
+   pack::Initialize ini;
+   ini.id = id;
+   ini.hp = 0;
+   //ini.dir = vec2()
+   ini.pos = pos;
+   ini.subType = type;
+   ini.type = getType();
+   return ini.makePacket();;
+}
+
 bool ObjectHolder::add(Player *obj)
 {
    return ObjectManager::add(static_cast<PlayerBase *>(obj));
@@ -525,6 +571,29 @@ Serializable *ObjectHolder::getSerialized(int id)
          printf("Error: getSerialized Unknown type %d\n", obj->getType());
    }
    return serialized;
+}
+
+pack::Packet ObjectHolder::getCSerialized(int id)
+{
+   ObjectBase *obj = static_cast<ObjectBase *>(getOM().get(id));
+   pack::Packet cserialized(-1);
+   switch(obj->getType()) {
+      case ObjectType::Player:
+         cserialized = static_cast<Player *>(obj)->cserialize();
+         break;
+      case ObjectType::NPC:
+         cserialized = static_cast<NPC *>(obj)->cserialize();
+         break;
+      case ObjectType::Item:
+         cserialized = static_cast<Item *>(obj)->cserialize();
+         break;
+      case ObjectType::Missile:
+         cserialized = static_cast<Missile *>(obj)->cserialize();
+         break;
+      default:
+         printf("Error: getSerialized Unknown type %d\n", obj->getType());
+   }
+   return cserialized;
 }
 
 } // end server namespace
