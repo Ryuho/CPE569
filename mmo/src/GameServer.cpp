@@ -36,6 +36,27 @@ void GameServer::newClientConnection(int id)
 
 	clientSendPacket(Connect(id, constants::worldHeight, 
       constants::worldWidth), id);
+	clientSendPacket(Initialize(newPlayer->getId(), ObjectType::Player, 
+      0, newPlayer->pos, newPlayer->dir, newPlayer->hp), id);
+
+   //tell new player about objects in AOI
+	//TODO need to update to account for PVP mode
+	Player &p = *static_cast<Player *>(om.getPlayer(newPlayer->getId()));
+   sendPlayerAOI(p, om);
+}
+//OLD implementation
+/*void GameServer::newClientConnection(int id)
+{
+   printf("New client connection: %d\n", id);
+   
+   vec2 pos((float)(rand()%200), (float)(rand()%200));
+   
+   Player *newPlayer 
+      = new Player(id, cm.ownServerId, pos, vec2(0,1), playerMaxHp);
+   om.add(newPlayer);
+
+	clientSendPacket(Connect(id, constants::worldHeight, 
+      constants::worldWidth), id);
    clientBroadcast(Initialize(newPlayer->getId(), ObjectType::Player, 
       0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
 
@@ -61,18 +82,98 @@ void GameServer::newClientConnection(int id)
    }
 
    serverBroadcast(newPlayer->serialize());
-}
+}*/
 
 void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
+   Player &p = *static_cast<Player *>(om.getPlayer(id));
+   Geometry g(p.getGeom());
+   std::vector<PlayerBase *> collidedPlayers;
+   om.collidingPlayers(g, p.pos, collidedPlayers);
    Packet removePacket(Signal(Signal::remove, id).makePacket());
+   for(unsigned i = 0; i < collidedPlayers.size(); i++)
+   {
+	   clientSendPacket(removePacket, collidedPlayers[i]->getId());
+   }
+   /*Packet removePacket(Signal(Signal::remove, id).makePacket());
    clientBroadcast(removePacket);
-   serverBroadcast(removePacket);
+   serverBroadcast(removePacket);*/
    om.remove(id);
 }
 
 void GameServer::processClientPacket(pack::Packet p, int id)
+{
+   if(!om.contains(id, ObjectType::Player)) {
+      printf("Error: Client %d sent packet and is not connected", id);
+      return;
+   }
+   Player &player = *static_cast<Player *>(om.getPlayer(id));
+   if (p.type == PacketType::position) {
+      Position pos(p);
+      player.move(pos.pos, pos.dir, pos.moving != 0);
+      //player went out of bounds or invalid positon?
+      if(pos.pos.x != player.pos.x || pos.pos.y != player.pos.y) {
+         clientSendPacket(Teleport(player.pos), id);
+         printf("Player %d went outside map bounds\n", id);
+      }
+   }
+   else if(p.type == PacketType::signal) {
+      Signal signal(p);
+      if (signal.sig == Signal::special) {
+         for(int i = 0; i < constants::numArrows; i++) {
+            float t = i/(float)constants::numArrows;
+            Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
+               vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
+            om.add(m);
+            //TODO: make missles AOI
+			clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
+               m->type, m->pos, m->dir, 0));
+         }
+      }
+      else if(signal.sig == Signal::setPvp) {
+         player.pvp = signal.val != 0;
+         //printf("Player %d PVP: %s\n", player.getId(), player.pvp ? "on" : "off");
+      }
+      else if(signal.sig == Signal::hurtme) {
+         player.takeDamage(1);
+      }
+      else
+         printf("Error: Unknown Signal packet type=%d val=%d\n", 
+            signal.sig, signal.val);
+   }
+   else if (p.type == PacketType::arrow) {
+      Arrow ar(p);
+      if(!player.shotThisFrame) {
+         player.shotThisFrame = true;
+         Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
+            ar.dir);
+         om.add(m);
+		 //TODO: update arrow AOI
+         clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
+            m->type, m->pos, m->dir, 0));
+      }
+   }
+   else if(p.type == PacketType::click) {
+      Click click(p);
+      Geometry point(Point(click.pos));
+      //printf("Player %d clicked <%0.1f, %0.1f>\n", id, click.pos.x, 
+      //   click.pos.y);
+      std::vector<ItemBase *> items;
+      om.collidingItems(point, click.pos, items);
+      if(items.size() > 0) {
+         for(unsigned i = 0; i < items.size(); i++) {
+            Item &item = *static_cast<Item *>(items[i]);
+            if(item.isCollectable()) {
+               collectItem(player, item);
+            }
+         }
+      }
+   }
+   else
+      printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
+}
+/*void GameServer::processClientPacket(pack::Packet p, int id)
 {
    if(!om.contains(id, ObjectType::Player)) {
       printf("Error: Client %d sent packet and is not connected", id);
@@ -142,7 +243,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
    }
    else
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
-}
+}*/
 
 ///////////////////////////////////////
 /////////////// Updates ///////////////
@@ -233,8 +334,9 @@ void GameServer::updateNPCs(int ticks, float dt)
       if(lootItem >= 0) {
          Item *item = new Item(newId(), cm.ownServerId, npc.pos, lootItem);
          om.add(item);
-         clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
-            item->pos, vec2(0,1), 0));
+		 //handled during aoi
+         /*clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
+            item->pos, vec2(0,1), 0));*/
       }
       removeObject(npc);
    }
@@ -391,6 +493,33 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
    oh.collidingNPCs(aoi, p.pos, aoinpcs);
    for(unsigned i = 0; i < aoinpcs.size(); i++) {
       NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
+	  clientSendPacket(Initialize(npc.getId(), npc.getType(), npc.type, npc.pos, npc.dir, npc.hp), p.getId());
+   }
+   std::vector<PlayerBase *> aoiplayers;
+   oh.collidingPlayers(aoi, p.pos, aoiplayers);
+   for(unsigned i = 0; i < aoiplayers.size(); i++) {
+      Player &player = *static_cast<Player *>(aoiplayers[i]);
+      clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
+      if(player.getId() != p.getId()) {
+		  clientSendPacket(Initialize(player.getId(), player.getType(), 0, player.pos, player.dir, player.hp), p.getId());
+      }
+   }
+
+   std::vector<ItemBase *> aoiitems;
+   oh.collidingItems(aoi, p.pos, aoiitems);
+   for(unsigned i = 0; i < aoiitems.size(); i++) {
+	   Item &item = *static_cast<Item *>(aoiitems[i]);
+	   clientSendPacket(Initialize(item.getId(), item.getType(), item.type, item.pos, vec2(), 0), p.getId());
+   }
+}
+//Old implementation
+/*void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
+{
+   Geometry aoi(Circle(p.pos, areaOfInfluenceRadius));
+   std::vector<NPCBase *> aoinpcs;
+   oh.collidingNPCs(aoi, p.pos, aoinpcs);
+   for(unsigned i = 0; i < aoinpcs.size(); i++) {
+      NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
       clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
       clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), 
          p.getId());
@@ -405,7 +534,14 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
             player.getId()),  p.getId());
       }
    }
-}
+
+   std::vector<ItemBase *> aoiitems;
+   oh.collidingItems(aoi, p.pos, aoiitems);
+   for(unsigned i = 0; i < aoiitems.size(); i++) {
+	   Item &item = *static_cast<Item *>(aoiitems[i]);
+	   clientSendPacket(Initialize(item.getId(), item.getType(), item.type, item.pos, vec2(), 0), p.getId());
+   }
+}*/
 
 void GameServer::removePlayer(Player &p)
 {

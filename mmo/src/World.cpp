@@ -194,7 +194,7 @@ void WorldData::processPacket(pack::Packet p)
 {
 	using namespace pack;
    
-   if (p.type == PacketType::position) {
+	if (p.type == PacketType::position) {
       Position pos(p);
       if(pos.id == player.getId()) { //ignore
       } else if(objs.contains(pos.id, ObjectType::Player)) {
@@ -244,8 +244,17 @@ void WorldData::processPacket(pack::Packet p)
          objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-         objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
-         printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
+		  if(objs.contains(i.id, i.type))
+		  {
+			objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
+			printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
+		  }
+		 else
+		 {
+			 NPC *obj = objs.getNPC(i.id);
+			 objs.move(obj, i.pos);
+			 obj->move(i.pos, i.dir, false);
+		 }
       }
       else if (i.type == ObjectType::Item) {
          objs.add(new Item(i.id, i.subType, i.pos));
