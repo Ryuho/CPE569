@@ -16,7 +16,7 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
    : PlayerBase(id, pos), dir(dir), moving(false), alive(true), hp(hp),
    rupees(0), exp(0), pvp(false)
 {
-   lastUpdate = getTicks();
+   this->lastUpdate = getTicks();
 }
 
 Player::Player(pack::Initialize &ini)
@@ -39,6 +39,7 @@ void Player::deserialize(pack::Initialize &ini)
    this->hp = ini.hp;
    //this->type = ini.subType
    //this->pvp = ini.pvp;
+   this->lastUpdate = getTicks();
 }
 
 void Player::deserialize(pack::Packet &p)
@@ -49,6 +50,7 @@ void Player::deserialize(pack::Packet &p)
    p.data.readInt(id).readInt(_type).readInt(__type)
       .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
       .readFloat(dir.y).readInt(hp).reset();
+   this->lastUpdate = getTicks();
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
@@ -104,6 +106,8 @@ void Missile::deserialize(pack::Packet &p)
    p.data.readInt(id).readInt(_type).readInt(type)
       .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
       .readFloat(dir.y).readInt(hp).reset();
+
+   this->lastUpdate = getTicks();
 }
 
 void Missile::deserialize(pack::Initialize &ini)
@@ -114,6 +118,8 @@ void Missile::deserialize(pack::Initialize &ini)
    //this->hp = ini.hp;
    this->type = ini.subType;
    //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
 }
 
 
@@ -159,6 +165,8 @@ void Item::deserialize(pack::Initialize &ini)
    //this->hp = ini.hp;
    this->type = ini.subType;
    //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
 }
 
 void Item::deserialize(pack::Packet &p)
@@ -170,6 +178,8 @@ void Item::deserialize(pack::Packet &p)
    p.data.readInt(id).readInt(_type).readInt(type)
       .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
       .readFloat(dir.y).readInt(hp).reset();
+
+   this->lastUpdate = getTicks();
 }
 
 void Item::update()
@@ -214,6 +224,8 @@ void NPC::deserialize(pack::Initialize &ini)
    this->hp = ini.hp;
    this->type = ini.subType;
    //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
 }
 
 void NPC::deserialize(pack::Packet &p)
@@ -224,6 +236,8 @@ void NPC::deserialize(pack::Packet &p)
    p.data.readInt(id).readInt(_type).readInt(type)
       .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
       .readFloat(dir.y).readInt(hp).reset();
+
+   this->lastUpdate = getTicks();
 }
 
 void NPC::update()
