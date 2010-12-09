@@ -16,7 +16,41 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
    : PlayerBase(id, pos), dir(dir), moving(false), alive(true), hp(hp),
    rupees(0), exp(0), pvp(false)
 {
-   lastUpdate = getTicks();
+   this->lastUpdate = getTicks();
+}
+
+Player::Player(pack::Initialize &ini)
+   : PlayerBase(-1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+Player::Player(pack::Packet &p) 
+   : PlayerBase(-1, vec2()), alive(true)
+{
+   deserialize(p);
+}
+
+void Player::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   this->hp = ini.hp;
+   //this->type = ini.subType
+   //this->pvp = ini.pvp;
+   this->lastUpdate = getTicks();
+}
+
+void Player::deserialize(pack::Packet &p)
+{
+   p.data.setCursor(0);
+   int _type, __type;
+
+   p.data.readInt(id).readInt(_type).readInt(__type)
+      .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
+      .readFloat(dir.y).readInt(hp).reset();
+   this->lastUpdate = getTicks();
 }
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
@@ -52,6 +86,43 @@ Missile::Missile(int id, int type, vec2 pos, vec2 dir)
       this->dir.normalize();
 }
 
+Missile::Missile(pack::Packet &p)
+   : MissileBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(p);
+}
+
+Missile::Missile(pack::Initialize &ini)
+   : MissileBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void Missile::deserialize(pack::Packet &p)
+{
+   p.data.setCursor(0);
+   int hp, _type;
+
+   p.data.readInt(id).readInt(_type).readInt(type)
+      .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
+      .readFloat(dir.y).readInt(hp).reset();
+
+   this->lastUpdate = getTicks();
+}
+
+void Missile::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   //this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
+}
+
+
 void Missile::update()
 {
    pos = pos + dir * projectileSpeed * getDt();
@@ -74,6 +145,43 @@ Item::Item(int id, int type, vec2 pos)
     initGraphics();
 }
 
+Item::Item(pack::Packet &p)
+   : ItemBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(p);
+}
+
+Item::Item(pack::Initialize &ini)
+   : ItemBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void Item::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   //this->dir = ini.dir;
+   //this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
+}
+
+void Item::deserialize(pack::Packet &p)
+{
+   p.data.setCursor(0);
+   int _type, hp;
+   vec2 dir;
+
+   p.data.readInt(id).readInt(_type).readInt(type)
+      .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
+      .readFloat(dir.y).readInt(hp).reset();
+
+   this->lastUpdate = getTicks();
+}
+
 void Item::update()
 {
 
@@ -92,6 +200,43 @@ NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
    : NPCBase(id, type, pos), dir(dir), moving(moving), hp(hp), alive(true)
 {
    initGraphics();
+   this->lastUpdate = getTicks();
+}
+
+NPC::NPC(pack::Packet &p)
+   : NPCBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(p);
+}
+
+
+NPC::NPC(pack::Initialize &ini)
+   : NPCBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void NPC::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
+}
+
+void NPC::deserialize(pack::Packet &p)
+{
+   p.data.setCursor(0);
+   int _type;
+
+   p.data.readInt(id).readInt(_type).readInt(type)
+      .readFloat(pos.x).readFloat(pos.y).readFloat(dir.x)
+      .readFloat(dir.y).readInt(hp).reset();
+
    this->lastUpdate = getTicks();
 }
 
