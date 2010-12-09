@@ -546,6 +546,7 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
 void GameServer::removePlayer(Player &p)
 {
    clientBroadcast(Signal(Signal::remove, p.getId()));
+   serverBroadcast(Signal(Signal::remove, p.getId()));
    removeClientConnection(p.getId());
    om.remove(p.getId());
 }
@@ -553,6 +554,7 @@ void GameServer::removePlayer(Player &p)
 void GameServer::removeObject(ObjectBase &obj)
 {
    clientBroadcast(Signal(Signal::remove, obj.getId()));
+   serverBroadcast(Signal(Signal::remove, obj.getId()));
    om.remove(obj.getId());
 }
 

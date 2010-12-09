@@ -21,6 +21,7 @@ namespace server {
    struct Serializable {
       virtual Packet serialize() const = 0;
       virtual void deserialize(Packet &serialized) = 0;
+      virtual Packet cserialize() const = 0; //client serialization (Initialize)
    };
 
    struct Player : PlayerBase, Serializable {
@@ -32,6 +33,7 @@ namespace server {
       void gainRupees(int rupees);
       void gainHp(int hp);
       Packet serialize() const;
+      Packet cserialize() const;
       void deserialize(Packet &serialized);
       
       vec2 dir;
@@ -47,6 +49,7 @@ namespace server {
       void update();
       int getDamage() const;
       Packet serialize() const;
+      Packet cserialize() const;
       void deserialize(Packet &serialized);
 
       vec2 dir;
@@ -64,6 +67,7 @@ namespace server {
       void move(vec2 pos, vec2 dir, bool moving);
       int getAttackDelay() const;
       Packet serialize() const;
+      Packet cserialize() const;
       void deserialize(Packet &serialized);
       
       vec2 dir, initPos;
@@ -79,6 +83,7 @@ namespace server {
       bool isCollidable() const; //cannot be walked onto? Stump
       void move(vec2 pos);
       Packet serialize() const;
+      Packet cserialize() const;
       void deserialize(Packet &serialized);
 
       int sid;
@@ -98,6 +103,7 @@ namespace server {
       Missile *getMissile(int id);
 
       Serializable *getSerialized(int id);
+      Packet getCSerialized(int id);
    };
 
 } // end server namespace
