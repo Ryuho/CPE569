@@ -118,8 +118,8 @@ void drawHpBar(float percent, int width, int height, bool isPvp)
 {
    float center = (width*2 * percent) - width;
 
-   if (percent == 1.0)
-      return;
+   //if (percent == 1.0)
+   //   return;
 
    glDisable(GL_TEXTURE_2D);
    if(isPvp)

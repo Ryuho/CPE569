@@ -15,6 +15,7 @@ namespace constants {
    const unsigned missileDamageMax = 11;
    const unsigned missileDamageMin = 5;
    const float areaOfInfluenceRadius = 800;
+   const float missileInfluenceRadius = 1000;
 
    const int predictTicks = 200;
    const int deltaRegion = 1;
