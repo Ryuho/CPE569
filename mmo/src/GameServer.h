@@ -62,6 +62,8 @@ struct GameServer {
    int ticks;
    float dt;
 
+   int totalUpdates;
+
    void processClientPacket(pack::Packet p, int fromid);
    void processServerPacket(pack::Packet p, int fromid);
 private:

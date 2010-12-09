@@ -7,6 +7,9 @@
 using namespace pack;
 using namespace server;
 
+//How often you should send init packets vs positions
+const static int positionPackets = 20;
+
 void GameServer::newServerConnection(int id) 
 { 
    printf("Single Game Server Implementation!!!\n");
@@ -89,8 +92,8 @@ void GameServer::processClientPacket(pack::Packet p, int id)
                vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
 			Geometry aoi(Circle(m->pos, missileInfluenceRadius));
             om.add(m);
-            std::vector<MissileBase *> aoiplayers;
-			om.collidingMissiles(aoi, m->pos, aoiplayers);
+            std::vector<PlayerBase *> aoiplayers;
+			om.collidingPlayers(aoi, m->pos, aoiplayers);
 			for(unsigned i = 0; i < aoiplayers.size(); i++) {
 				clientSendPacket(m->cserialize(), aoiplayers[i]->getId());
 			}
@@ -119,8 +122,8 @@ void GameServer::processClientPacket(pack::Packet p, int id)
             ar.dir);
          om.add(m);
 		 Geometry aoi(Circle(m->pos, missileInfluenceRadius));
-         std::vector<MissileBase *> aoiplayers;
-		 om.collidingMissiles(aoi, m->pos, aoiplayers);
+         std::vector<PlayerBase *> aoiplayers;
+		 om.collidingPlayers(aoi, m->pos, aoiplayers);
 		 for(unsigned i = 0; i < aoiplayers.size(); i++) {
 			clientSendPacket(m->cserialize(), aoiplayers[i]->getId());
 		 }
@@ -254,12 +257,18 @@ void GameServer::removeClientConnection(int id)
 
 void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
 {
+   bool initRun = positionPackets%positionPackets == 0;
    Geometry aoi(Circle(p.pos, areaOfInfluenceRadius));
    std::vector<NPCBase *> aoinpcs;
    oh.collidingNPCs(aoi, p.pos, aoinpcs);
    for(unsigned i = 0; i < aoinpcs.size(); i++) {
       NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
-	  clientSendPacket(npc.cserialize(), p.getId());
+      if(initRun)
+      {
+	      clientSendPacket(npc.cserialize(), p.getId());
+      }
+      else
+         clientSendPacket(pack::Position(npc.pos, npc.dir, npc.moving, npc.getId()), p.getId());
    }
    std::vector<PlayerBase *> aoiplayers;
    oh.collidingPlayers(aoi, p.pos, aoiplayers);
@@ -267,7 +276,10 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
       Player &player = *static_cast<Player *>(aoiplayers[i]);
       clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
       if(player.getId() != p.getId()) {
-		  clientSendPacket(Initialize(player.getId(), player.getType(), 0, player.pos, player.dir, player.hp), p.getId());
+         if(initRun)
+		      clientSendPacket(Initialize(player.getId(), player.getType(), 0, player.pos, player.dir, player.hp), p.getId());
+         else
+            clientSendPacket(pack::Position(player.pos,player.dir,player.moving,player.getId()),p.getId());
       }
    }
 
@@ -275,7 +287,8 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
    oh.collidingItems(aoi, p.pos, aoiitems);
    for(unsigned i = 0; i < aoiitems.size(); i++) {
 	   Item &item = *static_cast<Item *>(aoiitems[i]);
-	   clientSendPacket(Initialize(item.getId(), item.getType(), item.type, item.pos, vec2(), 0), p.getId());
+      if(initRun)
+	      clientSendPacket(Initialize(item.getId(), item.getType(), item.type, item.pos, vec2(), 0), p.getId());
    }
 
    /*std::vector<MissileBase *> aoimissile;
@@ -322,7 +335,7 @@ void GameServer::update(int ticks)
 
    //if there is a player connected, spawn up to 50 NPCs, evenly distributed
    if(om.playerCount() > 0) {
-      if(om.npcCount() < 100){
+      if(om.npcCount() < 1000){
          for(unsigned i = 0; i < regionXSize; i++) {
             for(unsigned j = 0; j < regionYSize; j++) {
                NPC *npc = spawnNPC(i, j);
@@ -336,4 +349,5 @@ void GameServer::update(int ticks)
    updateNPCs(ticks, dt);
    updatePlayers(ticks, dt);
    updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
+   totalUpdates++;
 }

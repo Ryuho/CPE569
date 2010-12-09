@@ -214,9 +214,9 @@ void WorldData::processPacket(pack::Packet p)
          objs.move(obj, pos.pos);
          obj->move(pos.pos, pos.dir);
       }
-      else
-         printf("client %d: unable to process Pos packet id=%d\n", 
-            player.getId(), pos.id);
+      //else
+      //   printf("client %d: unable to process Pos packet id=%d\n", 
+      //      player.getId(), pos.id);
    }
    else if (p.type == PacketType::teleport) {
       Teleport tele(p);
@@ -252,8 +252,9 @@ void WorldData::processPacket(pack::Packet p)
 		 else
 		 {
 			 NPC *obj = objs.getNPC(i.id);
+          obj->deserialize(i);
 			 objs.move(obj, i.pos);
-			 obj->move(i.pos, i.dir, false);
+          obj->move(i.pos, i.dir, obj->moving);
 		 }
       }
       else if (i.type == ObjectType::Item) {

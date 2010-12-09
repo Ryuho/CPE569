@@ -29,8 +29,8 @@ namespace constants {
 
    const int npcMaxHp = 120;
    const int playerMaxHp = 200;
-	const int worldHeight = 5000;
-	const int worldWidth = 5000;
+	const int worldHeight = 50000;
+	const int worldWidth = 50000;
    const int regionXSize = ((int)(worldWidth / regionSize))*regionSize == worldWidth ?
       ((int)(worldWidth / regionSize)) : ((int)(worldWidth / regionSize)) + 1;
    const unsigned regionYSize = ((int)(worldHeight / regionSize))*regionSize == worldHeight ?

@@ -224,7 +224,7 @@ void GameServer::update(int ticks)
 
    //if there is a player connected, spawn up to 50 NPCs, evenly distributed
    if(om.playerCount() > 0) {
-      if(om.npcCount() < 100){
+      if(om.npcCount() < 1000){
          for(unsigned i = 0; i < regionXSize; i++) {
             for(unsigned j = 0; j < regionYSize; j++) {
                NPC *npc = spawnNPC(i, j);
@@ -238,4 +238,5 @@ void GameServer::update(int ticks)
    updateNPCs(ticks, dt);
    updatePlayers(ticks, dt);
    updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
+   totalUpdates++;
 }

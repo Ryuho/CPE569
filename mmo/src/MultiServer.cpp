@@ -315,4 +315,5 @@ void GameServer::update(int ticks)
       updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
    }
    updateServers();
+   totalUpdates++;
 }

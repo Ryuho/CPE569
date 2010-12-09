@@ -15,7 +15,7 @@ GameServer &getGS()
 }
 
 GameServer::GameServer(ConnectionManager &cm, int remoteServerId) 
-   : cm(cm), ticks(0), dt(0.0f), rsid(remoteServerId)
+   : cm(cm), ticks(0), dt(0.0f), rsid(remoteServerId), totalUpdates(0)
 {
    serverState = this;
 
