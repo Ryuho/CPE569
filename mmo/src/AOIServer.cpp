@@ -18,11 +18,49 @@ void GameServer::newServerConnection(int id)
       exit(EXIT_FAILURE); 
 }
 
+void GameServer::newClientConnection(int id)
+{
+   printf("New client connection: %d\n", id);
+   
+   vec2 pos((float)(rand()%200), (float)(rand()%200));
+   
+   Player *newPlayer 
+      = new Player(id, cm.ownServerId, pos, vec2(0,1), playerMaxHp);
+   om.add(newPlayer);
+
+	clientSendPacket(Connect(id, constants::worldHeight, 
+      constants::worldWidth), id);
+	clientSendPacket(newPlayer->cserialize(), id);
+
+   //tell new player about objects in AOI
+	//TODO need to update to account for PVP mode
+	Player &p = *static_cast<Player *>(om.getPlayer(newPlayer->getId()));
+   sendPlayerAOI(p, om);
+}
+
 void GameServer::serverDisconnect(int id) 
 {
    printf("Single Game Server Implementation!!!\n");
    printf("Illegal action: serverDisconnect.\n");
    exit(EXIT_FAILURE); 
+}
+
+void GameServer::clientDisconnect(int id)
+{
+   printf("Client %d disconnected\n", id);
+   Player &p = *static_cast<Player *>(om.getPlayer(id));
+   Geometry g(p.getGeom());
+   std::vector<PlayerBase *> collidedPlayers;
+   om.collidingPlayers(g, p.pos, collidedPlayers);
+   Packet removePacket(Signal(Signal::remove, id).makePacket());
+   for(unsigned i = 0; i < collidedPlayers.size(); i++)
+   {
+	   clientSendPacket(removePacket, collidedPlayers[i]->getId());
+   }
+   /*Packet removePacket(Signal(Signal::remove, id).makePacket());
+   clientBroadcast(removePacket);
+   serverBroadcast(removePacket);*/
+   om.remove(id);
 }
 
 void GameServer::processServerPacket(pack::Packet p, int fromid) 

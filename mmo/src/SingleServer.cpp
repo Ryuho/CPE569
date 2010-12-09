@@ -18,11 +18,59 @@ void GameServer::newServerConnection(int id)
       exit(EXIT_FAILURE); 
 }
 
+void GameServer::newClientConnection(int id)
+{
+   printf("New client connection: %d\n", id);
+   
+   vec2 pos((float)(rand()%200), (float)(rand()%200));
+   
+   Player *newPlayer 
+      = new Player(id, cm.ownServerId, pos, vec2(0,1), playerMaxHp);
+   om.add(newPlayer);
+
+	clientSendPacket(Connect(id, constants::worldHeight, 
+      constants::worldWidth), id);
+   clientBroadcast(Initialize(newPlayer->getId(), ObjectType::Player, 
+      0, newPlayer->pos, newPlayer->dir, newPlayer->hp));
+
+   //tell new player about previous players (includes self)
+   for(unsigned i = 0; i < om.playerCount(); i++) {
+      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
+      clientSendPacket(Initialize(p.getId(), ObjectType::Player, 
+         0, p.pos, p.dir, p.hp), id);
+      if(p.pvp)
+         clientSendPacket(Pvp(p.getId(), p.pvp), id);
+   }
+   //tell new player about previous Items
+   for(unsigned i = 0; i < om.itemCount(); i++) {
+      Item &item = *static_cast<Item *>(om.get(ObjectType::Item, i));
+      clientSendPacket(Initialize(item.getId(), ObjectType::Item, item.type,
+         item.pos, vec2(), 0), id);
+   }
+   //tell new player about previous NPCs
+   for(unsigned i = 0; i < om.npcCount(); i++) {
+      NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
+      clientSendPacket(Initialize(npc.getId(), ObjectType::NPC, 
+         npc.type, npc.pos, npc.dir, npc.hp), id);
+   }
+
+   serverBroadcast(newPlayer->serialize());
+}
+
 void GameServer::serverDisconnect(int id) 
 {
    printf("Single Game Server Implementation!!!\n");
    printf("Illegal action: serverDisconnect.\n");
    exit(EXIT_FAILURE); 
+}
+
+void GameServer::clientDisconnect(int id)
+{
+   printf("Client %d disconnected\n", id);
+   Packet removePacket(Signal(Signal::remove, id).makePacket());
+   clientBroadcast(removePacket);
+   serverBroadcast(removePacket);
+   om.remove(id);
 }
 
 void GameServer::processServerPacket(pack::Packet p, int fromid) 

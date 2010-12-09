@@ -244,7 +244,7 @@ void WorldData::processPacket(pack::Packet p)
          objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
       }
       else if (i.type == ObjectType::NPC) {
-		  if(objs.contains(i.id, i.type))
+		  if(!objs.contains(i.id, i.type))
 		  {
 			objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
 			printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
