@@ -7,9 +7,6 @@
 using namespace pack;
 using namespace server;
 
-//spawnUnit()
-//
-
 void GameServer::processServerPacket(pack::Packet p, int id)
 {
    if(p.type == PacketType::serialPlayer) {
@@ -99,4 +96,31 @@ void GameServer::clientBroadcast(Packet &p)
 void GameServer::serverBroadcast(Packet &p)
 {
    cm.serverBroadcast(p);
+}
+
+void GameServer::update(int ticks)
+{
+   //get the current delta time (time passed since it last ran update())
+   dt = (ticks - this->ticks)/1000.0f;
+   this->ticks = ticks;
+
+
+   if(rsid < 0) {
+      //if there is a player connected, spawn NPCs, evenly distributed
+      if(om.playerCount() > 0) {
+         if(om.npcCount() < 300){
+            for(unsigned i = 0; i < regionXSize; i++) {
+               for(unsigned j = 0; j < regionYSize; j++) {
+                  NPC *npc = spawnNPC(i, j);
+                  clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
+                     npc->type, npc->pos, npc->dir, npc->hp));
+               }
+            }
+         }
+      }
+
+      updateNPCs(ticks, dt);
+      updatePlayers(ticks, dt);
+      updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
+   }
 }

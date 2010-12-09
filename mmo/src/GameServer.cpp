@@ -15,7 +15,7 @@ GameServer &getGS()
 }
 
 GameServer::GameServer(ConnectionManager &cm, int remoteServerId) 
-   : cm(cm), ticks(0), dt(0.0f)
+   : cm(cm), ticks(0), dt(0.0f), rsid(remoteServerId)
 {
    serverState = this;
 
@@ -146,31 +146,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
 ///////////////////////////////////////
 /////////////// Updates ///////////////
 ///////////////////////////////////////
-void GameServer::update(int ticks)
-{
-   //get the current delta time (time passed since it last ran update())
-   dt = (ticks - this->ticks)/1000.0f;
-   this->ticks = ticks;
-
-
-   //if there is a player connected, spawn up to 50 NPCs, evenly distributed
-   if(om.playerCount() > 0) {
-      if(om.npcCount() < 300){
-         for(unsigned i = 0; i < regionXSize; i++) {
-            for(unsigned j = 0; j < regionYSize; j++) {
-               NPC *npc = spawnNPC(i, j);
-               clientBroadcast(Initialize(npc->getId(), ObjectType::NPC, 
-                  npc->type, npc->pos, npc->dir, npc->hp));
-            }
-         }
-      }
-   }
-
-   updateNPCs(ticks, dt);
-   updatePlayers(ticks, dt);
-   updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
-}
-
 void GameServer::updatePlayers(int ticks, float dt)
 {
    std::vector<Player *> playersToRemove;
@@ -196,41 +171,20 @@ void GameServer::updatePlayers(int ticks, float dt)
       std::vector<MissileBase *> collidedMis;
       om.collidingMissiles(g, p.pos, collidedMis);
       //bool damaged = false;
-      for(unsigned j = 0; j < collidedMis.size(); j++) {
+      for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
          Missile &m = *static_cast<Missile *>(collidedMis[j]);
          collideMissile(p, m);
       }
       collidedMis.clear();
       som.collidingMissiles(g, p.pos, collidedMis);
-      for(unsigned j = 0; j < collidedMis.size(); j++) {
+      for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
          Missile &m = *static_cast<Missile *>(collidedMis[j]);
          collideMissile(p, m);
       }
-
-      if(p.hp == 0) {
+      if(p.hp <= 0)
          playersToRemove.push_back(&p);
-         continue;
-      } else {
-         Circle areaOfInfluence(p.pos, areaOfInfluenceRadius);
-         std::vector<NPCBase *> aoinpcs;
-         om.collidingNPCs(areaOfInfluence, p.pos, aoinpcs);
-         for(unsigned i = 0; i < aoinpcs.size(); i++) {
-            NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
-            clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
-            clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), 
-               p.getId());
-         }
-         std::vector<PlayerBase *> aoiplayers;
-         om.collidingPlayers(areaOfInfluence, p.pos, aoiplayers);
-         for(unsigned i = 0; i < aoiplayers.size(); i++) {
-            Player &player = *static_cast<Player *>(aoiplayers[i]);
-            clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
-            if(player.getId() != p.getId()) {
-               clientSendPacket(Position(player.pos, player.dir, player.moving, 
-                  player.getId()),  p.getId());
-            }
-         }
-      }
+      else
+         sendPlayerAOI(p);
    }
 
    for(unsigned i = 0; i < playersToRemove.size(); i++) {
@@ -432,4 +386,37 @@ bool GameServer::collideItem(ObjectBase &obj, Item &item)
       return true;
    }
    return false;
+}
+
+void GameServer::sendPlayerAOI(Player &p)
+{
+   Geometry aoi(Circle(p.pos, areaOfInfluenceRadius));
+   std::vector<NPCBase *> aoinpcs;
+   om.collidingNPCs(aoi, p.pos, aoinpcs);
+   for(unsigned i = 0; i < aoinpcs.size(); i++) {
+      NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
+      clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
+      clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), 
+         p.getId());
+   }
+   std::vector<PlayerBase *> aoiplayers;
+   om.collidingPlayers(aoi, p.pos, aoiplayers);
+   for(unsigned i = 0; i < aoiplayers.size(); i++) {
+      Player &player = *static_cast<Player *>(aoiplayers[i]);
+      clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
+      if(player.getId() != p.getId()) {
+         clientSendPacket(Position(player.pos, player.dir, player.moving, 
+            player.getId()),  p.getId());
+      }
+   }
+}
+
+void GameServer::removePlayer(Player &p)
+{
+   printf("**TODO** removePlayer\n");
+}
+
+void GameServer::removeObject(ObjectBase &obj)
+{
+   printf("**TODO** removeObject\n");
 }

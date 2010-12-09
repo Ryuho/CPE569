@@ -14,9 +14,6 @@ struct GameServer {
    void newServerConnection(int id);
    void clientDisconnect(int id);
    void serverDisconnect(int id);
-   void processClientPacket(pack::Packet p, int fromid);
-   void processServerPacket(pack::Packet p, int fromid);
-   void removeClientConnection(int id);
 
    void clientSendPacket(Packet &p, int id);
    void clientBroadcast(Packet &p);
@@ -45,6 +42,9 @@ struct GameServer {
    void updatePlayers(int ticks, float dt);
 
    //Utilities
+   void sendPlayerAOI(Player &p);
+   void removeObject(ObjectBase &obj);
+   void removePlayer(Player &p);
    bool collectItem(Player &pl, Item &item); //collect, not collide
    bool collideMissile(Player &p, Missile &m);
    bool collideMissile(NPC &npc, Missile &m);
@@ -57,9 +57,15 @@ struct GameServer {
    ConnectionManager &cm;
    ObjectHolder om;
    ObjectHolder som; //other servers' objects
+   int rsid; //remove server id, -1 if you are the main server
 
    int ticks;
    float dt;
+
+   void processClientPacket(pack::Packet p, int fromid);
+   void processServerPacket(pack::Packet p, int fromid);
+private:
+   void removeClientConnection(int id);
 };
 
 GameServer &getGS(); //singleton
