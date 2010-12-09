@@ -94,8 +94,7 @@ struct TConn {
 
 int main(int argc, const char* argv[])
 {
-   printf("Something\n");
-   //decalre vars that are going to be used
+   //declare vars that are going to be used
    int clientPort, serverPort;
    const char* altAddress = 0;
    int altPort = -1;

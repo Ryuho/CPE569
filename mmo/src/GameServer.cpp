@@ -20,8 +20,62 @@ GameServer::GameServer(ConnectionManager &cm, int remoteServerId)
    serverState = this;
 
    Item *stump = spawnStump(newId());
-   clientBroadcast(Initialize(stump->getId(), ObjectType::Item, 
-      stump->type, stump->pos, vec2(), 0));
+   clientBroadcast(stump->cserialize());
+}
+
+void GameServer::processClientPacket(pack::Packet p, int id)
+{
+   if(!om.contains(id, ObjectType::Player)) {
+      printf("Error: Client %d sent packet and is not connected", id);
+      return;
+   }
+   Player &player = *om.getPlayer(id);
+   if (p.type == PacketType::position) {
+      Position pos(p);
+      player.move(pos.pos, pos.dir, pos.moving != 0);
+      //player went out of bounds or invalid positon?
+      if(pos.pos.x != player.pos.x || pos.pos.y != player.pos.y) {
+         clientSendPacket(Teleport(player.pos), id);
+         printf("Player %d went outside map bounds\n", id);
+      }
+   }
+   else if(p.type == PacketType::signal) {
+      Signal signal(p);
+      if (signal.sig == Signal::special) {
+         sendPlayerSpecial(player);
+      }
+      else if(signal.sig == Signal::setPvp) {
+         player.pvp = signal.val != 0;
+         clientBroadcast(Pvp(id, signal.val));
+      }
+      else if(signal.sig == Signal::hurtme) {
+         player.takeDamage(1);
+         clientBroadcast(HealthChange(id, player.hp));
+      }
+      else
+         printf("Error: Unknown Signal packet type=%d val=%d\n", 
+            signal.sig, signal.val);
+   }
+   else if (p.type == PacketType::arrow) {
+      Arrow ar(p);
+      if(!player.shotThisFrame) {
+         sendPlayerArrow(player, ar.dir);
+      }
+   }
+   else if(p.type == PacketType::click) {
+      Click click(p);
+      Geometry point(Point(click.pos));
+      std::vector<ItemBase *> items;
+      om.collidingItems(point, click.pos, items);
+      for(unsigned i = 0; i < items.size(); i++) {
+         Item &item = *static_cast<Item *>(items[i]);
+         if(collectItem(player, item)) {
+            break;
+         }
+      }
+   }
+   else
+      printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
 }
 
 /*void GameServer::processClientPacket(pack::Packet p, int id)
@@ -48,8 +102,7 @@ GameServer::GameServer(ConnectionManager &cm, int remoteServerId)
             Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
                vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
             om.add(m);
-            clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
-               m->type, m->pos, m->dir, 0));
+            clientBroadcast(m->cserialize());
          }
       }
       else if(signal.sig == Signal::setPvp) {
@@ -72,8 +125,7 @@ GameServer::GameServer(ConnectionManager &cm, int remoteServerId)
          Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
             ar.dir);
          om.add(m);
-         clientBroadcast(Initialize(m->getId(), ObjectType::Missile, 
-            m->type, m->pos, m->dir, 0));
+         clientBroadcast(m->cserialize());
       }
    }
    else if(p.type == PacketType::click) {
@@ -185,9 +237,8 @@ void GameServer::updateNPCs(int ticks, float dt)
       if(lootItem >= 0) {
          Item *item = new Item(newId(), cm.ownServerId, npc.pos, lootItem);
          om.add(item);
-		 //handled during aoi
-         /*clientBroadcast(Initialize(item->getId(), ObjectType::Item, item->type,
-            item->pos, vec2(0,1), 0));*/
+         //handled during aoi
+         //clientBroadcast(item->cserialize());
       }
       removeObject(npc);
    }
@@ -223,6 +274,20 @@ void GameServer::updateMissiles(int ticks, float dt)
    }
 }
 
+void GameServer::clientSendPacket(Packet &p, int id)
+{
+   cm.clientSendPacket(p, id);
+}
+
+void GameServer::clientBroadcast(Packet &p)
+{
+   cm.clientBroadcast(p);
+}
+
+void GameServer::removeClientConnection(int id)
+{
+   cm.removeClientConnection(id);
+}
 
 /////////////////////////////////////////
 /////////////// Utilities ///////////////
@@ -337,6 +402,40 @@ bool GameServer::collideItem(ObjectBase &obj, Item &item)
    return false;
 }
 
+void GameServer::sendPlayerInitData(int id)
+{
+   //tell new player about previous players (includes self)
+   for(unsigned i = 0; i < om.playerCount(); i++) {
+      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
+      clientSendPacket(p.cserialize(), id);
+      //if(p.pvp) //already in init packet atm?
+      //   clientSendPacket(Pvp(p.getId(), p.pvp), id);
+   }
+   //tell new player about previous Items
+   for(unsigned i = 0; i < om.itemCount(); i++) {
+      Item &item = *static_cast<Item *>(om.get(ObjectType::Item, i));
+      clientSendPacket(item.cserialize(), id);
+   }
+   //tell new player about previous NPCs
+   for(unsigned i = 0; i < om.npcCount(); i++) {
+      NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
+      clientSendPacket(npc.cserialize(), id);
+   }
+   //tell new player about previous Missiles
+   for(unsigned i = 0; i < om.missileCount(); i++) {
+      Missile &m = *static_cast<Missile *>(om.get(ObjectType::Missile, i));
+      clientSendPacket(m.cserialize(), id);
+   }
+}
+
+void GameServer::sendPlayerSpecial(Player &player)
+{
+   for(int i = 0; i < constants::numArrows; i++) {
+	   float t = i/(float)constants::numArrows;
+      vec2 dir((float)cos(t*2*PI), (float)sin(t*2*PI));
+	   sendPlayerArrow(player, dir);
+   }
+}
 
 //Old implementation
 /*void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
@@ -365,7 +464,7 @@ bool GameServer::collideItem(ObjectBase &obj, Item &item)
    oh.collidingItems(aoi, p.pos, aoiitems);
    for(unsigned i = 0; i < aoiitems.size(); i++) {
 	   Item &item = *static_cast<Item *>(aoiitems[i]);
-	   clientSendPacket(Initialize(item.getId(), item.getType(), item.type, item.pos, vec2(), 0), p.getId());
+	   clientSendPacket(item.cserialize(), p.getId());
    }
 }*/
 

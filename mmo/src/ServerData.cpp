@@ -352,8 +352,7 @@ void NPC::update()
          Missile *m = new Missile(newId(), id, sid, pos, 
             mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
          getOM().add(m);
-         getGS().clientBroadcast(pack::Initialize(m->getId(), 
-            ObjectType::Missile, m->type, m->pos,  m->dir, 0));
+         getGS().clientBroadcast(m->cserialize());
       }
    }
    else {

@@ -42,6 +42,9 @@ struct GameServer {
    void updatePlayers(int ticks, float dt);
 
    //Utilities
+   void sendPlayerArrow(Player &p, vec2 dir);
+   void sendPlayerSpecial(Player &player);
+   void sendPlayerInitData(int id);
    void sendPlayerAOI(Player &p, ObjectHolder &oh);
    void removeObject(ObjectBase &obj);
    void removePlayer(Player &p);
