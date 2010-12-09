@@ -180,22 +180,7 @@ bool ObjectManager::_add(ObjectBase *obj, vec2 pos, Geometry g)
    return rm.add(obj, obj->getType(), regionIds);
 }
 
-bool ObjectManager::add(PlayerBase *obj)
-{
-   return _add(obj, obj->pos, obj->getGeom());
-}
-
-bool ObjectManager::add(MissileBase *obj)
-{
-   return _add(obj, obj->pos, obj->getGeom());
-}
-
-bool ObjectManager::add(NPCBase *obj)
-{
-   return _add(obj, obj->pos, obj->getGeom());
-}
-
-bool ObjectManager::add(ItemBase *obj)
+bool ObjectManager::add(ObjectBase *obj)
 {
    return _add(obj, obj->pos, obj->getGeom());
 }

@@ -92,11 +92,6 @@ namespace server {
    struct ObjectHolder : ObjectManager {
       ObjectHolder() : ObjectManager() {}
 
-      bool add(Player *obj);
-      bool add(NPC *obj);
-      bool add(Item *obj);
-      bool add(Missile *obj);
-
       Player *getPlayer(int id);
       NPC *getNPC(int id);
       Item *getItem(int id);

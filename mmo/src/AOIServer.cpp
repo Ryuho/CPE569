@@ -158,6 +158,11 @@ void GameServer::sendPlayerArrow(Player &player, vec2 dir)
    }
 }
 
+void GameServer::createObject(ObjectBase *obj)
+{
+   om.add(obj);
+}
+
 ////////////////////////////////////////////
 /////////// Multi Server Methods ///////////
 ////////////////////////////////////////////

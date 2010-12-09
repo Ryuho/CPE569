@@ -68,10 +68,11 @@ namespace objectManager {
       NPCBase *getNPC(int id) const;
       ItemBase *getItem(int id) const;
       
-      bool add(PlayerBase *obj);
-      bool add(MissileBase *obj);
-      bool add(NPCBase *obj);
-      bool add(ItemBase *obj);
+      //bool add(PlayerBase *obj);
+      //bool add(MissileBase *obj);
+      //bool add(NPCBase *obj);
+      //bool add(ItemBase *obj);
+      bool add(ObjectBase *obj);
       
       bool remove(int id);
       bool contains(int id) const;

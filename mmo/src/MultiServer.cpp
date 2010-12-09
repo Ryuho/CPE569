@@ -114,7 +114,7 @@ void GameServer::update(int ticks)
          for(unsigned i = 0; i < regionXSize; i++) {
             for(unsigned j = 0; j < regionYSize; j++) {
                NPC *npc = spawnNPC(i, j);
-               clientBroadcast(npc->cserialize());
+               //clientBroadcast(npc->cserialize());
             }
          }
       }
@@ -128,8 +128,13 @@ void GameServer::sendPlayerArrow(Player &player, vec2 dir)
    player.shotThisFrame = true;
    Missile *m = new Missile(newId(), cm.ownServerId, player.getId(), player.pos, 
       dir);
-   om.add(m);
-   clientBroadcast(m->cserialize());
+   createObject(m);
+}
+
+void GameServer::createObject(ObjectBase *obj)
+{
+   om.add(obj);
+   clientBroadcast(om.getCSerialized(obj->getId()));
 }
 
 ////////////////////////////////////////////

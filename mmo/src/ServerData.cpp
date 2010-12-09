@@ -509,26 +509,9 @@ pack::Packet Item::cserialize() const
    return ini.makePacket();;
 }
 
-bool ObjectHolder::add(Player *obj)
-{
-   return ObjectManager::add(static_cast<PlayerBase *>(obj));
-}
-
-bool ObjectHolder::add(NPC *obj)
-{
-   return ObjectManager::add(static_cast<NPCBase *>(obj));
-}
-
-bool ObjectHolder::add(Item *obj)
-{
-   return ObjectManager::add(static_cast<ItemBase *>(obj));
-}
-
-bool ObjectHolder::add(Missile *obj)
-{
-   return ObjectManager::add(static_cast<MissileBase *>(obj));
-}
-
+//////////////////////////////////////////
+////////////// Object Holder /////////////
+//////////////////////////////////////////
 Player *ObjectHolder::getPlayer(int id)
 {
    return static_cast<Player *>(ObjectManager::getPlayer(id));

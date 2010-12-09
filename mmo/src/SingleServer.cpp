@@ -99,8 +99,13 @@ void GameServer::sendPlayerArrow(Player &player, vec2 dir)
    player.shotThisFrame = true;
    Missile *m = new Missile(newId(), cm.ownServerId, player.getId(), player.pos, 
       dir);
-   om.add(m);
-   clientBroadcast(m->cserialize());
+   createObject(m);
+}
+
+void GameServer::createObject(ObjectBase *obj)
+{
+   om.add(obj);
+   clientBroadcast(om.getCSerialized(obj->getId()));
 }
 
 ////////////////////////////////////////////

@@ -236,9 +236,7 @@ void GameServer::updateNPCs(int ticks, float dt)
       int lootItem = npc.getLoot();
       if(lootItem >= 0) {
          Item *item = new Item(newId(), cm.ownServerId, npc.pos, lootItem);
-         om.add(item);
-         //handled during aoi
-         //clientBroadcast(item->cserialize());
+         createObject(item);
       }
       removeObject(npc);
    }
@@ -305,7 +303,7 @@ NPC *GameServer::spawnNPC(int regionX, int regionY)
    NPC *n = new server::NPC(newId(), cm.ownServerId, npcMaxHp, pos, 
       vec2(0,1), npcType(regionX, regionY));
 
-   om.add(n);
+   createObject(n);
    return n;
 }
 
@@ -313,8 +311,8 @@ Item *GameServer::spawnItem(int id)
 {
    vec2 pos = randPos2(200, 350);
    Item *item = new Item(id, cm.ownServerId, pos, rand() % (ItemType::Explosion+1));
-   om.add(item);
-   printf("Spawn Item id=%d type=%d\n", item->getId(), item->type);
+   //printf("Spawn Item id=%d type=%d\n", item->getId(), item->type);
+   createObject(item);
    return item;
 }
 
@@ -322,15 +320,14 @@ Item *GameServer::spawnStump(int id)
 {
    vec2 pos = randPos2(200, 350);
    Item *stump = new Item(id, cm.ownServerId, pos, ItemType::Stump);
-   om.add(stump);
-   printf("Spawn Stump id=%d type=%d\n", stump->getId(), stump->type);
+   createObject(stump);
+   //printf("Spawn Stump id=%d type=%d\n", stump->getId(), stump->type);
    return stump;
 }
 
 bool GameServer::collectItem(Player &pl, Item &item)
 {
    if(item.isCollectable()) {
-      //clientBroadcast(Signal(Signal::remove, item.getId()));
       int rupees = item.type == ItemType::GreenRupee ? greenRupeeValue :
          item.type == ItemType::BlueRupee ? blueRupeeValue :
          item.type == ItemType::RedRupee ? redRupeeValue :
@@ -436,41 +433,3 @@ void GameServer::sendPlayerSpecial(Player &player)
 	   sendPlayerArrow(player, dir);
    }
 }
-
-//Old implementation
-/*void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
-{
-   Geometry aoi(Circle(p.pos, areaOfInfluenceRadius));
-   std::vector<NPCBase *> aoinpcs;
-   oh.collidingNPCs(aoi, p.pos, aoinpcs);
-   for(unsigned i = 0; i < aoinpcs.size(); i++) {
-      NPC &npc = *static_cast<NPC *>(aoinpcs[i]);
-      clientSendPacket(HealthChange(npc.getId(), npc.hp), p.getId());
-      clientSendPacket(Position(npc.pos, npc.dir, npc.moving, npc.getId()), 
-         p.getId());
-   }
-   std::vector<PlayerBase *> aoiplayers;
-   oh.collidingPlayers(aoi, p.pos, aoiplayers);
-   for(unsigned i = 0; i < aoiplayers.size(); i++) {
-      Player &player = *static_cast<Player *>(aoiplayers[i]);
-      clientSendPacket(HealthChange(player.getId(), player.hp), p.getId());
-      if(player.getId() != p.getId()) {
-         clientSendPacket(Position(player.pos, player.dir, player.moving, 
-            player.getId()),  p.getId());
-      }
-   }
-
-   std::vector<ItemBase *> aoiitems;
-   oh.collidingItems(aoi, p.pos, aoiitems);
-   for(unsigned i = 0; i < aoiitems.size(); i++) {
-	   Item &item = *static_cast<Item *>(aoiitems[i]);
-	   clientSendPacket(item.cserialize(), p.getId());
-   }
-}*/
-
-
-
-//void GameServer::createObject(ObjectBase &obj)
-//{
-//
-//}
