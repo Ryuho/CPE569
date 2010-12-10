@@ -158,7 +158,10 @@ pack::Packet Missile::serialize() const
 
 void Missile::move(vec2 pos, vec2 dir)
 {
-   getOM().move(static_cast<MissileBase *>(this), pos);
+   if(getOM().contains(id))
+      getOM().move(static_cast<MissileBase *>(this), pos);
+   else
+      getSOM().move(static_cast<MissileBase *>(this), pos);
    this->pos = pos;
    this->dir = dir;
 }
@@ -308,7 +311,10 @@ void NPC::update()
    Geometry aggroCircle(Circle(pos, npcAggroRange));
    std::vector<PlayerBase *> closePlayers;
    getOM().collidingPlayers(aggroCircle, pos, closePlayers);
-   if(closePlayers.size() > 0) {
+   if(closePlayers.size() < 0) {
+      getSOM().collidingPlayers(aggroCircle, pos, closePlayers);
+   }
+   if(closePlayers.size() < 0) {
       aiType = AIType::Attacking;
       p = static_cast<Player *>(closePlayers[0]);
       attackId = p->getId();
@@ -321,8 +327,10 @@ void NPC::update()
          }
       }
    }
+
    if(aiType == AIType::Attacking 
-         && (!getOM().contains(attackId, ObjectType::Player) || !p)) {
+         && (!p || !getOM().contains(attackId, ObjectType::Player)
+         || !getSOM().contains(attackId, ObjectType::Player))) {
       attackId = 0;
       aiType = AIType::Stopped;
       return;
@@ -350,9 +358,9 @@ void NPC::update()
       if(getTicks() > nextMissileTicks) {
          nextMissileTicks = getTicks() + getAttackDelay();
          Missile *m = new Missile(newId(), id, sid, pos, 
-            mat::to(this->pos, getOM().getPlayer(attackId)->pos), MissileType::Arrow);
-         getOM().add(m);
-         getGS().clientBroadcast(m->cserialize());
+            mat::to(this->pos, p->pos), 
+            MissileType::Arrow);
+         getGS().createMissile(m);
       }
    }
    else {
@@ -532,22 +540,22 @@ Missile *ObjectHolder::getMissile(int id)
    return static_cast<Missile *>(ObjectManager::getMissile(id));
 }
 
-Serializable *ObjectHolder::getSerialized(int id)
+pack::Packet ObjectHolder::getSerialized(int id)
 {
    ObjectBase *obj = static_cast<ObjectBase *>(getOM().get(id));
-   Serializable *serialized = 0;
+   pack::Packet serialized(-1);
    switch(obj->getType()) {
       case ObjectType::Player:
-         serialized = static_cast<Serializable *>(static_cast<Player *>(obj));
+         serialized = static_cast<Player *>(obj)->serialize();
          break;
       case ObjectType::NPC:
-         serialized = static_cast<Serializable *>(static_cast<NPC *>(obj));
+         serialized = static_cast<NPC *>(obj)->serialize();
          break;
       case ObjectType::Item:
-         serialized = static_cast<Serializable *>(static_cast<Item *>(obj));
+         serialized = static_cast<Item *>(obj)->serialize();
          break;
       case ObjectType::Missile:
-         serialized = static_cast<Serializable *>(static_cast<Missile *>(obj));
+         serialized = static_cast<Missile *>(obj)->serialize();
          break;
       default:
          printf("Error: getSerialized Unknown type %d\n", obj->getType());

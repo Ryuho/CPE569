@@ -22,6 +22,10 @@ inline objectManager::ObjectManager &getOM() {
    return getGS().om;
 }
 
+inline objectManager::ObjectManager &getSOM() {
+   return getGS().som;
+}
+
 inline ConnectionManager &getCM() {
    return getGS().cm;
 }

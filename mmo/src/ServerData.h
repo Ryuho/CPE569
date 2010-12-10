@@ -97,7 +97,7 @@ namespace server {
       Item *getItem(int id);
       Missile *getMissile(int id);
 
-      Serializable *getSerialized(int id);
+      Packet getSerialized(int id);
       Packet getCSerialized(int id);
    };
 

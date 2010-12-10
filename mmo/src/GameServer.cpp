@@ -162,6 +162,7 @@ void GameServer::updatePlayers(int ticks, float dt)
       p.gainHp(playerHpPerTick);
       std::vector<ItemBase *> collidedItems;
       om.collidingItems(g, p.pos, collidedItems);
+      som.collidingItems(g, p.pos, collidedItems);
       for(unsigned j = 0; j < collidedItems.size(); j++) {
          Item &item = *static_cast<Item *>(collidedItems[j]);
          if(collectItem(p, item)) {
@@ -175,17 +176,18 @@ void GameServer::updatePlayers(int ticks, float dt)
       //if player is colliding with any missile that is not owned by it, they take dmg
       std::vector<MissileBase *> collidedMis;
       om.collidingMissiles(g, p.pos, collidedMis);
+      som.collidingMissiles(g, p.pos, collidedMis);
       //bool damaged = false;
       for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
          Missile &m = *static_cast<Missile *>(collidedMis[j]);
          collideMissile(p, m);
       }
-      collidedMis.clear();
-      som.collidingMissiles(g, p.pos, collidedMis);
-      for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
-         Missile &m = *static_cast<Missile *>(collidedMis[j]);
-         collideMissile(p, m);
-      }
+      //collidedMis.clear();
+      //som.collidingMissiles(g, p.pos, collidedMis);
+      //for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
+      //   Missile &m = *static_cast<Missile *>(collidedMis[j]);
+      //   collideMissile(p, m);
+      //}
       if(p.hp <= 0)
          playersToRemove.push_back(&p);
       else {
@@ -265,6 +267,10 @@ void GameServer::updateMissiles(int ticks, float dt)
             }
          }
       }
+   }
+   for(unsigned i = 0; i < som.missileCount(); i++) {
+      Missile &m = *static_cast<Missile *>(som.get(ObjectType::Missile, i));
+      m.update();
    }
 
    for(unsigned i = 0; i < missilesToRemove.size(); i++) {

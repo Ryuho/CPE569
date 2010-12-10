@@ -149,18 +149,22 @@ void GameServer::sendPlayerArrow(Player &player, vec2 dir)
    player.shotThisFrame = true;
    Missile *m = new Missile(newId(), cm.ownServerId, player.getId(), player.pos, 
       dir);
-   om.add(m);
+   createMissile(m);
+}
+
+void GameServer::createObject(ObjectBase *obj)
+{
+   om.add(obj);
+}
+
+void GameServer::createMissile(Missile *m)
+{
    Geometry aoi(Circle(m->pos, missileInfluenceRadius));
    std::vector<PlayerBase *> aoiplayers;
    om.collidingPlayers(aoi, m->pos, aoiplayers);
    for(unsigned i = 0; i < aoiplayers.size(); i++) {
       clientSendPacket(m->cserialize(), aoiplayers[i]->getId());
    }
-}
-
-void GameServer::createObject(ObjectBase *obj)
-{
-   om.add(obj);
 }
 
 ////////////////////////////////////////////

@@ -43,6 +43,7 @@ struct GameServer {
 
    //Utilities
    void createObject(ObjectBase *obj);
+   void createMissile(Missile *m);
    //void serverBroadcastPos(int id, pack::Position &pos);
    void sendPlayerArrow(Player &p, vec2 dir);
    void sendPlayerSpecial(Player &player);

@@ -108,6 +108,11 @@ void GameServer::createObject(ObjectBase *obj)
    clientBroadcast(om.getCSerialized(obj->getId()));
 }
 
+void GameServer::createMissile(Missile *m)
+{
+   createObject(m);
+}
+
 ////////////////////////////////////////////
 /////////// Multi Server Methods ///////////
 ////////////////////////////////////////////

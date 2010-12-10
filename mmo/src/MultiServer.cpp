@@ -136,6 +136,12 @@ void GameServer::createObject(ObjectBase *obj)
 {
    om.add(obj);
    clientBroadcast(om.getCSerialized(obj->getId()));
+   serverBroadcast(om.getSerialized(obj->getId()));
+}
+
+void GameServer::createMissile(Missile *m)
+{
+   createObject(m);
 }
 
 ////////////////////////////////////////////
@@ -169,12 +175,20 @@ void GameServer::processServerPacket(pack::Packet p, int id)
          som.add(new Player(obj));
          clientBroadcast(obj.cserialize());
       }
+      else {
+         Player *obj2 = som.getPlayer(obj.getId());
+         *obj2 = obj;
+      }
    }
    else if(p.type == PacketType::serialItem) {
       Item obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new Item(obj));
          clientBroadcast(obj.cserialize());
+      }
+      else {
+         Item *obj2 = som.getItem(obj.getId());
+         *obj2 = obj;
       }
    }
    else if(p.type == PacketType::serialMissile) {
@@ -183,12 +197,20 @@ void GameServer::processServerPacket(pack::Packet p, int id)
          som.add(new Missile(obj));
          clientBroadcast(obj.cserialize());
       }
+      //else {
+         //Missile *obj2 = som.getMissile(obj.getId());
+         //*obj2 = obj;
+      //}
    }
    else if(p.type == PacketType::serialNPC) {
       NPC obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new NPC(obj));
          clientBroadcast(obj.cserialize());
+      }
+      else {
+         NPC *obj2 = som.getNPC(obj.getId());
+         *obj2 = obj;
       }
    }
    else if(p.type == PacketType::signal) {
