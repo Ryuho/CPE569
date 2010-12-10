@@ -224,7 +224,7 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       Player obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new Player(obj));
-         //clientBroadcast(obj.cserialize());
+         clientBroadcast(obj.cserialize());
       }
       else {
          Player *obj2 = som.getPlayer(obj.getId());
