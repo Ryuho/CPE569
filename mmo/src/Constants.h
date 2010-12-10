@@ -9,7 +9,7 @@ namespace constants {
    const int numArrows = 30; // Number of arrows that are fired in the special attack
    const int arrowCooldown = 150; // Number of ms between arrow shots
    const int specialCooldown = 2000; // ms between special attacks
-   const int npcQuantity = 175;
+   const int npcQuantity = 90;
    const float maxProjectileTicks = 500;
    const float projectileSpeed = 800;
    const unsigned missileDamageMax = 11;
@@ -29,8 +29,8 @@ namespace constants {
 
    const int npcMaxHp = 120;
    const int playerMaxHp = 200;
-	const int worldHeight = 5000;
-	const int worldWidth = 5000;
+	const int worldHeight = 3000;
+	const int worldWidth = 3000;
    const int regionXSize = ((int)(worldWidth / regionSize))*regionSize == worldWidth ?
       ((int)(worldWidth / regionSize)) : ((int)(worldWidth / regionSize)) + 1;
    const unsigned regionYSize = ((int)(worldHeight / regionSize))*regionSize == worldHeight ?
