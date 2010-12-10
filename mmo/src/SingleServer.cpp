@@ -19,7 +19,7 @@ void GameServer::newClientConnection(int id)
 
 	clientSendPacket(Connect(id, constants::worldHeight, 
       constants::worldWidth), id);
-   sendPlayerInitData(id);
+   sendPlayerInitData(id, om);
    clientBroadcast(newPlayer->cserialize());
    serverBroadcast(newPlayer->serialize());
 }

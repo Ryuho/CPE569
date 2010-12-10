@@ -399,29 +399,29 @@ bool GameServer::collideItem(ObjectBase &obj, Item &item)
    return false;
 }
 
-void GameServer::sendPlayerInitData(int id)
+void GameServer::sendPlayerInitData(int playerId, ObjectHolder &oh)
 {
    //tell new player about previous players (includes self)
-   for(unsigned i = 0; i < om.playerCount(); i++) {
-      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
-      clientSendPacket(p.cserialize(), id);
-      //if(p.pvp) //already in init packet atm?
-      //   clientSendPacket(Pvp(p.getId(), p.pvp), id);
+   for(unsigned i = 0; i < oh.playerCount(); i++) {
+      Player &p = *static_cast<Player *>(oh.get(ObjectType::Player, i));
+      clientSendPacket(p.cserialize(), playerId);
+      if(p.pvp) //already in init packet atm?
+         clientSendPacket(Pvp(p.getId(), p.pvp), playerId);
    }
    //tell new player about previous Items
-   for(unsigned i = 0; i < om.itemCount(); i++) {
-      Item &item = *static_cast<Item *>(om.get(ObjectType::Item, i));
-      clientSendPacket(item.cserialize(), id);
+   for(unsigned i = 0; i < oh.itemCount(); i++) {
+      Item &item = *static_cast<Item *>(oh.get(ObjectType::Item, i));
+      clientSendPacket(item.cserialize(), playerId);
    }
    //tell new player about previous NPCs
-   for(unsigned i = 0; i < om.npcCount(); i++) {
-      NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
-      clientSendPacket(npc.cserialize(), id);
+   for(unsigned i = 0; i < oh.npcCount(); i++) {
+      NPC &npc = *static_cast<NPC *>(oh.get(ObjectType::NPC, i));
+      clientSendPacket(npc.cserialize(), playerId);
    }
    //tell new player about previous Missiles
-   for(unsigned i = 0; i < om.missileCount(); i++) {
-      Missile &m = *static_cast<Missile *>(om.get(ObjectType::Missile, i));
-      clientSendPacket(m.cserialize(), id);
+   for(unsigned i = 0; i < oh.missileCount(); i++) {
+      Missile &m = *static_cast<Missile *>(oh.get(ObjectType::Missile, i));
+      clientSendPacket(m.cserialize(), playerId);
    }
 }
 

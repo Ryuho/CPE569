@@ -43,9 +43,10 @@ struct GameServer {
 
    //Utilities
    void createObject(ObjectBase *obj);
+   //void serverBroadcastPos(int id, pack::Position &pos);
    void sendPlayerArrow(Player &p, vec2 dir);
    void sendPlayerSpecial(Player &player);
-   void sendPlayerInitData(int id);
+   void sendPlayerInitData(int playerId, ObjectHolder &oh);
    void sendPlayerAOI(Player &p, ObjectHolder &oh);
    void removeObject(ObjectBase &obj);
    void removePlayer(Player &p);

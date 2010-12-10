@@ -22,7 +22,8 @@ void GameServer::newClientConnection(int id)
       constants::worldWidth), id);
    clientBroadcast(newPlayer->cserialize());
 
-   sendPlayerInitData(id);
+   sendPlayerInitData(id, om);
+   sendPlayerInitData(id, som);
    serverBroadcast(newPlayer->serialize());
 }
 
@@ -195,11 +196,12 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       if(signal.sig == Signal::remove) {
          if(som.contains(signal.val)) {
             som.remove(signal.val);
-            clientBroadcast(p);
+            clientBroadcast(signal);
             //may still remove other server's objects... and no easy way to check
          }
          else if(om.contains(signal.val)) {
             om.remove(signal.val);
+            clientBroadcast(signal);
             printf("Server %d requesting remote removal of %d\n", 
                id, signal.val);
          }
