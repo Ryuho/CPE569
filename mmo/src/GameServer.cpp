@@ -360,8 +360,7 @@ bool GameServer::collideMissile(Player &p, Missile &m)
 {
    if(m.owned != p.getId()) {
       if(p.pvp && (om.contains(m.owned, ObjectType::Player)
-            && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) 
-      {
+            && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) {
          return false;
       }
       else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))

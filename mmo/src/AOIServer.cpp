@@ -165,6 +165,7 @@ void GameServer::createMissile(Missile *m)
    for(unsigned i = 0; i < aoiplayers.size(); i++) {
       clientSendPacket(m->cserialize(), aoiplayers[i]->getId());
    }
+   createObject(m);
 }
 
 ////////////////////////////////////////////
