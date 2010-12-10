@@ -166,7 +166,7 @@ void GameServer::serverDisconnect(int id)
    printf("Server %d disconnected\n", id);
    int newId = -1;
    for(int i = id+1; i < cm.nextServId-1; i++){
-      if(cm.idToServerIndex.find(i) != cm.idToClientIndex.end()){
+      if(cm.idToServerIndex.find(i) != cm.idToServerIndex.end()){
          newId = i;
       }
       if(newId != -1){
@@ -174,7 +174,7 @@ void GameServer::serverDisconnect(int id)
       }
    }
    for(int i = 0; i < cm.ownServerId-1; i++){
-      if(cm.idToServerIndex.find(i) != cm.idToClientIndex.end()){
+      if(cm.idToServerIndex.find(i) != cm.idToServerIndex.end()){
          newId = i;
       }
       if(newId != -1){
@@ -183,10 +183,10 @@ void GameServer::serverDisconnect(int id)
    }
 
 
-   printf("deleted %d NPCs that was on the server that died. FIX THIS\n",som.npcCount());
-   printf("deleted %d Items that was on the server that died. FIX THIS\n",som.itemCount());
-   /* som.getNPC(i) is not valid, and so the program crashes when it is referenced
+   printf("should have deleted %d NPCs that was on the server that died. FIX THIS\n",som.npcCount());
+   printf("should have deleted %d Items that was on the server that died. FIX THIS\n",som.itemCount());
 
+   /*
    for(unsigned i = 0; i < som.npcCount(); i++){
       if(som.getNPC(i)->sid == id){
          som.getNPC(i)->sid = newId;
