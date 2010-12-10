@@ -50,6 +50,8 @@ namespace constants {
    const int blueRupeeValue = 3;
    const int redRupeeValue = 5;
 
+   const int maxServerCount = 8;
+
    namespace AnimType { enum { 
       LeftRight=0, Forward=1, Normal=2
    };}

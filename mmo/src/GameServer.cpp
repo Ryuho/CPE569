@@ -78,75 +78,6 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
 }
 
-/*void GameServer::processClientPacket(pack::Packet p, int id)
-{
-   if(!om.contains(id, ObjectType::Player)) {
-      printf("Error: Client %d sent packet and is not connected", id);
-      return;
-   }
-   Player &player = *static_cast<Player *>(om.getPlayer(id));
-   if (p.type == PacketType::position) {
-      Position pos(p);
-      player.move(pos.pos, pos.dir, pos.moving != 0);
-      //player went out of bounds or invalid positon?
-      if(pos.pos.x != player.pos.x || pos.pos.y != player.pos.y) {
-         clientSendPacket(Teleport(player.pos), id);
-         printf("Player %d went outside map bounds\n", id);
-      }
-   }
-   else if(p.type == PacketType::signal) {
-      Signal signal(p);
-      if (signal.sig == Signal::special) {
-         for(int i = 0; i < constants::numArrows; i++) {
-            float t = i/(float)constants::numArrows;
-            Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
-               vec2((float)cos(t*2*PI), (float)sin(t*2*PI)));
-            om.add(m);
-            clientBroadcast(m->cserialize());
-         }
-      }
-      else if(signal.sig == Signal::setPvp) {
-         player.pvp = signal.val != 0;
-         //printf("Player %d PVP: %s\n", player.getId(), player.pvp ? "on" : "off");
-         clientBroadcast(Pvp(id, signal.val));
-      }
-      else if(signal.sig == Signal::hurtme) {
-         player.takeDamage(1);
-         clientBroadcast(HealthChange(id, player.hp));
-      }
-      else
-         printf("Error: Unknown Signal packet type=%d val=%d\n", 
-            signal.sig, signal.val);
-   }
-   else if (p.type == PacketType::arrow) {
-      Arrow ar(p);
-      if(!player.shotThisFrame) {
-         player.shotThisFrame = true;
-         Missile *m = new Missile(newId(), cm.ownServerId, id, player.pos, 
-            ar.dir);
-         om.add(m);
-         clientBroadcast(m->cserialize());
-      }
-   }
-   else if(p.type == PacketType::click) {
-      Click click(p);
-      Geometry point(Point(click.pos));
-      //printf("Player %d clicked <%0.1f, %0.1f>\n", id, click.pos.x, 
-      //   click.pos.y);
-      std::vector<ItemBase *> items;
-      om.collidingItems(point, click.pos, items);
-      if(items.size() > 0) {
-         for(unsigned i = 0; i < items.size(); i++) {
-            Item &item = *static_cast<Item *>(items[i]);
-            if(item.isCollectable()) {
-               collectItem(player, item);
-            }
-         }
-      }
-   }
-   else
-      printf("Unknown client packet type=%d size=%d\n", p.type, p.data.size());
-}*/
 
 ///////////////////////////////////////
 /////////////// Updates ///////////////
@@ -220,6 +151,7 @@ void GameServer::updateNPCs(int ticks, float dt)
   
       std::vector<MissileBase *> ms;
       om.collidingMissiles(g, npc.pos, ms);
+      som.collidingMissiles(g, npc.pos, ms);
       for(unsigned j = 0; j < ms.size() && npc.hp > 0; j++) {
          Missile &m = *static_cast<Missile *>(ms[j]);
          if(collideMissile(npc, m)) {
@@ -358,13 +290,14 @@ bool GameServer::collectItem(Player &pl, Item &item)
 
 bool GameServer::collideMissile(Player &p, Missile &m)
 {
-   if(m.owned != p.getId()) {
-      if(p.pvp && (om.contains(m.owned, ObjectType::Player)
-            && !static_cast<Player *>(om.getPlayer(m.owned))->pvp)) {
+   //if not in pvp or missle is owned by player, don't hurt
+   if(!p.pvp && m.owned != p.getId()) {
+      if(om.contains(m.owned, ObjectType::Player) && !static_cast<Player *>(om.getPlayer(m.owned))->pvp){
          return false;
       }
-      else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
+      else if(som.contains(m.owned, ObjectType::Player) && !static_cast<Player *>(som.getPlayer(m.owned))->pvp){
          return false;
+      }
       p.takeDamage(m.getDamage());
       removeObject(m);
       return true;
@@ -374,7 +307,7 @@ bool GameServer::collideMissile(Player &p, Missile &m)
 
 bool GameServer::collideMissile(NPC &npc, Missile &m)
 {
-   if(m.owned != npc.getId() && om.contains(m.owned, ObjectType::Player)) {
+   if(m.owned != npc.getId() && (om.contains(m.owned, ObjectType::Player) || som.contains(m.owned, ObjectType::Player))) {
       npc.takeDamage(m.getDamage());
       if(npc.hp <= 0) {
          if(om.contains(m.owned, ObjectType::Player)) {

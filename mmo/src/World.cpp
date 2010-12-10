@@ -306,8 +306,10 @@ void WorldData::processPacket(pack::Packet p)
       else if(objs.contains(hc.id, ObjectType::NPC)) {
          objs.getNPC(hc.id)->hp = hc.hp;
       }
-      else
+      else{
          printf("Error: Health change on id %d\n", hc.id);
+      }
+        
    }
    else if(p.type == PacketType::changePvp) {
       Pvp pvpPacket(p);

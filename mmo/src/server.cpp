@@ -17,12 +17,21 @@ using sock::Server;
 using sock::Packet;
 using sock::setupSockets;
 
+ConnectionManager *ourCM;
+
 int nextId = 100;
-int nextServId = 1;
+
+void setId(int val)
+{
+   nextId = val;
+}
 
 int newId()
 {
-   return nextId++;
+   int answer = nextId*maxServerCount+ourCM->ownServerId;
+
+   nextId++;
+   return answer;
 }
 
 void setIdOffset(int sid)
@@ -32,10 +41,8 @@ void setIdOffset(int sid)
 
 int newServId()
 {
-   return nextServId++;
+   return ourCM->nextServId++;
 }
-
-ConnectionManager *displayCM;
 
 void displayBandwidth()
 {
@@ -49,14 +56,14 @@ void displayBandwidth()
       float rkb = sock::getBytesRead() / 1000.0f;
 
       printf("s=%2.2fkb|r=%2.2fkb ", skb, rkb);
-      displayCM->printPackStat();
+      ourCM->printPackStat();
    }
 }
 
 bool updateServId(int last)
 {
-   bool ret = last >= nextServId;
-   nextServId = max(nextServId, last+1);
+   bool ret = last >= ourCM->nextServId;
+   ourCM->nextServId = max(ourCM->nextServId, last+1);
    return ret;
 }
 
@@ -101,7 +108,7 @@ int main(int argc, const char* argv[])
    int remoteId = -1, remoteClientPort;
    vector<TConn> tconns;
 
-   testPackets();
+   //testPackets();
 
    if(argc == 3) {
       clientPort = atoi(argv[1]);
@@ -133,7 +140,7 @@ int main(int argc, const char* argv[])
 
    ConnectionManager cm;
    cm.initPackStat();
-   displayCM = &cm;
+   ourCM = &cm;
 
 
    if(altPort > 0) {
@@ -160,6 +167,8 @@ int main(int argc, const char* argv[])
          for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
             cm.serverConnections[i].conn.send(sock::Packet().writeInt(ServerOps::ready));
          }
+         updateServId(cm.ownServerId);
+
       } else {
          printf("Unable to connect to all servers, aborting\n");
          return -1;
@@ -177,17 +186,20 @@ int main(int argc, const char* argv[])
       displayBandwidth();
       int startTicks = currentTicks();
 
+	  //add new client connection
       while (clientServ.select()) {
          int id = newId();
          cm.addClientConnection(clientServ.accept(), id);
          gs.newClientConnection(id);
       }
 
+	  //add new server connection
       while (serverServ.select()) {
          int id = newId();
          tconns.push_back(TConn(serverServ.accept()));
       }
    
+	  //process packet for each client connection
       for (unsigned i = 0; i < cm.clientConnections.size(); i++) {
          Connection conn = cm.clientConnections[i].conn;
          while (conn.select()) {
@@ -202,6 +214,7 @@ int main(int argc, const char* argv[])
          }
       }
 
+	  //process packet for each server connection
       for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
          Connection conn = cm.serverConnections[i].conn;
          while (conn.select()) {
@@ -216,16 +229,18 @@ int main(int argc, const char* argv[])
          }
       }
 
-      
+      //process server connections that it recieved
       for (unsigned i = 0; i < tconns.size(); i++) {
          Connection conn = tconns[i].conn;
          while (conn.select()) {
             if (conn) {
                sock::Packet p;
                int op;
+               //if the connection doesn't have a server id associated
                if (tconns[i].servId == -1) {
                   conn.recv(p, 4);
                   p.readInt(op);
+                  //request to join the group of servers
                   if (op == ServerOps::request) {
                      // request would also tell us about its ports
                      conn.recv(p, 8);
@@ -245,7 +260,12 @@ int main(int argc, const char* argv[])
                      tconns[i].servId = sid;
                      tconns[i].clientPort = cp;
                      tconns[i].servPort = sp;
-                     conn.send(p.reset().writeInt(updateServId(sid) ? ServerOps::good : ServerOps::bad));
+					      if(updateServId(sid)){
+						      conn.send(p.reset().writeInt(ServerOps::good));
+					      }
+					      else{
+                        conn.send(p.reset().writeInt(ServerOps::bad));
+					      }
                   } else {
                      printf("Got a packet from tconn with unknown id with unknown op: %d\n", op);
                   }

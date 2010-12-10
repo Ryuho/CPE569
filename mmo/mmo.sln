@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_multi", "multiserver
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_aoi", "aoiserver.vcproj", "{6D9FDEE0-1F58-43AE-ABA7-619BAD744DD2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_multi_aoi", "multiserveraoi.vcproj", "{F6A6A92B-CB7B-485B-97C8-95BE0CF76522}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,10 @@ Global
 		{6D9FDEE0-1F58-43AE-ABA7-619BAD744DD2}.Debug|Win32.Build.0 = Debug|Win32
 		{6D9FDEE0-1F58-43AE-ABA7-619BAD744DD2}.Release|Win32.ActiveCfg = Release|Win32
 		{6D9FDEE0-1F58-43AE-ABA7-619BAD744DD2}.Release|Win32.Build.0 = Release|Win32
+		{F6A6A92B-CB7B-485B-97C8-95BE0CF76522}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F6A6A92B-CB7B-485B-97C8-95BE0CF76522}.Debug|Win32.Build.0 = Debug|Win32
+		{F6A6A92B-CB7B-485B-97C8-95BE0CF76522}.Release|Win32.ActiveCfg = Release|Win32
+		{F6A6A92B-CB7B-485B-97C8-95BE0CF76522}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
