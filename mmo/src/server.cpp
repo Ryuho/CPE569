@@ -101,7 +101,7 @@ int main(int argc, const char* argv[])
    int remoteId = -1, remoteClientPort;
    vector<TConn> tconns;
 
-   testPackets();
+   //testPackets();
 
    if(argc == 3) {
       clientPort = atoi(argv[1]);
@@ -177,17 +177,20 @@ int main(int argc, const char* argv[])
       displayBandwidth();
       int startTicks = currentTicks();
 
+	  //add new client connection
       while (clientServ.select()) {
          int id = newId();
          cm.addClientConnection(clientServ.accept(), id);
          gs.newClientConnection(id);
       }
 
+	  //add new server connection
       while (serverServ.select()) {
          int id = newId();
          tconns.push_back(TConn(serverServ.accept()));
       }
    
+	  //process packet for each client connection
       for (unsigned i = 0; i < cm.clientConnections.size(); i++) {
          Connection conn = cm.clientConnections[i].conn;
          while (conn.select()) {
@@ -202,6 +205,7 @@ int main(int argc, const char* argv[])
          }
       }
 
+	  //process packet for each server connection
       for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
          Connection conn = cm.serverConnections[i].conn;
          while (conn.select()) {
@@ -216,16 +220,18 @@ int main(int argc, const char* argv[])
          }
       }
 
-      
+      //process server connections that it recieved
       for (unsigned i = 0; i < tconns.size(); i++) {
          Connection conn = tconns[i].conn;
          while (conn.select()) {
             if (conn) {
                sock::Packet p;
                int op;
+               //if the connection doesn't have a server id associated
                if (tconns[i].servId == -1) {
                   conn.recv(p, 4);
                   p.readInt(op);
+                  //request to join the group of servers
                   if (op == ServerOps::request) {
                      // request would also tell us about its ports
                      conn.recv(p, 8);
@@ -245,7 +251,12 @@ int main(int argc, const char* argv[])
                      tconns[i].servId = sid;
                      tconns[i].clientPort = cp;
                      tconns[i].servPort = sp;
-                     conn.send(p.reset().writeInt(updateServId(sid) ? ServerOps::good : ServerOps::bad));
+					      if(updateServId(sid)){
+						      conn.send(p.reset().writeInt(ServerOps::good));
+					      }
+					      else{
+                        conn.send(p.reset().writeInt(ServerOps::bad));
+					      }
                   } else {
                      printf("Got a packet from tconn with unknown id with unknown op: %d\n", op);
                   }
