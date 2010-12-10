@@ -75,6 +75,7 @@ void ConnectionManager::serverSendPacket(pack::Packet p, int toid)
    std::map<int,int>::iterator iter = idToServerIndex.find(toid);
    if(iter != idToServerIndex.end()) {
       p.sendTo(serverConnections[(*iter).second].conn);
+	  updatePackStat(p.type);
    }
    else
       printf("Error: serverSendPacket: Unable to send to %d\n", toid);
@@ -85,6 +86,7 @@ void ConnectionManager::serverBroadcast(pack::Packet p)
 {
    for(unsigned i = 0; i < serverConnections.size(); i++)
       p.sendTo(serverConnections[i].conn);
+      updatePackStat(p.type);
 }
 
 // server -> client connection functions
