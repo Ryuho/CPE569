@@ -66,6 +66,7 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
             npc.moving, npc.getId()), p.getId());
       }
    }
+
    std::vector<PlayerBase *> aoiplayers;
    oh.collidingPlayers(aoi, p.pos, aoiplayers);
    for(unsigned i = 0; i < aoiplayers.size(); i++) {
@@ -234,7 +235,7 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       Item obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new Item(obj));
-         clientBroadcast(obj.cserialize());
+         //clientBroadcast(obj.cserialize());
       }
       else {
          Item *obj2 = som.getItem(obj.getId());
@@ -245,7 +246,13 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       Missile obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new Missile(obj));
-         clientBroadcast(obj.cserialize());
+         Geometry aoi(Circle(obj.pos, missileInfluenceRadius));
+         std::vector<PlayerBase *> aoiplayers;
+         om.collidingPlayers(aoi, obj.pos, aoiplayers);
+         for(unsigned i = 0; i < aoiplayers.size(); i++) {
+            clientSendPacket(obj.cserialize(), aoiplayers[i]->getId());
+         }
+         //clientBroadcast(obj.cserialize());
       }
       //else {
          //Missile *obj2 = som.getMissile(obj.getId());
@@ -256,7 +263,7 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       NPC obj(p);
       if(!som.contains(obj.getId())) {
          som.add(new NPC(obj));
-         clientBroadcast(obj.cserialize());
+         //clientBroadcast(obj.cserialize());
       }
       else {
          NPC *obj2 = som.getNPC(obj.getId());
@@ -281,6 +288,32 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       else
          printf("Error: unknown signal (sig=%d val=%d)\n", 
             signal.sig, signal.val);
+      /*Signal signal(p);
+      if(signal.sig == Signal::remove) {
+         if(som.contains(signal.val)) {
+            Item *obj = som.getItem(signal.val);
+            Geometry aoi(Circle(obj->pos, areaOfInfluenceRadius));
+            std::vector<PlayerBase *> aoiplayers;
+            som.collidingPlayers(aoi, obj->pos, aoiplayers);
+            for(unsigned i = 0; i < aoiplayers.size(); i++) {
+               Player &player = *static_cast<Player *>(aoiplayers[i]);
+	            clientSendPacket(Signal(Signal::remove, obj->getId()), player.getId());
+            }
+            som.remove(signal.val);
+            //clientBroadcast(signal);
+            //may still remove other server's objects... and no easy way to check
+         }
+         else if(om.contains(signal.val)) {
+            removeObject(*om.getItem(signal.val));
+            //om.remove(signal.val);
+            //clientBroadcast(signal);
+            printf("Server %d requesting remote removal of %d\n", 
+               id, signal.val);
+         }
+      }
+      else
+         printf("Error: unknown signal (sig=%d val=%d)\n", 
+            signal.sig, signal.val);*/
    }
    else
       printf("Error: unknown server packet, size: %d\n", p.data.size());
