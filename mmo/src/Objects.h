@@ -71,6 +71,7 @@ namespace objectManager {
       bool add(ObjectBase *obj);
       
       bool remove(int id);
+      bool remove(int type, int index_Not_The_Id) const;
       bool contains(int id) const;
       bool contains(int id, int type) const;
       ObjectBase *get(int id) const;
