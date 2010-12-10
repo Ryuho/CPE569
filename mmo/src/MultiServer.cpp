@@ -195,22 +195,23 @@ void GameServer::serverDisconnect(int id)
    //i think i changed the id, and added it to om, but i can't remove it from som,
    //and I don't know if removing it from om would be bad because it's a pointer
    for(unsigned i = 0; i < som.npcCount(); i++){
-      NPC* curr = static_cast<NPC *>(som.get(ObjectType::NPC, i));
-      if(curr->sid == id){
-         curr->sid = newId;
-         om.add(curr);
+      NPC *obj = new NPC(*som.getNPCByIndex(i));
+      if(obj->sid == id) {
+         obj->sid = newId;
+         om.add(obj);
+         som.remove(obj->getId());
          //printf("changed NPC# %d to be owned by server %d\n",curr->getId(),newId);
       }
    }
    for(unsigned i = 0; i < som.itemCount(); i++){
-      Item* curr = static_cast<Item *>(som.get(ObjectType::Item, i));
-      if(curr->sid == id){
-         curr->sid = newId;
-         om.add(curr);
-         //printf("changed Item# %d to be owned by  server %d\n",curr->getId(),newId);
+      Item *obj = new Item(*som.getItemByIndex(i));
+      if(obj->sid == id) {
+         obj->sid = newId;
+         om.add(obj);
+         som.remove(obj->getId());
+         //printf("changed Item# %d to be owned by server %d\n",curr->getId(),newId);
       }
    }
-
 }
 
 void GameServer::serverSendPacket(Packet &p, int id)
