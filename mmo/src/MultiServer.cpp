@@ -79,10 +79,10 @@ void updateServers()
       getGS().serverBroadcast(obj.serialize());
    }
    //tell new servers about previous Missiles
-   for(unsigned i = 0; i < getOM().missileCount(); i++) {
-      Missile &obj = *static_cast<Missile *>(getOM().get(ObjectType::Missile, i));
-      getGS().serverBroadcast(obj.serialize());
-   }
+   //for(unsigned i = 0; i < getOM().missileCount(); i++) {
+   //   Missile &obj = *static_cast<Missile *>(getOM().get(ObjectType::Missile, i));
+   //   getGS().serverBroadcast(obj.serialize());
+   //}
 }
 
 void GameServer::removePlayer(Player &p)
