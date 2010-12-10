@@ -13,11 +13,9 @@ const static int positionPackets = 20;
 void GameServer::newClientConnection(int id)
 {
    printf("New client connection: %d\n", id);
-   
-   vec2 pos((float)(rand()%200), (float)(rand()%200));
-   
+    
    Player *newPlayer 
-      = new Player(id, cm.ownServerId, pos, vec2(0,1), playerMaxHp);
+      = new Player(id, cm.ownServerId, randPos(), vec2(0,1), playerMaxHp);
    om.add(newPlayer);
 
 	clientSendPacket(Connect(id, constants::worldHeight, 

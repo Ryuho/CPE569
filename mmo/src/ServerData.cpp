@@ -305,6 +305,8 @@ void NPC::update()
       dir = mat::to(pos, initPos);
       dir.normalize();
       aiTicks = getTicks() + rand() % 1000;
+      if(!npcStaysAggroWhenInRange)
+         return;
    }
 
    if(aiType == AIType::Attacking 
@@ -332,17 +334,6 @@ void NPC::update()
             }
          }
       }
-
-      if(aiTicks - getTicks() <= 0
-            && (aiType == AIType::Stopped || aiType == AIType::Walking)) {
-         aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
-         aiTicks = getTicks() + rand() % 1000 + 300;
-         if(aiType == AIType::Walking) {
-            float angle = ((rand() % 360) / 180.0f) * (float) PI;
-            dir = vec2(cos(angle), sin(angle));
-            dir.normalize();
-         }
-      }
    }
    if(aiType == AIType::Attacking) {
       vec2 newDir = mat::to(pos, p->pos);
@@ -366,6 +357,17 @@ void NPC::update()
       gainHp(npcOutOfCombatHpPerTick);
       if(aiType == AIType::Walking) {
          move(pos + dir * getDt() * npcWalkSpeed, dir, true);
+      }
+      if(aiTicks - getTicks() <= 0
+            && (aiType == AIType::Stopped || aiType == AIType::Walking)) {
+         aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
+         aiTicks = getTicks() + rand() % 1000 + 300;
+         if(aiType == AIType::Walking) {
+            //float angle = ((rand() % 360) / 180.0f) * (float) PI;
+            float angle = (float)((rand() /180.0f) * PI);
+            dir = vec2(cos(angle), sin(angle));
+            dir.normalize();
+         }
       }
    }
 }

@@ -14,6 +14,63 @@ GameServer &getGS()
    return *serverState;
 }
 
+int getSize(int type)
+{
+   const int headerSize = 8;
+   int size = 0;
+   std::vector<unsigned long> uLongList;
+   switch(type)
+   {
+      case PacketType::position:
+         size = Position().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::message:
+         break;
+      case PacketType::connect:
+         size = Connect().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::signal:
+         size = Signal().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::arrow:
+         size = Arrow().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::initialize:
+         size = Initialize().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::healthChange:
+         size = HealthChange(0,0).makePacket().data.size() + headerSize;
+         break;
+      case PacketType::click:
+         size = Click().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::serialPlayer:
+         size = Player(0,0,vec2(),vec2(),0).cserialize().data.size() + headerSize;
+         break;
+      case PacketType::serialItem:
+         size = Item(0,0,vec2()).cserialize().data.size() + headerSize;
+         break;
+      case PacketType::serialNPC:
+         size = NPC(0,0,0,vec2(),vec2()).cserialize().data.size() + headerSize;
+         break;
+      case PacketType::serialMissile:
+         size = Missile(0,0,0,vec2(),vec2()).cserialize().data.size() + headerSize;
+         break;
+      case PacketType::serverList:
+         size = ServerList(uLongList).makePacket().data.size() + headerSize;
+         break;
+      case PacketType::changePvp:
+         size = Pvp().makePacket().data.size() + headerSize;
+         break;
+      case PacketType::teleport:
+         size = Teleport().makePacket().data.size() + headerSize;
+         break;
+      default:
+         break;
+   }
+   return size;
+}
+
 GameServer::GameServer(ConnectionManager &cm, int remoteServerId) 
    : cm(cm), ticks(0), dt(0.0f), rsid(remoteServerId), totalUpdates(0)
 {
@@ -21,6 +78,13 @@ GameServer::GameServer(ConnectionManager &cm, int remoteServerId)
 
    Item *stump = spawnStump(newId());
    clientBroadcast(stump->cserialize());
+   printf("Packet Sizes ");
+   for(unsigned i = 1; i <= PacketType::MaxPacketType; i++) {
+      printf(" %d", getSize(i));
+      if(i == PacketType::serverList)
+         printf("+");
+   }
+   printf("\n\n");
 }
 
 void GameServer::processClientPacket(pack::Packet p, int id)
@@ -67,6 +131,7 @@ void GameServer::processClientPacket(pack::Packet p, int id)
       Geometry point(Point(click.pos));
       std::vector<ItemBase *> items;
       om.collidingItems(point, click.pos, items);
+      som.collidingItems(point, click.pos, items);
       for(unsigned i = 0; i < items.size(); i++) {
          Item &item = *static_cast<Item *>(items[i]);
          if(collectItem(player, item)) {
@@ -113,12 +178,6 @@ void GameServer::updatePlayers(int ticks, float dt)
          Missile &m = *static_cast<Missile *>(collidedMis[j]);
          collideMissile(p, m);
       }
-      //collidedMis.clear();
-      //som.collidingMissiles(g, p.pos, collidedMis);
-      //for(unsigned j = 0; j < collidedMis.size() && p.hp > 0; j++) {
-      //   Missile &m = *static_cast<Missile *>(collidedMis[j]);
-      //   collideMissile(p, m);
-      //}
       if(p.hp <= 0)
          playersToRemove.push_back(&p);
       else {
@@ -230,8 +289,8 @@ void GameServer::removeClientConnection(int id)
 /////////////////////////////////////////
 NPC *GameServer::spawnNPC(int regionX, int regionY)
 {
-   util::clamp(regionX, 0, (int)regionXSize-1);
-   util::clamp(regionY, 0,  (int)regionYSize-1);
+   regionX = util::clamp(regionX, 0, (int)regionXSize-1);
+   regionY = util::clamp(regionY, 0,  (int)regionYSize-1);
 
    vec2 botLeft(om.worldBotLeft.x + regionSize*regionX,
       om.worldBotLeft.y + regionSize*regionY);
@@ -239,8 +298,9 @@ NPC *GameServer::spawnNPC(int regionX, int regionY)
       util::frand(botLeft.y, botLeft.y + regionSize));
 
    NPC *n = new server::NPC(newId(), cm.ownServerId, npcMaxHp, pos, 
-      vec2(0,1), npcType(regionX, regionY));
-
+      vec2(-pos.x, -pos.y), npcType(regionX, regionY));
+   //printf("NPC Spawned <%d %d> <%0.1f %0.1f>\n", 
+   //   regionX, regionY, pos.x, pos.y);
    createObject(n);
    return n;
 }

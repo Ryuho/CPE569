@@ -13,7 +13,7 @@ int main (int argc, char *argv[])
    const char* address;
 
    if(argc != 3){
-      printf("Usage: client <server address> <port number>\n");
+      printf("Usage: %s <server address> <port number>\n", argv[0]);
       address = "localhost";
       port = 27027;
    }

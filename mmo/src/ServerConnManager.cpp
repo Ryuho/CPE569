@@ -53,7 +53,7 @@ void ConnectionManager::clientSendPacket(pack::Packet p, int toid)
    std::map<int,int>::iterator iter = idToClientIndex.find(toid);
    if(iter != idToClientIndex.end()) {
       p.sendTo(clientConnections[(*iter).second].conn);
-      updatePackStat(p.type);
+      updatePackStatC(p.type);
    }
    else
 	   return;
@@ -65,8 +65,8 @@ void ConnectionManager::clientBroadcast(pack::Packet p)
 {
    for (unsigned i = 0; i < clientConnections.size(); i++)
    {
-      p.sendTo(clientConnections[i].conn);
-      updatePackStat(p.type);
+      p.sendTo(clientConnections[i].conn);   
+      updatePackStatC(p.type);
    }
 }
 
@@ -75,7 +75,7 @@ void ConnectionManager::serverSendPacket(pack::Packet p, int toid)
    std::map<int,int>::iterator iter = idToServerIndex.find(toid);
    if(iter != idToServerIndex.end()) {
       p.sendTo(serverConnections[(*iter).second].conn);
-	  updatePackStat(p.type);
+	  updatePackStatS(p.type);
    }
    else
       printf("Error: serverSendPacket: Unable to send to %d\n", toid);
@@ -86,7 +86,7 @@ void ConnectionManager::serverBroadcast(pack::Packet p)
 {
    for(unsigned i = 0; i < serverConnections.size(); i++)
       p.sendTo(serverConnections[i].conn);
-      updatePackStat(p.type);
+      updatePackStatS(p.type);
 }
 
 // server -> client connection functions
@@ -224,28 +224,38 @@ bool ConnectionManager::readServerList(sock::Connection conn, int ownId, int own
 
 void ConnectionManager::printPackStat()
 {
-   for(unsigned i = 1; i < packStat.size(); i++){
-      printf("|%d",packStat[i]);
+   printf("Server-Server ");
+   for(unsigned i = 1; i < packStatC.size(); i++) {
+      printf(" %d", packStatC[i]);
    }
    printf("\n");
+   printf("Server-Client ");
+   for(unsigned i = 1; i < packStatS.size(); i++){
+      printf(" %d", packStatS[i]);
+   }
+   printf("\n\n");
    initPackStat();
 }
 
 void ConnectionManager::initPackStat()
 {
-   packStat.clear();
+   packStatC.clear();
+   packStatS.clear();
    for(unsigned i = 0; i < constants::PacketType::MaxPacketType; i++){
-      packStat.push_back(0);
+      packStatC.push_back(0);
+      packStatS.push_back(0);
    }
    
 }
 
-void ConnectionManager::updatePackStat(int packType)
+void ConnectionManager::updatePackStatC(int packType)
 {
    if(packType >= 0 && packType < constants::PacketType::MaxPacketType)
-      packStat[packType]++;
-   //else
-   //   printf("updatePackStat: Unknown Pack Type %d\n", packType);
+      packStatC[packType]++;
 }
 
-
+void ConnectionManager::updatePackStatS(int packType)
+{
+   if(packType >= 0 && packType < constants::PacketType::MaxPacketType)
+      packStatS[packType]++;
+}

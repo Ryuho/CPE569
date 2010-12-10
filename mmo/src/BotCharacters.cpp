@@ -20,6 +20,23 @@ Player::Player(int id, vec2 pos, vec2 dir, int hp)
    lastUpdate = getTicks();
 }
 
+Player::Player(pack::Initialize &ini)
+   : PlayerBase(-1, vec2())
+{
+   deserialize(ini);
+}
+
+void Player::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   this->hp = ini.hp;
+   //this->type = ini.subType
+   //this->pvp = ini.pvp;
+   this->lastUpdate = getTicks();
+}
+
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
    lastUpdate = getTicks();
@@ -50,6 +67,24 @@ Missile::Missile(int id, int type, vec2 pos, vec2 dir)
       this->dir = normalize(this->dir);
 }
 
+Missile::Missile(pack::Initialize &ini)
+   : MissileBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void Missile::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   //this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
+}
+
 void Missile::update()
 {
    pos = pos + dir * projectileSpeed * getDt();
@@ -69,6 +104,24 @@ Item::Item(int id, int type, vec2 pos)
    : ItemBase(id, type, pos), alive(true)
 {
    lastUpdate = getTicks();
+}
+
+Item::Item(pack::Initialize &ini)
+   : ItemBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void Item::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   //this->dir = ini.dir;
+   //this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
 }
 
 void Item::update()
@@ -106,6 +159,24 @@ NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
    : NPCBase(id, type, pos), dir(dir), moving(moving), hp(hp)
 {
    lastUpdate = getTicks();
+}
+
+NPC::NPC(pack::Initialize &ini)
+   : NPCBase(-1, -1, vec2()), alive(true)
+{
+   deserialize(ini);
+}
+
+void NPC::deserialize(pack::Initialize &ini)
+{
+   this->id = ini.id;
+   this->pos = ini.pos;
+   this->dir = ini.dir;
+   this->hp = ini.hp;
+   this->type = ini.subType;
+   //this->pvp = ini.pvp;
+
+   this->lastUpdate = getTicks();
 }
 
 void NPC::update()

@@ -236,29 +236,31 @@ void WorldData::processPacket(pack::Packet p)
                i.id, i.pos.x, i.pos.y);
          } 
          else {
-            objs.add(new Player(i.id, i.pos, i.dir, i.hp));
+            objs.add(new Player(i));
             printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
-         objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new Missile(i));
+         }
       }
       else if (i.type == ObjectType::NPC) {
-		  if(!objs.contains(i.id, i.type))
-		  {
-			objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
-			printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
-		  }
-		 else
-		 {
-			 NPC *obj = objs.getNPC(i.id);
-          obj->deserialize(i);
-			 objs.move(obj, i.pos);
-          obj->move(i.pos, i.dir, obj->moving);
-		 }
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new NPC(i));
+            printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
+         }
+         else {
+            NPC *obj = objs.getNPC(i.id);
+            obj->deserialize(i);
+            objs.move(obj, i.pos);
+            obj->move(i.pos, i.dir, obj->moving);
+         }
       }
       else if (i.type == ObjectType::Item) {
-         objs.add(new Item(i.id, i.subType, i.pos));
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new Item(i));
+         }
          printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else

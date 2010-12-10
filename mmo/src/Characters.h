@@ -19,9 +19,9 @@ void initCharacterResources();
 struct Player : PlayerBase {
    Player() : PlayerBase(0, vec2()), alive(false), moving(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
-   Player(pack::Packet &p);
+   //Player(pack::Packet &p);
    Player(pack::Initialize &ini);
-   void deserialize(pack::Packet &p);
+   //void deserialize(pack::Packet &p);
    void deserialize(pack::Initialize &ini);
 
    void move(vec2 pos, vec2 dir, bool moving);
@@ -37,9 +37,9 @@ struct Player : PlayerBase {
 
 struct Missile : MissileBase {
    Missile(int id, int type, vec2 pos, vec2 dir);
-   Missile(pack::Packet &p);
+   //Missile(pack::Packet &p);
    Missile(pack::Initialize &ini);
-   void deserialize(pack::Packet &p);
+   //void deserialize(pack::Packet &p);
    void deserialize(pack::Initialize &ini);
 
    void move(vec2 pos, vec2 dir);
@@ -53,9 +53,9 @@ struct Missile : MissileBase {
 
 struct Item : ItemBase {
    Item(int id, int type, vec2 pos);
-   Item(pack::Packet &p);
+   //Item(pack::Packet &p);
    Item(pack::Initialize &ini);
-   void deserialize(pack::Packet &p);
+   //void deserialize(pack::Packet &p);
    void deserialize(pack::Initialize &ini);
 
    void move(vec2 pos);
@@ -71,9 +71,9 @@ private:
 
 struct NPC : NPCBase {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
-   NPC(pack::Packet &p);
+   //NPC(pack::Packet &p);
    NPC(pack::Initialize &ini);
-   void deserialize(pack::Packet &p);
+   //void deserialize(pack::Packet &p);
    void deserialize(pack::Initialize &ini);
 
    void move(vec2 pos, vec2 dir, bool moving);

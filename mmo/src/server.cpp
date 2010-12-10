@@ -119,7 +119,8 @@ int main(int argc, const char* argv[])
       altAddress = argv[3];
       altPort = atoi(argv[4]);
    } else {
-      printf("Usage: server <client port number> <server port number> [ <alternate server address> <alternate server port> ]\r\n");
+      printf("Usage: %s <client port number> <server port number>", argv[0]);
+      printf(" [ <alternate server address> <alternate server port> ]\r\n");
       printf("Using defaults...\n");
       clientPort = 27027;
       serverPort = 27028;

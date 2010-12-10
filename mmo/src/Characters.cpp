@@ -25,11 +25,13 @@ Player::Player(pack::Initialize &ini)
    deserialize(ini);
 }
 
+/*
 Player::Player(pack::Packet &p) 
    : PlayerBase(-1, vec2()), alive(true)
 {
    deserialize(p);
 }
+*/
 
 void Player::deserialize(pack::Initialize &ini)
 {
@@ -42,6 +44,7 @@ void Player::deserialize(pack::Initialize &ini)
    this->lastUpdate = getTicks();
 }
 
+/*
 void Player::deserialize(pack::Packet &p)
 {
    p.data.setCursor(0);
@@ -52,6 +55,7 @@ void Player::deserialize(pack::Packet &p)
       .readFloat(dir.y).readInt(hp).reset();
    this->lastUpdate = getTicks();
 }
+*/
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
@@ -86,11 +90,13 @@ Missile::Missile(int id, int type, vec2 pos, vec2 dir)
       this->dir.normalize();
 }
 
+/*
 Missile::Missile(pack::Packet &p)
    : MissileBase(-1, -1, vec2()), alive(true)
 {
    deserialize(p);
 }
+*/
 
 Missile::Missile(pack::Initialize &ini)
    : MissileBase(-1, -1, vec2()), alive(true)
@@ -98,6 +104,7 @@ Missile::Missile(pack::Initialize &ini)
    deserialize(ini);
 }
 
+/*
 void Missile::deserialize(pack::Packet &p)
 {
    p.data.setCursor(0);
@@ -109,6 +116,7 @@ void Missile::deserialize(pack::Packet &p)
 
    this->lastUpdate = getTicks();
 }
+*/
 
 void Missile::deserialize(pack::Initialize &ini)
 {
@@ -145,16 +153,19 @@ Item::Item(int id, int type, vec2 pos)
     initGraphics();
 }
 
+/*
 Item::Item(pack::Packet &p)
    : ItemBase(-1, -1, vec2()), alive(true)
 {
    deserialize(p);
 }
+*/
 
 Item::Item(pack::Initialize &ini)
    : ItemBase(-1, -1, vec2()), alive(true)
 {
    deserialize(ini);
+   initGraphics();
 }
 
 void Item::deserialize(pack::Initialize &ini)
@@ -169,6 +180,7 @@ void Item::deserialize(pack::Initialize &ini)
    this->lastUpdate = getTicks();
 }
 
+/*
 void Item::deserialize(pack::Packet &p)
 {
    p.data.setCursor(0);
@@ -181,6 +193,7 @@ void Item::deserialize(pack::Packet &p)
 
    this->lastUpdate = getTicks();
 }
+*/
 
 void Item::update()
 {
@@ -203,17 +216,19 @@ NPC::NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving)
    this->lastUpdate = getTicks();
 }
 
+/*
 NPC::NPC(pack::Packet &p)
    : NPCBase(-1, -1, vec2()), alive(true)
 {
    deserialize(p);
 }
-
+*/
 
 NPC::NPC(pack::Initialize &ini)
    : NPCBase(-1, -1, vec2()), alive(true)
 {
    deserialize(ini);
+   initGraphics();
 }
 
 void NPC::deserialize(pack::Initialize &ini)
@@ -228,6 +243,7 @@ void NPC::deserialize(pack::Initialize &ini)
    this->lastUpdate = getTicks();
 }
 
+/*
 void NPC::deserialize(pack::Packet &p)
 {
    p.data.setCursor(0);
@@ -239,6 +255,7 @@ void NPC::deserialize(pack::Packet &p)
 
    this->lastUpdate = getTicks();
 }
+*/
 
 void NPC::update()
 {

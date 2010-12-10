@@ -6,6 +6,7 @@
 #include "ServerConnManager.h"
 #include "GameServer.h"
 
+mat::vec2 randPos();
 mat::vec2 randPos(int minxy, int maxxy);
 mat::vec2 randPos2(int minRadius, int maxRadius);
 int npcType(int regionX, int regionY);

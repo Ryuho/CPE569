@@ -271,28 +271,6 @@ void ObjectManager::move(ObjectBase *obj, const vec2 &newPos)
    }
 }
 
-/*
-void ObjectManager::move(ObjectBase *obj, vec2 newPos)
-{
-   _move(obj, obj->pos, newPos);
-}
-
-void ObjectManager::move(ItemBase *obj, vec2 newPos)
-{
-   _move(obj, obj->pos, newPos);
-}
-
-void ObjectManager::move(MissileBase *obj, vec2 newPos)
-{
-   _move(obj, obj->pos, newPos);
-}
-
-void ObjectManager::move(NPCBase *obj, vec2 newPos)
-{
-   _move(obj, obj->pos, newPos);
-}
-*/
-
 /////////// Colliding ////////////
 //////////////////////////////////
 void ObjectManager::collidingPlayers(Geometry g, vec2 center, 
@@ -407,12 +385,18 @@ void ObjectManager::getRegions(vec2 pos, Geometry g,
 
 vec2 ObjectManager::toWorldPos(vec2 pos) const
 {
-   if(!inBounds(pos)) {
-      int x, y;
-      getRegion(pos, x, y);
-      return vec2(worldBotLeft.x + regionXSize*(x+0.5f), 
-         worldBotLeft.y + regionYSize*(y+0.5f));
-   }
+   const float delta = 0.5f;
+
+   if(pos.x >= worldBotLeft.x + worldWidth)
+      pos.x = worldBotLeft.x + worldWidth - delta;
+   else if(pos.x <= worldBotLeft.x)
+      pos.x = worldBotLeft.x + delta;
+
+   if(pos.y >= worldBotLeft.y + worldHeight)
+      pos.y = worldBotLeft.y + worldHeight - delta;
+   else if(pos.y <= worldBotLeft.y)
+      pos.y = worldBotLeft.y + delta;
+
    return pos;
 }
 

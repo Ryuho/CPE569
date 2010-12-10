@@ -54,10 +54,12 @@ struct ConnectionManager {
 
    void printPackStat();
    void initPackStat();
-   void updatePackStat(int packType);
+   void updatePackStatC(int packType);
+   void updatePackStatS(int packType);
 
    int ownServerId, nextServId;
-   std::vector<int> packStat;
+   std::vector<int> packStatC; //server->client stats
+   std::vector<int> packStatS; //server->server stats
 };
 
 

@@ -5,6 +5,7 @@
 #include "matrix.h"
 #include "Geometry.h"
 #include "Constants.h"
+#include "Packets.h"
 #include <vector>
 #include <map>
 
@@ -18,6 +19,8 @@ using namespace objectManager;
 struct Player : PlayerBase {
    Player() : PlayerBase(0, vec2()), moving(false) {}
    Player(int id, vec2 pos, vec2 dir, int hp);
+   Player(pack::Initialize &ini);
+   void deserialize(pack::Initialize &ini);
    void move(vec2 pos, vec2 dir, bool moving);
 
    void update();
@@ -32,6 +35,8 @@ struct Player : PlayerBase {
 
 struct Missile : MissileBase {
    Missile(int id, int type, vec2 pos, vec2 dir);
+   Missile(pack::Initialize &ini);
+   void deserialize(pack::Initialize &ini);
    void update();
    void move(vec2 pos, vec2 dir);
 
@@ -42,6 +47,8 @@ struct Missile : MissileBase {
 
 struct Item : ItemBase {
    Item(int id, int type, vec2 pos);
+   Item(pack::Initialize &ini);
+   void deserialize(pack::Initialize &ini);
    void update();
    bool isCollectable() const;
    void move(vec2 pos);
@@ -52,6 +59,8 @@ struct Item : ItemBase {
 
 struct NPC : NPCBase {
    NPC(int id, int type, int hp, vec2 pos, vec2 dir, bool moving);
+   NPC(pack::Initialize &ini);
+   void deserialize(pack::Initialize &ini);
    void update();
    void move(vec2 pos, vec2 dir, bool moving);
    

@@ -1,17 +1,23 @@
 #include "ServerUtil.h"
 #include "Util.h"
 #include "Packets.h"
+#include "Constants.h"
 #include <stdio.h>
 
 using namespace mat;
 using namespace server;
 using namespace pack;
 
+vec2 randPos()
+{
+   int val = max(constants::worldWidth/2, constants::worldHeight/2);
+   return randPos(-val, val);
+}
+
 vec2 randPos(int minxy, int maxxy)
 {
-   float x = (float)minxy + (rand() % (maxxy - minxy));
-   float y = (float)minxy + (rand() % (maxxy - minxy));
-   return vec2(x, y);
+   return vec2(util::frand((float)minxy, (float)maxxy), 
+      util::frand((float)minxy, (float)maxxy));
 }
 
 vec2 randPos2(int minRadius, int maxRadius)
@@ -24,12 +30,14 @@ vec2 randPos2(int minRadius, int maxRadius)
 int npcType(int regionX, int regionY)
 {
    //assumes regionX and regionY are valid
-   int maxType = (int) NPCType::Goblin;
+   int maxType = (int) NPCType::Ganon;
    int rows = regionXSize;
    int cols = regionYSize;
-   int difficulty = abs(std::max(regionX - rows/2, regionY - cols/2));
-   //float difficultyScalar = ((float)rows) / (2*maxType);
-   float difficultyScalar = ((float)maxType*2) / rows;
-   int type = (int)(difficulty*difficultyScalar + rand() % 5);
+   float difficulty = getCM().ownServerId/(float)(constants::maxServerCount+1);
+   float difficulty2 = (getCM().ownServerId+1)/(float)(constants::maxServerCount+1);
+   int type = (int)util::irand((int)(difficulty*maxType), 
+      (int)(difficulty2*maxType));
+   //int difficulty = abs(std::max(regionX - rows/2, regionY - cols/2));
+   //int type = (int)(difficulty*difficultyScalar + rand() % 5);
    return util::clamp(type, 0, maxType); //ensure valid range
 }

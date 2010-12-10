@@ -14,7 +14,7 @@ const float BotWorldData::botAggroRange = 650.0f;
 const float BotWorldData::botFightRange = 300.0f;
 const float BotWorldData::maxBotItemGrab = botAggroRange;
 const float BotWorldData::maxBotWalkDistance 
-      = (constants::worldWidth + constants::worldHeight - 1)/4;
+      = (constants::worldWidth + constants::worldHeight - 1);
 const float BotWorldData::returnWalkDistance 
       = BotWorldData::maxBotWalkDistance* 0.7f;
 
@@ -377,20 +377,32 @@ void BotWorldData::processPacket(pack::Packet p)
                i.id, i.pos.x, i.pos.y);
          } 
          else {
-            objs.add(new Player(i.id, i.pos, i.dir, i.hp));
-            //printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+            objs.add(new Player(i));
+            printf("Added Player %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
          }
       }
       else if (i.type == ObjectType::Missile) {
-         objs.add(new Missile(i.id, i.subType, i.pos, i.dir));
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new Missile(i));
+         }
       }
       else if (i.type == ObjectType::NPC) {
-         objs.add(new NPC(i.id, i.subType, i.hp, i.pos, i.dir, false));
-         //printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new NPC(i));
+            printf("Added NPC %d hp=%d <%0.1f, %0.1f>\n", i.id, i.hp, i.pos.x, i.pos.y);
+         }
+         else {
+            NPC *obj = objs.getNPC(i.id);
+            obj->deserialize(i);
+            objs.move(obj, i.pos);
+            obj->move(i.pos, i.dir, obj->moving);
+         }
       }
       else if (i.type == ObjectType::Item) {
-         objs.add(new Item(i.id, i.subType, i.pos));
-         //printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
+         if(!objs.contains(i.id, i.type)) {
+            objs.add(new Item(i));
+         }
+         printf("Added Item %d <%0.1f, %0.1f>\n", i.id, i.pos.x, i.pos.y);
       }
       else
          printf("Error: Unknown initialize type %d\n", i.type);
