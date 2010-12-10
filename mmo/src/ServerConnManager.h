@@ -29,7 +29,7 @@ struct ServerConnectionInfo {
 };
 
 struct ConnectionManager {
-   ConnectionManager() : ownServerId(-1) {}
+   ConnectionManager() : ownServerId(0),nextServId(0) {}
    void clientSendPacket(pack::Packet p, int id);
    void clientBroadcast(pack::Packet p);
    void serverSendPacket(pack::Packet p, int id);
@@ -56,7 +56,7 @@ struct ConnectionManager {
    void initPackStat();
    void updatePackStat(int packType);
 
-   int ownServerId;
+   int ownServerId, nextServId;
    std::vector<int> packStat;
 };
 

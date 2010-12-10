@@ -164,7 +164,42 @@ void GameServer::newServerConnection(int id)
 void GameServer::serverDisconnect(int id)
 {
    printf("Server %d disconnected\n", id);
-   //TODO transfer som that = the id that died to a certain server id
+   int newId = -1;
+   for(int i = id+1; i < cm.nextServId-1; i++){
+      if(cm.idToServerIndex.find(i) != cm.idToClientIndex.end()){
+         newId = i;
+      }
+      if(newId != -1){
+         break;
+      }
+   }
+   for(int i = 0; i < cm.ownServerId-1; i++){
+      if(cm.idToServerIndex.find(i) != cm.idToClientIndex.end()){
+         newId = i;
+      }
+      if(newId != -1){
+         break;
+      }
+   }
+
+
+   printf("deleted %d NPCs that was on the server that died. FIX THIS\n",som.npcCount());
+   printf("deleted %d Items that was on the server that died. FIX THIS\n",som.itemCount());
+   /* som.getNPC(i) is not valid, and so the program crashes when it is referenced
+
+   for(unsigned i = 0; i < som.npcCount(); i++){
+      if(som.getNPC(i)->sid == id){
+         som.getNPC(i)->sid = newId;
+         printf("changed an npc to server %d",newId);
+      }
+   }
+   for(unsigned i = 0; i < som.itemCount(); i++){
+      if(som.getItem(i)->sid == id){
+         som.getItem(i)->sid = newId;
+         printf("changed an item to server %d",newId);
+      }
+   }
+   */
 }
 
 void GameServer::serverSendPacket(Packet &p, int id)

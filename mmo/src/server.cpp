@@ -17,9 +17,9 @@ using sock::Server;
 using sock::Packet;
 using sock::setupSockets;
 
+ConnectionManager *ourCM;
+
 int nextId = 100;
-int nextServId = 1;
-int ownServerId = -1;
 
 void setId(int val)
 {
@@ -28,7 +28,8 @@ void setId(int val)
 
 int newId()
 {
-   int answer = nextId*maxServerCount+ownServerId;
+   int answer = nextId*maxServerCount+ourCM->ownServerId;
+
    nextId++;
    return answer;
 }
@@ -40,10 +41,8 @@ void setIdOffset(int sid)
 
 int newServId()
 {
-   return nextServId++;
+   return ourCM->nextServId++;
 }
-
-ConnectionManager *displayCM;
 
 void displayBandwidth()
 {
@@ -57,14 +56,14 @@ void displayBandwidth()
       float rkb = sock::getBytesRead() / 1000.0f;
 
       printf("s=%2.2fkb|r=%2.2fkb ", skb, rkb);
-      displayCM->printPackStat();
+      ourCM->printPackStat();
    }
 }
 
 bool updateServId(int last)
 {
-   bool ret = last >= nextServId;
-   nextServId = max(nextServId, last+1);
+   bool ret = last >= ourCM->nextServId;
+   ourCM->nextServId = max(ourCM->nextServId, last+1);
    return ret;
 }
 
@@ -141,7 +140,7 @@ int main(int argc, const char* argv[])
 
    ConnectionManager cm;
    cm.initPackStat();
-   displayCM = &cm;
+   ourCM = &cm;
 
 
    if(altPort > 0) {
@@ -169,7 +168,6 @@ int main(int argc, const char* argv[])
             cm.serverConnections[i].conn.send(sock::Packet().writeInt(ServerOps::ready));
          }
          updateServId(cm.ownServerId);
-         ownServerId = cm.ownServerId;
 
       } else {
          printf("Unable to connect to all servers, aborting\n");
@@ -177,7 +175,6 @@ int main(int argc, const char* argv[])
       }
    } else {
       cm.ownServerId = newServId();
-      ownServerId = cm.ownServerId;
       printf("Server started as independent host. id: %d\n", cm.ownServerId);
    }
 

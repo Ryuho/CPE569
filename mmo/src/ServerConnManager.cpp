@@ -148,7 +148,7 @@ void ConnectionManager::addServerConnection(Connection conn, int id, int clientP
 void ConnectionManager::removeServerConnection(int id)
 {
    std::map<int,int>::iterator iter = idToServerIndex.find(id);
-   if (iter != idToClientIndex.end()) {
+   if (iter != idToServerIndex.end()) {
 	   removeServerAt(iter->second);
    }
    else
