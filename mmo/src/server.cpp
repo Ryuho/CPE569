@@ -160,6 +160,7 @@ int main(int argc, const char* argv[])
          for (unsigned i = 0; i < cm.serverConnections.size(); i++) {
             cm.serverConnections[i].conn.send(sock::Packet().writeInt(ServerOps::ready));
          }
+         updateServId(cm.ownServerId);
       } else {
          printf("Unable to connect to all servers, aborting\n");
          return -1;
