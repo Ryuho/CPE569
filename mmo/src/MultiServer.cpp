@@ -165,41 +165,54 @@ void GameServer::serverDisconnect(int id)
 {
    printf("Server %d disconnected\n", id);
    int newId = -1;
-   for(int i = id+1; i < cm.nextServId-1; i++){
+
+   printf("id=%d\n",id);
+   printf("cm.nextServId=%d\n",cm.nextServId);
+
+   for(int i = id+1; i < cm.nextServId; i++){
+      printf("searching1 server #%d\n",i);
       if(cm.idToServerIndex.find(i) != cm.idToServerIndex.end()){
          newId = i;
+         printf("FOUND1 server #%d\n",newId);
       }
       if(newId != -1){
          break;
       }
    }
-   for(int i = 0; i < cm.ownServerId-1; i++){
+   for(int i = 0; i < cm.ownServerId; i++){
+      printf("searching2 server #%d\n",i);
       if(cm.idToServerIndex.find(i) != cm.idToServerIndex.end()){
          newId = i;
+         printf("FOUND2 server #%d\n",newId);
       }
       if(newId != -1){
          break;
       }
    }
 
+   if(newId == -1){
+      printf("A valid server ID could not be found! This is impossible because THIS server is alive!! FIXME\n");
+      printf("should have deleted %d NPCs that was on the server that died.\n",som.npcCount());
+      printf("should have deleted %d Items that was on the server that died.\n",som.itemCount());
+      return;
+   }
 
-   printf("should have deleted %d NPCs that was on the server that died. FIX THIS\n",som.npcCount());
-   printf("should have deleted %d Items that was on the server that died. FIX THIS\n",som.itemCount());
 
-   /*
    for(unsigned i = 0; i < som.npcCount(); i++){
-      if(som.getNPC(i)->sid == id){
-         som.getNPC(i)->sid = newId;
-         printf("changed an npc to server %d",newId);
+      NPC* curr = static_cast<NPC *>(som.get(ObjectType::NPC, i));
+      if(curr->sid == id){
+         curr->sid = newId;
+         //printf("changed NPC# %d to be owned by server %d\n",curr->getId(),newId);
       }
    }
    for(unsigned i = 0; i < som.itemCount(); i++){
-      if(som.getItem(i)->sid == id){
-         som.getItem(i)->sid = newId;
-         printf("changed an item to server %d",newId);
+      Item* curr = static_cast<Item *>(som.get(ObjectType::Item, i));
+      if(curr->sid == id){
+         curr->sid = newId;
+         //printf("changed Item# %d to be owned by  server %d\n",curr->getId(),newId);
       }
    }
-   */
+
 }
 
 void GameServer::serverSendPacket(Packet &p, int id)
