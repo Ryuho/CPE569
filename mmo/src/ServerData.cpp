@@ -308,26 +308,6 @@ void NPC::update()
       aiTicks = getTicks() + rand() % 1000;
    }
 
-   Geometry aggroCircle(Circle(pos, npcAggroRange));
-   std::vector<PlayerBase *> closePlayers;
-   getOM().collidingPlayers(aggroCircle, pos, closePlayers);
-   if(closePlayers.size() < 0) {
-      getSOM().collidingPlayers(aggroCircle, pos, closePlayers);
-   }
-   if(closePlayers.size() < 0) {
-      aiType = AIType::Attacking;
-      p = static_cast<Player *>(closePlayers[0]);
-      attackId = p->getId();
-      float dist = mat::dist(p->pos, pos);
-      for(unsigned i = 1; i < closePlayers.size(); i++) {
-         float dist2 = mat::dist(closePlayers[i]->pos, pos);
-         if(dist2 < dist) {
-            p = static_cast<Player *>(closePlayers[i]);
-            attackId = p->getId();
-         }
-      }
-   }
-
    if(aiType == AIType::Attacking 
          && (!p || !getOM().contains(attackId, ObjectType::Player)
          || !getSOM().contains(attackId, ObjectType::Player))) {
@@ -335,14 +315,36 @@ void NPC::update()
       aiType = AIType::Stopped;
       return;
    }
-   if(aiTicks - getTicks() <= 0
-         && (aiType == AIType::Stopped || aiType == AIType::Walking)) {
-      aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
-      aiTicks = getTicks() + rand() % 1000 + 300;
-      if(aiType == AIType::Walking) {
-         float angle = ((rand() % 360) / 180.0f) * (float) PI;
-         dir = vec2(cos(angle), sin(angle));
-         dir.normalize();
+   else {
+      Geometry aggroCircle(Circle(pos, npcAggroRange));
+      std::vector<PlayerBase *> closePlayers;
+      getOM().collidingPlayers(aggroCircle, pos, closePlayers);
+      if(closePlayers.size() < 0) {
+         getSOM().collidingPlayers(aggroCircle, pos, closePlayers);
+      }
+      if(closePlayers.size() > 0) {
+         aiType = AIType::Attacking;
+         p = static_cast<Player *>(closePlayers[0]);
+         attackId = p->getId();
+         float dist = mat::dist(p->pos, pos);
+         for(unsigned i = 1; i < closePlayers.size(); i++) {
+            float dist2 = mat::dist(closePlayers[i]->pos, pos);
+            if(dist2 < dist) {
+               p = static_cast<Player *>(closePlayers[i]);
+               attackId = p->getId();
+            }
+         }
+      }
+
+      if(aiTicks - getTicks() <= 0
+            && (aiType == AIType::Stopped || aiType == AIType::Walking)) {
+         aiType = (rand() % 100) < 30 ? AIType::Stopped : AIType::Walking;
+         aiTicks = getTicks() + rand() % 1000 + 300;
+         if(aiType == AIType::Walking) {
+            float angle = ((rand() % 360) / 180.0f) * (float) PI;
+            dir = vec2(cos(angle), sin(angle));
+            dir.normalize();
+         }
       }
    }
    if(aiType == AIType::Attacking) {

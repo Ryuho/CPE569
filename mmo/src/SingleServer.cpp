@@ -21,7 +21,7 @@ void GameServer::newClientConnection(int id)
       constants::worldWidth), id);
    sendPlayerInitData(id, om);
    clientBroadcast(newPlayer->cserialize());
-   serverBroadcast(newPlayer->serialize());
+   //serverBroadcast(newPlayer->serialize());
 }
 
 void GameServer::clientDisconnect(int id)
@@ -29,7 +29,7 @@ void GameServer::clientDisconnect(int id)
    printf("Client %d disconnected\n", id);
    Packet removePacket(Signal(Signal::remove, id).makePacket());
    clientBroadcast(removePacket);
-   serverBroadcast(removePacket);
+   //serverBroadcast(removePacket);
    om.remove(id);
 }
 
@@ -59,7 +59,7 @@ void GameServer::sendPlayerAOI(Player &p, ObjectHolder &oh)
 void GameServer::removePlayer(Player &p)
 {
    clientBroadcast(Signal(Signal::remove, p.getId()));
-   serverBroadcast(Signal(Signal::remove, p.getId()));
+   //serverBroadcast(Signal(Signal::remove, p.getId()));
    removeClientConnection(p.getId());
    om.remove(p.getId());
 }
@@ -67,7 +67,7 @@ void GameServer::removePlayer(Player &p)
 void GameServer::removeObject(ObjectBase &obj)
 {
    clientBroadcast(Signal(Signal::remove, obj.getId()));
-   serverBroadcast(Signal(Signal::remove, obj.getId()));
+   //serverBroadcast(Signal(Signal::remove, obj.getId()));
    om.remove(obj.getId());
 }
 
