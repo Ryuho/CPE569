@@ -159,6 +159,7 @@ void GameServer::createObject(ObjectBase *obj)
 
 void GameServer::createMissile(Missile *m)
 {
+   createObject(m);
    Geometry aoi(Circle(m->pos, missileInfluenceRadius));
    std::vector<PlayerBase *> aoiplayers;
    om.collidingPlayers(aoi, m->pos, aoiplayers);
