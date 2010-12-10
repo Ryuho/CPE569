@@ -189,6 +189,17 @@ Connection::Connection(const char *host, int port)
       sockError();
       return;
    }
+   
+#ifdef WIN32
+   char yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(char)) == -1) {
+#else
+   int yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(int)) == -1) {
+#endif
+      sockError();
+      return;
+   }
 
    sockaddr_in sinRemote;
    sinRemote.sin_family = AF_INET;
@@ -213,6 +224,17 @@ Connection::Connection(unsigned long host, int port)
 
    info->sd = socket(AF_INET, SOCK_STREAM, 0);
    if (info->sd == INVALID_SOCKET) {
+      sockError();
+      return;
+   }
+   
+#ifdef WIN32
+   char yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(char)) == -1) {
+#else
+   int yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(int)) == -1) {
+#endif
       sockError();
       return;
    }
@@ -429,6 +451,18 @@ Server::Server(int port, const char *addr)
       return;
    }
    
+
+#ifdef WIN32
+   yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(char)) == -1) {
+#else
+   yes = 1;
+   if (setsockopt(info->sd, IPPROTO_TCP,TCP_NODELAY,&yes,sizeof(int)) == -1) {
+#endif
+      sockError();
+      return;
+   }
+
    info->port = ntohs(sinRemote.sin_port);
    info->active = true;
 }
