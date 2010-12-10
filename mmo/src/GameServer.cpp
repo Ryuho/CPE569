@@ -86,7 +86,7 @@ void GameServer::updatePlayers(int ticks, float dt)
 {
    std::vector<Player *> playersToRemove;
    for(unsigned i = 0; i < om.playerCount(); i++) {
-      Player &p = *static_cast<Player *>(om.get(ObjectType::Player, i));
+      Player &p = *om.getPlayerByIndex(i);
       Geometry g(p.getGeom());
       p.shotThisFrame = false;
 
@@ -128,7 +128,7 @@ void GameServer::updatePlayers(int ticks, float dt)
    }
 
    for(unsigned i = 0; i < playersToRemove.size(); i++) {
-      removePlayer(*playersToRemove[i]);
+      playerDeath(*playersToRemove[i]);
    }
 }
 
@@ -137,7 +137,7 @@ void GameServer::updateNPCs(int ticks, float dt)
    //NPC update - collision detection with missiles, death, exp/loot distribution
    std::vector<NPC *> npcsToRemove;
    for(unsigned i = 0; i < om.npcCount(); i++) {
-      NPC &npc = *static_cast<NPC *>(om.get(ObjectType::NPC, i));
+      NPC &npc = *om.getNPCByIndex(i);
       Geometry g(npc.getGeom());
 
       std::vector<ItemBase *> collidedItems;
@@ -183,7 +183,7 @@ void GameServer::updateMissiles(int ticks, float dt)
    std::vector<Missile *> missilesToRemove;
    for(unsigned i = 0; i < om.missileCount(); i++) {
       //missile out of bound
-      Missile &m = *static_cast<Missile *>(om.get(ObjectType::Missile, i));
+      Missile &m = *om.getMissileByIndex(i);
       if(ticks - m.spawnTime >= maxProjectileTicks){
          missilesToRemove.push_back(&m);
       }
@@ -201,7 +201,7 @@ void GameServer::updateMissiles(int ticks, float dt)
       }
    }
    for(unsigned i = 0; i < som.missileCount(); i++) {
-      Missile &m = *static_cast<Missile *>(som.get(ObjectType::Missile, i));
+      Missile &m = *som.getMissileByIndex(i);
       m.update();
    }
 
@@ -292,10 +292,12 @@ bool GameServer::collideMissile(Player &p, Missile &m)
 {
    //if not in pvp or missle is owned by player, don't hurt
    if(!p.pvp && m.owned != p.getId()) {
-      if(om.contains(m.owned, ObjectType::Player) && !static_cast<Player *>(om.getPlayer(m.owned))->pvp){
+      if(om.contains(m.owned, ObjectType::Player) 
+            && !om.getPlayer(m.owned)->pvp){
          return false;
       }
-      else if(som.contains(m.owned, ObjectType::Player) && !static_cast<Player *>(som.getPlayer(m.owned))->pvp){
+      else if(som.contains(m.owned, ObjectType::Player) 
+            && !som.getPlayer(m.owned)->pvp){
          return false;
       }
       p.takeDamage(m.getDamage());
@@ -307,11 +309,14 @@ bool GameServer::collideMissile(Player &p, Missile &m)
 
 bool GameServer::collideMissile(NPC &npc, Missile &m)
 {
-   if(m.owned != npc.getId() && (om.contains(m.owned, ObjectType::Player) || som.contains(m.owned, ObjectType::Player))) {
+   if(m.owned != npc.getId() 
+         && (om.contains(m.owned, ObjectType::Player) 
+         || som.contains(m.owned, ObjectType::Player))) 
+   {
       npc.takeDamage(m.getDamage());
       if(npc.hp <= 0) {
          if(om.contains(m.owned, ObjectType::Player)) {
-            Player &p = *static_cast<Player *>(om.getPlayer(m.owned));
+            Player &p = *om.getPlayer(m.owned);
             p.gainExp(npc.getExp());
             clientSendPacket(Signal(Signal::changeExp, p.exp), p.getId());
          }
@@ -341,24 +346,24 @@ void GameServer::sendPlayerInitData(int playerId, ObjectHolder &oh)
 {
    //tell new player about previous players (includes self)
    for(unsigned i = 0; i < oh.playerCount(); i++) {
-      Player &p = *static_cast<Player *>(oh.get(ObjectType::Player, i));
+      Player &p = *oh.getPlayerByIndex(i);
       clientSendPacket(p.cserialize(), playerId);
       if(p.pvp) //already in init packet atm?
          clientSendPacket(Pvp(p.getId(), p.pvp), playerId);
    }
    //tell new player about previous Items
    for(unsigned i = 0; i < oh.itemCount(); i++) {
-      Item &item = *static_cast<Item *>(oh.get(ObjectType::Item, i));
+      Item &item = *oh.getItemByIndex(i);
       clientSendPacket(item.cserialize(), playerId);
    }
    //tell new player about previous NPCs
    for(unsigned i = 0; i < oh.npcCount(); i++) {
-      NPC &npc = *static_cast<NPC *>(oh.get(ObjectType::NPC, i));
+      NPC &npc = *oh.getNPCByIndex(i);
       clientSendPacket(npc.cserialize(), playerId);
    }
    //tell new player about previous Missiles
    for(unsigned i = 0; i < oh.missileCount(); i++) {
-      Missile &m = *static_cast<Missile *>(oh.get(ObjectType::Missile, i));
+      Missile &m = *oh.getMissileByIndex(i);
       clientSendPacket(m.cserialize(), playerId);
    }
 }
@@ -370,4 +375,11 @@ void GameServer::sendPlayerSpecial(Player &player)
       vec2 dir((float)cos(t*2*PI), (float)sin(t*2*PI));
 	   sendPlayerArrow(player, dir);
    }
+}
+
+void GameServer::playerDeath(Player &player)
+{
+   player.move(vec2(), player.dir, false);
+   player.gainHp(constants::playerMaxHp);
+   clientSendPacket(Teleport(player.pos), player.getId());
 }

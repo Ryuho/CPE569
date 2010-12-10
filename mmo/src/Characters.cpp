@@ -305,22 +305,42 @@ NPC *ObjectHolder::getNPC(int id)
    return static_cast<NPC *>(rm.get(id));
 }
 
+Player *ObjectHolder::getPlayerByIndex(int index) const
+{
+   return static_cast<Player *>(get(ObjectType::Player, index));
+}
+
+NPC *ObjectHolder::getNPCByIndex(int index) const
+{
+   return static_cast<NPC *>(get(ObjectType::NPC, index));
+}
+
+Item *ObjectHolder::getItemByIndex(int index) const
+{
+   return static_cast<Item *>(get(ObjectType::Item, index));
+}
+
+Missile *ObjectHolder::getMissileByIndex(int index) const
+{
+   return static_cast<Missile *>(get(ObjectType::Missile, index));
+}
+
 void ObjectHolder::updateAll()
 {
    for(unsigned i = 0; i < playerCount(); i++) {
-      Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
+      Player &obj = *getPlayerByIndex(i);
       obj.update();
    }
    for(unsigned i = 0; i < npcCount(); i++) {
-      NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
+      NPC &obj = *getNPCByIndex(i);
       obj.update();
    }
    for(unsigned i = 0; i < itemCount(); i++) {
-      Item &obj = *static_cast<Item *>(get(ObjectType::Item, i));
+      Item &obj = *getItemByIndex(i);
       obj.update();
    }
    for(unsigned i = 0; i < missileCount(); i++) {
-      Missile &obj = *static_cast<Missile *>(get(ObjectType::Missile, i));
+      Missile &obj = *getMissileByIndex(i);
       obj.update();
    }
 }
@@ -340,23 +360,23 @@ void ObjectHolder::drawAll(bool checkNoDraw)
    int ticks = getTicks();
 
    for(unsigned i = 0; i < playerCount(); i++) {
-      Player &obj = *static_cast<Player *>(get(ObjectType::Player, i));
+      Player &obj = *getPlayerByIndex(i);
       if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
    for(unsigned i = 0; i < npcCount(); i++) {
-      NPC &obj = *static_cast<NPC *>(get(ObjectType::NPC, i));
+      NPC &obj = *getNPCByIndex(i);
       if(!checkNoDraw || ticks - obj.lastUpdate < noDrawTicks) {
          obj.draw();
       }
    }
    for(unsigned i = 0; i < itemCount(); i++) {
-      Item &obj = *static_cast<Item *>(get(ObjectType::Item, i));
+      Item &obj = *getItemByIndex(i);
       obj.draw();
    }
    for(unsigned i = 0; i < missileCount(); i++) {
-      Missile &obj = *static_cast<Missile *>(get(ObjectType::Missile, i));
+      Missile &obj = *getMissileByIndex(i);
       obj.draw();
    }
 

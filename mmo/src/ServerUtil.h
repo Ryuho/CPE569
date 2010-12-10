@@ -18,11 +18,11 @@ inline float getDt() {
    return getGS().dt;
 }
 
-inline objectManager::ObjectManager &getOM() {
+inline ObjectHolder &getOM() {
    return getGS().om;
 }
 
-inline objectManager::ObjectManager &getSOM() {
+inline ObjectHolder &getSOM() {
    return getGS().som;
 }
 

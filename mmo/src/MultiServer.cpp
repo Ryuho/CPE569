@@ -64,22 +64,22 @@ void updateServers()
 {
    //tell new server about previous players (includes self)
    for(unsigned i = 0; i < getOM().playerCount(); i++) {
-      Player &obj = *static_cast<Player *>(getOM().get(ObjectType::Player, i));
+      Player &obj = *getOM().getPlayerByIndex(i);
       getGS().serverBroadcast(obj.serialize());
    }
    //tell new server about previous Items
    for(unsigned i = 0; i < getOM().itemCount(); i++) {
-      Item &obj = *static_cast<Item *>(getOM().get(ObjectType::Item, i));
+      Item &obj = *getOM().getItemByIndex(i);
       getGS().serverBroadcast(obj.serialize());
    }
    //tell new server about previous NPCs
    for(unsigned i = 0; i < getOM().npcCount(); i++) {
-      NPC &obj = *static_cast<NPC *>(getOM().get(ObjectType::NPC, i));
+      NPC &obj = *getOM().getNPCByIndex(i);
       getGS().serverBroadcast(obj.serialize());
    }
    //tell new servers about previous Missiles
    //for(unsigned i = 0; i < getOM().missileCount(); i++) {
-   //   Missile &obj = *static_cast<Missile *>(getOM().get(ObjectType::Missile, i));
+   //   Missile &obj = *getOM().getMissileByIndex(i);
    //   getGS().serverBroadcast(obj.serialize());
    //}
 }

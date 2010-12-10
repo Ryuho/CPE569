@@ -49,6 +49,7 @@ struct GameServer {
    void sendPlayerInitData(int playerId, ObjectHolder &oh);
    void sendPlayerAOI(Player &p, ObjectHolder &oh);
    void removeObject(ObjectBase &obj);
+   void playerDeath(Player &p);
    void removePlayer(Player &p);
    bool collectItem(Player &pl, Item &item); //collect, not collide
    bool collideMissile(Player &p, Missile &m);

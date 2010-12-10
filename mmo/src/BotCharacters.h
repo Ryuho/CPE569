@@ -69,6 +69,11 @@ struct ObjectHolder : ObjectManager {
    bool add(Item *obj);
    bool add(Missile *obj);
 
+   Player *getPlayerByIndex(int index) const;
+   NPC *getNPCByIndex(int index) const;
+   Item *getItemByIndex(int index) const;
+   Missile *getMissileByIndex(int index) const;
+
    Player *getPlayer(int id);
    NPC *getNPC(int id);
    Item *getItem(int id);

@@ -102,6 +102,11 @@ struct ObjectHolder : ObjectManager {
    Item *getItem(int id);
    Missile *getMissile(int id);
 
+   Player *getPlayerByIndex(int index) const;
+   NPC *getNPCByIndex(int index) const;
+   Item *getItemByIndex(int index) const;
+   Missile *getMissileByIndex(int index) const;
+
    void updateAll();
    void drawAll(vec2 pos, bool checkNoDraw);
    void drawAll(bool checkNoDraw);
