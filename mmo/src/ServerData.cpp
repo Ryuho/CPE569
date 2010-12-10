@@ -499,7 +499,7 @@ pack::Packet Item::serialize() const
 {
    //printf("Error Item::serialize untested - update with members!");
    pack::Packet p(PacketType::serialItem);
-   p.data.writeUInt(id).writeInt(sid).writeInt(type)
+   p.data.writeInt(id).writeInt(sid).writeInt(type)
       .writeFloat(pos.x).writeFloat(pos.y);
    return p;
 }
@@ -519,90 +519,77 @@ pack::Packet Item::cserialize() const
 //////////////////////////////////////////
 ////////////// Object Holder /////////////
 //////////////////////////////////////////
-Player *ObjectHolder::getPlayer(int id)
+Player *ObjectHolder::getPlayer(int id) const
 {
    return static_cast<Player *>(ObjectManager::getPlayer(id));
 }
 
-NPC *ObjectHolder::getNPC(int id)
+NPC *ObjectHolder::getNPC(int id) const
 {
    return static_cast<NPC *>(ObjectManager::getNPC(id));
 }
 
-Item *ObjectHolder::getItem(int id)
+Item *ObjectHolder::getItem(int id) const
 {
    return static_cast<Item *>(ObjectManager::getItem(id));
 }
 
-Missile *ObjectHolder::getMissile(int id)
+Missile *ObjectHolder::getMissile(int id) const
 {
    return static_cast<Missile *>(ObjectManager::getMissile(id));
 }
 
-Player *ObjectHolder::getPlayerByIndex(int index)
+Player *ObjectHolder::getPlayerByIndex(int index) const
 {
    return static_cast<Player *>(get(ObjectType::Player, index));
 }
 
-NPC *ObjectHolder::getNPCByIndex(int index)
+NPC *ObjectHolder::getNPCByIndex(int index) const
 {
    return static_cast<NPC *>(get(ObjectType::NPC, index));
 }
 
-Item *ObjectHolder::getItemByIndex(int index)
+Item *ObjectHolder::getItemByIndex(int index) const
 {
    return static_cast<Item *>(get(ObjectType::Item, index));
 }
 
-Missile *ObjectHolder::getMissileByIndex(int index)
+Missile *ObjectHolder::getMissileByIndex(int index) const
 {
    return static_cast<Missile *>(get(ObjectType::Missile, index));
 }
 
-pack::Packet ObjectHolder::getSerialized(int id)
+pack::Packet ObjectHolder::getSerialized(int id) const
 {
-   ObjectBase *obj = static_cast<ObjectBase *>(getOM().get(id));
-   pack::Packet serialized(-1);
-   switch(obj->getType()) {
-      case ObjectType::Player:
-         serialized = static_cast<Player *>(obj)->serialize();
-         break;
-      case ObjectType::NPC:
-         serialized = static_cast<NPC *>(obj)->serialize();
-         break;
-      case ObjectType::Item:
-         serialized = static_cast<Item *>(obj)->serialize();
-         break;
-      case ObjectType::Missile:
-         serialized = static_cast<Missile *>(obj)->serialize();
-         break;
-      default:
-         printf("Error: getSerialized Unknown type %d\n", obj->getType());
-   }
-   return serialized;
+   return getSerializable(id)->serialize();
 }
 
-pack::Packet ObjectHolder::getCSerialized(int id)
+pack::Packet ObjectHolder::getCSerialized(int id) const
 {
-   ObjectBase *obj = static_cast<ObjectBase *>(getOM().get(id));
-   pack::Packet cserialized(-1);
+   return getSerializable(id)->cserialize();
+}
+
+Serializable *ObjectHolder::getSerializable(int id) const
+{
+   ObjectBase *obj = static_cast<ObjectBase *>(get(id));
+   Serializable *ser = 0;
    switch(obj->getType()) {
       case ObjectType::Player:
-         cserialized = static_cast<Player *>(obj)->cserialize();
+         ser = static_cast<Serializable *>(static_cast<Player *>(obj));
          break;
       case ObjectType::NPC:
-         cserialized = static_cast<NPC *>(obj)->cserialize();
+         ser = static_cast<Serializable *>(static_cast<NPC *>(obj));
          break;
       case ObjectType::Item:
-         cserialized = static_cast<Item *>(obj)->cserialize();
+         ser = static_cast<Serializable *>(static_cast<Item *>(obj));
          break;
       case ObjectType::Missile:
-         cserialized = static_cast<Missile *>(obj)->cserialize();
+         ser = static_cast<Serializable *>(static_cast<Missile *>(obj));
          break;
       default:
          printf("Error: getSerialized Unknown type %d\n", obj->getType());
    }
-   return cserialized;
+   return ser;
 }
 
 } // end server namespace

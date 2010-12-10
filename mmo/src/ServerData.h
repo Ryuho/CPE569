@@ -92,18 +92,19 @@ namespace server {
    struct ObjectHolder : ObjectManager {
       ObjectHolder() : ObjectManager() {}
 
-      Player *getPlayer(int id);
-      NPC *getNPC(int id);
-      Item *getItem(int id);
-      Missile *getMissile(int id);
+      Player *getPlayer(int id) const;
+      NPC *getNPC(int id) const;
+      Item *getItem(int id) const;
+      Missile *getMissile(int id) const;
 
-      Player *getPlayerByIndex(int index);
-      NPC *getNPCByIndex(int index);
-      Item *getItemByIndex(int index);
-      Missile *getMissileByIndex(int index);
+      Player *getPlayerByIndex(int index) const;
+      NPC *getNPCByIndex(int index) const;
+      Item *getItemByIndex(int index) const;
+      Missile *getMissileByIndex(int index) const;
 
-      Packet getSerialized(int id);
-      Packet getCSerialized(int id);
+      Packet getSerialized(int id) const;
+      Packet getCSerialized(int id) const;
+      Serializable *getSerializable(int id) const;
    };
 
 } // end server namespace
