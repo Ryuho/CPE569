@@ -27,7 +27,6 @@ void GameServer::newClientConnection(int id)
    serverBroadcast(newPlayer->serialize());
 }
 
-//TODO: update for multi-server as needed
 void GameServer::clientDisconnect(int id)
 {
    printf("Client %d disconnected\n", id);
@@ -95,9 +94,18 @@ void GameServer::removePlayer(Player &p)
 
 void GameServer::removeObject(ObjectBase &obj)
 {
-   clientBroadcast(Signal(Signal::remove, obj.getId()));
-   serverBroadcast(Signal(Signal::remove, obj.getId()));
-   om.remove(obj.getId());
+   int id = obj.getId();
+   clientBroadcast(Signal(Signal::remove, id));
+   serverBroadcast(Signal(Signal::remove, id));
+   if(om.contains(id)){
+      om.remove(id);
+   }
+   else if(som.contains(id)){
+      som.remove(id);
+   }
+   else{
+      printf("Ryuho: trying to remove something that is not in om or som\n");
+   }
 }
 
 void GameServer::update(int ticks)
@@ -111,7 +119,8 @@ void GameServer::update(int ticks)
    updateMissiles(ticks, dt); //updated last to ensure near monsters are hit
    if(rsid < 0) {
       //if there is a player connected, spawn NPCs, evenly distributed
-      if(om.npcCount() < constants::npcQuantity) {
+      int npcCount = om.npcCount() + som.npcCount();
+      if(npcCount < constants::npcQuantity) {
          for(unsigned i = 0; i < regionXSize; i++) {
             for(unsigned j = 0; j < regionYSize; j++) {
                NPC *npc = spawnNPC(i, j);
@@ -155,6 +164,7 @@ void GameServer::newServerConnection(int id)
 void GameServer::serverDisconnect(int id)
 {
    printf("Server %d disconnected\n", id);
+   //TODO transfer som that = the id that died to a certain server id
 }
 
 void GameServer::serverSendPacket(Packet &p, int id)
@@ -172,12 +182,16 @@ void GameServer::processServerPacket(pack::Packet p, int id)
    if(p.type == PacketType::serialPlayer) {
       Player obj(p);
       if(!som.contains(obj.getId())) {
+         printf("Ryuho: A foreign server added a player to this server\n");
          som.add(new Player(obj));
          clientBroadcast(obj.cserialize());
       }
       else {
          Player *obj2 = som.getPlayer(obj.getId());
          *obj2 = obj;
+      }
+      if(om.contains(obj.getId())){
+         printf("Ryuho: A foreign server tried to access player owned by this server\n");
       }
    }
    else if(p.type == PacketType::serialItem) {
@@ -190,6 +204,9 @@ void GameServer::processServerPacket(pack::Packet p, int id)
          Item *obj2 = som.getItem(obj.getId());
          *obj2 = obj;
       }
+      if(om.contains(obj.getId())){
+         printf("Ryuho: A foreign server tried to access Item owned by this server\n");
+      }
    }
    else if(p.type == PacketType::serialMissile) {
       Missile obj(p);
@@ -201,6 +218,9 @@ void GameServer::processServerPacket(pack::Packet p, int id)
          //Missile *obj2 = som.getMissile(obj.getId());
          //*obj2 = obj;
       //}
+      if(om.contains(obj.getId())){
+         printf("Ryuho: A foreign server tried to access missle owned by this server\n");
+      }
    }
    else if(p.type == PacketType::serialNPC) {
       NPC obj(p);
@@ -211,6 +231,9 @@ void GameServer::processServerPacket(pack::Packet p, int id)
       else {
          NPC *obj2 = som.getNPC(obj.getId());
          *obj2 = obj;
+      }
+      if(om.contains(obj.getId())){
+         printf("Ryuho: A foreign server tried to access NPC owned by this server\n");
       }
    }
    else if(p.type == PacketType::signal) {

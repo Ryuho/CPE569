@@ -364,8 +364,9 @@ bool GameServer::collideMissile(Player &p, Missile &m)
       {
          return false;
       }
-      else if(!p.pvp && (om.contains(m.owned, ObjectType::Player)))
+      else if(!p.pvp && ((om.contains(m.owned, ObjectType::Player))) || ((som.contains(m.owned, ObjectType::Player))) ){
          return false;
+      }
       p.takeDamage(m.getDamage());
       removeObject(m);
       return true;

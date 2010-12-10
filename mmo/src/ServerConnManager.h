@@ -8,6 +8,7 @@
 void sleepms(int ms);
 int currentTicks();
 int newId();
+void setId(int v);
 
 namespace ServerOps { enum {
    request = 1, anounce=2, good=3, bad=4, ready=5

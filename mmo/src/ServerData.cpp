@@ -319,9 +319,7 @@ void NPC::update()
       Geometry aggroCircle(Circle(pos, npcAggroRange));
       std::vector<PlayerBase *> closePlayers;
       getOM().collidingPlayers(aggroCircle, pos, closePlayers);
-      if(closePlayers.size() < 0) {
-         getSOM().collidingPlayers(aggroCircle, pos, closePlayers);
-      }
+      getSOM().collidingPlayers(aggroCircle, pos, closePlayers);
       if(closePlayers.size() > 0) {
          aiType = AIType::Attacking;
          p = static_cast<Player *>(closePlayers[0]);

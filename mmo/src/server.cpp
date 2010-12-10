@@ -19,10 +19,18 @@ using sock::setupSockets;
 
 int nextId = 100;
 int nextServId = 1;
+int ownServerId = -1;
+
+void setId(int val)
+{
+   nextId = val;
+}
 
 int newId()
 {
-   return nextId++;
+   int answer = nextId*maxServerCount+ownServerId;
+   nextId++;
+   return answer;
 }
 
 void setIdOffset(int sid)
@@ -161,12 +169,15 @@ int main(int argc, const char* argv[])
             cm.serverConnections[i].conn.send(sock::Packet().writeInt(ServerOps::ready));
          }
          updateServId(cm.ownServerId);
+         ownServerId = cm.ownServerId;
+
       } else {
          printf("Unable to connect to all servers, aborting\n");
          return -1;
       }
    } else {
       cm.ownServerId = newServId();
+      ownServerId = cm.ownServerId;
       printf("Server started as independent host. id: %d\n", cm.ownServerId);
    }
 
