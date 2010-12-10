@@ -97,6 +97,11 @@ namespace server {
       Item *getItem(int id);
       Missile *getMissile(int id);
 
+      Player *getPlayerByIndex(int index);
+      NPC *getNPCByIndex(int index);
+      Item *getItemByIndex(int index);
+      Missile *getMissileByIndex(int index);
+
       Packet getSerialized(int id);
       Packet getCSerialized(int id);
    };

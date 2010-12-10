@@ -28,7 +28,7 @@ Player::Player(pack::Packet &serialized)
 
 void Player::move(vec2 pos, vec2 dir, bool moving)
 {
-   getOM().move(static_cast<PlayerBase *>(this), pos);
+   getOM().move(this, pos);
    this->dir = dir;
    this->moving = moving;
 }
@@ -89,8 +89,7 @@ pack::Packet Player::cserialize() const
 
 void Player::gainHp(int hp)
 {
-   this->hp = this->hp + hp;
-   util::clamp(this->hp, 0, playerMaxHp);
+   this->hp = min(this->hp + hp, playerMaxHp);
 }
 
 /////////////////////////////////
@@ -151,7 +150,7 @@ pack::Packet Missile::serialize() const
 {
    //printf("Error Missile::serialize untested - update with members!");
    pack::Packet p(PacketType::serialMissile);
-   p.data.writeUInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
+   p.data.writeInt(id).writeInt(sid).writeInt(owned).writeInt(type).writeInt(spawnTime)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y);
    return p;
 }
@@ -159,9 +158,9 @@ pack::Packet Missile::serialize() const
 void Missile::move(vec2 pos, vec2 dir)
 {
    if(getOM().contains(id))
-      getOM().move(static_cast<MissileBase *>(this), pos);
+      getOM().move(this, pos);
    else
-      getSOM().move(static_cast<MissileBase *>(this), pos);
+      getSOM().move(this, pos);
    this->pos = pos;
    this->dir = dir;
 }
@@ -373,7 +372,7 @@ void NPC::update()
 
 void NPC::move(vec2 pos, vec2 dir, bool moving)
 {
-   getOM().move(static_cast<NPCBase *>(this), pos);
+   getOM().move(this, pos);
    this->dir = dir;
    this->moving = moving;
 }
@@ -399,7 +398,7 @@ pack::Packet NPC::serialize() const
    //printf("Error NPC::serialize untested - update with members!");
    pack::Packet p(PacketType::serialNPC);
    int imoving = (int)moving;
-   p.data.writeUInt(id).writeInt(sid).writeInt(hp).writeInt(type)
+   p.data.writeInt(id).writeInt(sid).writeInt(hp).writeInt(type)
       .writeInt(aiTicks).writeInt(aiType).writeInt(attackId)
       .writeFloat(pos.x).writeFloat(pos.y).writeFloat(dir.x).writeFloat(dir.y)
       .writeFloat(initPos.x).writeFloat(initPos.y).writeInt(nextMissileTicks)
@@ -538,6 +537,26 @@ Item *ObjectHolder::getItem(int id)
 Missile *ObjectHolder::getMissile(int id)
 {
    return static_cast<Missile *>(ObjectManager::getMissile(id));
+}
+
+Player *ObjectHolder::getPlayerByIndex(int index)
+{
+   return static_cast<Player *>(get(ObjectType::Player, index));
+}
+
+NPC *ObjectHolder::getNPCByIndex(int index)
+{
+   return static_cast<NPC *>(get(ObjectType::NPC, index));
+}
+
+Item *ObjectHolder::getItemByIndex(int index)
+{
+   return static_cast<Item *>(get(ObjectType::Item, index));
+}
+
+Missile *ObjectHolder::getMissileByIndex(int index)
+{
+   return static_cast<Missile *>(get(ObjectType::Missile, index));
 }
 
 pack::Packet ObjectHolder::getSerialized(int id)
